@@ -1,0 +1,17 @@
+[model]
+type = "tfim"
+j = 1.0
+g = 0.7
+[evolution]
+dtau = 0.05
+beta_max = 0.2
+record_every_beta = 0.1
+trotter_order = 2
+[truncation]
+epsilon = 1e-12
+max_bond = 32
+[run]
+canonicalize_every = 1
+[output]
+path = "results/quickstart.json"
+include_exact = true

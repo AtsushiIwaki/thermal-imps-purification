@@ -8,8 +8,13 @@ maximally-mixed state cools it from T = ∞ down to the target temperature. Obse
 
 ## Build
 
+Requirements are Rust 1.96.1, a C compiler/build tool, and CMake 3.26 or newer. The lockfile
+pins all Rust dependencies; the enabled `hdf5-metno` `static` feature builds vendored HDF5, so a
+system HDF5, BLAS/LAPACK, Fortran, MPI, and zlib installation is not required. On Ubuntu 24.04,
+install `build-essential cmake`; on macOS, install Xcode Command Line Tools and a current CMake.
+
 ```bash
-cargo build --release
+cargo build --release --locked
 ```
 
 Large-β or spin-1 (d = 3) runs are slow in debug — use `--release` for real sweeps.
@@ -17,16 +22,34 @@ Large-β or spin-1 (d = 3) runs are slow in debug — use `--release` for real s
 ## Quick start
 
 ```bash
-cargo run --release --bin solve -- configs/aklt.toml
-cargo run --release --bin solve -- configs/aklt_projector.toml
+cargo run --release --bin solve -- configs/quickstart.toml
 ```
 
-These evolve the historical AKLT normalization and the coefficient-one projector normalization,
-writing `results/aklt.json` and `results/aklt_projector.json`. Plot the projector run with:
+This short TFIM run writes `results/quickstart.json`. Output creation is exclusive: move the
+result or change `output.path` before repeating a run. To plot it in an isolated Python
+environment:
 
 ```bash
-python scripts/plot_run.py results/aklt_projector.json figures/aklt_projector_observables.png
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install -r requirements-plot.txt
+python3 scripts/plot_run.py results/quickstart.json figures/quickstart.png
 ```
+
+The two-case smoke command runs fresh real TFIM and genuinely complex phase-rotated TFIM inputs.
+Its second argument must name a directory that does not exist:
+
+```bash
+cargo build --release --locked --bin solve
+python3 scripts/smoke.py target/release/solve results/smoke-001
+```
+
+Use a new directory such as `results/smoke-002` for every repeat. The smoke cases are short
+interface checks, not convergence measurements.
+
+Numerical conventions, qualified limits, and extraction/dependency provenance are documented in
+[`docs/numerical-conventions.md`](docs/numerical-conventions.md),
+[`docs/limitations.md`](docs/limitations.md), and [`docs/provenance.md`](docs/provenance.md).
 
 ## Configuration (TOML or JSON)
 
@@ -315,13 +338,10 @@ reason, final shell magnitudes, and maximum imaginary residual. Both decompositi
 reconstruct `raw_energy_variance_per_site`. The validated `energy_variance_per_site` differs only
 when a small negative raw value is projected to zero within the documented tolerance.
 
-Reviewed TOML/JSON matrix input and restart support for `solve` are integrated into `master` by
-merge `fef5878`. Their contracts and measured finite-window evidence are summarized in
-[`knowledge/topics/complex-solve-input.md`](knowledge/topics/complex-solve-input.md). The earlier
-complex-backend implementation design is in
-`docs/superpowers/specs/2026-08-27-complex-specific-heat-design.md`; its qualified refinement,
-sensitivity, direction, and derivative evidence is in
-`docs/performance/2026-08-27-complex-specific-heat-results.md`.
+Reviewed TOML/JSON matrix input and restart support are included in this package. Their public
+contracts and evidence bounds are summarized in
+[`docs/numerical-conventions.md`](docs/numerical-conventions.md) and
+[`docs/limitations.md`](docs/limitations.md).
 
 The complex backend was validated with the exactly equivalent phase rotation
 `U = diag(1, i)` of the TFIM at `J=1`, `g=0.7`, and `beta=1`. On the selected
@@ -329,8 +349,7 @@ The complex backend was validated with the exactly equivalent phase rotation
 and `2.072136` for free energy; the largest cutoff/cap endpoint change is `1.9198%`, and the
 largest selected bond is 10. The finest energy window is not used as a convergence claim because
 its observed order falls to `0.829` as other numerical floors compete. See
-`docs/performance/2026-08-26-itebd-complex-hermitian-results.md` for the complete matrices, raw
-timings, and limitations.
+[`docs/limitations.md`](docs/limitations.md) before extending this finite-window evidence.
 
 ## Two-site iTEBD checkpoints and physical interval RDMs
 
@@ -386,8 +405,8 @@ while validating its authoritative shape, so this is not a global allocation bou
 Boundaries are independently solved from identity seeds. Degenerate dominant sectors can make
 that selected boundary state sector-dependent; residual convergence does not prove uniqueness.
 Check model-specific step-size/cutoff/bond convergence separately from RDM matrix invariants.
-The retained TFIM and timing evidence is in
-[`docs/performance/2026-09-06-itebd-checkpoints-rdm-results.md`](docs/performance/2026-09-06-itebd-checkpoints-rdm-results.md).
+The resource and sector qualifications are summarized in
+[`docs/limitations.md`](docs/limitations.md).
 
 For genuinely complex input, rotate both model matrices by the same `U = diag(1,i)`:
 
@@ -535,8 +554,9 @@ For Rust callers, `solve_run::run_checkpointed_sweep(&cfg, config_path)` perform
 The existing `runner::run_sweep` remains computation-only and rejects checkpoint/restart options
 with `ItebdError::InvalidRunConfig`. Public `RunConfig` and `SweepResult` gained optional fields;
 external Rust struct-literal callers must initialize them (`None` for legacy behavior).
-Continuation evidence and tested failure boundaries are recorded in
-[`docs/performance/2026-09-06-solve-checkpoint-restart-results.md`](docs/performance/2026-09-06-solve-checkpoint-restart-results.md).
+Continuation and independent-publication boundaries are summarized in
+[`docs/numerical-conventions.md`](docs/numerical-conventions.md) and
+[`docs/limitations.md`](docs/limitations.md).
 
 ## Reproducing the figures
 
