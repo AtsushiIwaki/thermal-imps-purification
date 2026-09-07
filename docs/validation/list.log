@@ -1,0 +1,13 @@
+projector_direct_matches_json_cli_for_both_orders: test
+projector_high_temperature_control: test
+projector_old_first_order_control: test
+projector_old_normalization_grid: test
+
+4 tests, 0 benchmarks
+checkpoint_rdm_refinement_matrix: test
+
+1 test, 0 benchmarks
+matrix_cli_direct_oracles_both_orders: test
+matrix_cli_refinement: test
+
+2 tests, 0 benchmarks
