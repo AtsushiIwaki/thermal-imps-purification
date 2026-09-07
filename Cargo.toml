@@ -1,0 +1,26 @@
+[package]
+name = "thermal-imps-purification"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+anyhow = "1"
+tensor4all-core = { git = "https://github.com/tensor4all/tensor4all-rs.git", rev = "880032daea2a84d7ddfe84a2594a6d160631afc2" }
+tensor4all-hdf5 = { git = "https://github.com/tensor4all/tensor4all-rs.git", rev = "880032daea2a84d7ddfe84a2594a6d160631afc2" }
+hdf5-metno = { version = "0.12", default-features = false, features = ["static"] }
+nalgebra = "0.33"
+num-complex = "0.4"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+serde_json = { version = "1", features = ["float_roundtrip"] }
+
+[dev-dependencies]
+approx = "0.5"
+tempfile = "3"
+syn = { version = "2", features = ["full", "visit"] }
+proc-macro2 = "1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2.186"

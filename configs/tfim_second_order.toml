@@ -1,0 +1,19 @@
+[model]
+type = "tfim"
+j = 1.0
+g = 1.0
+
+[evolution]
+dtau = 0.01
+# Omission is also second order; this remains explicit as a Strang example.
+trotter_order = 2
+beta_max = 3.0
+record_every_beta = 0.1
+
+[truncation]
+epsilon = 1e-12
+max_bond = 48
+
+[output]
+path = "results/tfim_second_order.json"
+include_exact = true

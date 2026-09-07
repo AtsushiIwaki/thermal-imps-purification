@@ -1,0 +1,6 @@
+/target
+/results
+/figures
+.DS_Store
+__pycache__/
+*.pyc
