@@ -18,3 +18,23 @@ CMake 3.26 or newer. No sibling source checkout, `refs/` tree, local dependency 
 is required. See the README for locked build and executable smoke commands. Repository hosting,
 licensing, release tags, and registry publication are separate decisions and are not asserted by
 this document.
+
+## Extraction inventory and scope
+
+[source-manifest.json](source-manifest.json) records source paths and original SHA-256 values
+at the extraction commit, final destination paths and SHA-256 values, transformation reasons,
+new files, and excluded source rows. It deliberately does not hash itself; its fingerprint is
+retained in the private extraction delivery inventory. Hashes describe file bytes, independently
+of subsequent documentation-only Git commits.
+
+The retained scope is two-site thermal purification/iTEBD, its real and complex backends,
+checkpoint/restart and reduced-density-matrix APIs, solver, examples, and validation. Uniform
+TDVP and one-site uMPS persistence APIs, executables, and dedicated tests were excluded. Shared
+iTEBD helpers have neutral module names. Private project memory, research history, local caches,
+and source execution records were not copied. Original source attribution is preserved; no
+license grant, copyright owner, repository remote, release, or publication is invented.
+
+The [validation record](validation.md) distinguishes extraction compatibility, scientific
+qualification, and an independent cold-cache local macOS build. The prepared CI workflow has
+not run on GitHub, and Linux execution has not been verified. This is a verified local candidate,
+not a claim of a completed public release.

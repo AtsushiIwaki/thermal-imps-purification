@@ -23,8 +23,11 @@ def validate_result(result):
 
 def _write_tfim_config(config_path, output_path):
     source = (ROOT / "configs" / "quickstart.toml").read_text(encoding="utf-8")
+    # JSON basic-string escapes are also TOML escapes. Keep non-BMP Unicode
+    # literal (TOML disallows JSON surrogate pairs), and escape TOML's DEL.
+    encoded_path = json.dumps(str(output_path), ensure_ascii=False).replace("\x7f", "\\u007f")
     source = source.replace(
-        'path = "results/quickstart.json"', f'path = "{output_path}"'
+        'path = "results/quickstart.json"', f'path = {encoded_path}'
     )
     config_path.write_text(source, encoding="utf-8")
 

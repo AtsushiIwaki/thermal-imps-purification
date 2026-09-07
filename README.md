@@ -431,8 +431,8 @@ fn phase_rotated_rdm() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Automatic save/restart for built-in real models is described next; standalone crate extraction
-remains separate work.
+Automatic save/restart for built-in real models is described next. This repository is the
+standalone two-site purification/iTEBD crate; see [provenance](docs/provenance.md) for its scope.
 
 ## Automatic solve checkpoints and restart
 

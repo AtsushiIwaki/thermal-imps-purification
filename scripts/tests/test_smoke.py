@@ -5,6 +5,7 @@ from pathlib import Path
 import stat
 import tempfile
 import unittest
+from unittest import mock
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "smoke.py"
@@ -53,6 +54,35 @@ class SmokeCommandTests(unittest.TestCase):
         solver.write_text("#!/bin/sh\n" + body, encoding="utf-8")
         solver.chmod(solver.stat().st_mode | stat.S_IXUSR)
         return solver.resolve()
+
+    def test_unusual_destination_survives_config_and_process_arguments(self):
+        # JSON's shared basic-string escapes provide an independent decoder here;
+        # real-solver smoke separately exercises the production TOML parser.
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary).resolve() / 'quote" back\\slash 日本語 🧪\t\x7f'
+            solver = self.make_solver(temporary, "exit 0\n")
+            seen = []
+
+            def execute(argv, *, cwd, check):
+                self.assertEqual(argv[0], str(solver))
+                self.assertEqual(cwd, smoke.ROOT)
+                self.assertTrue(check)
+                config = Path(argv[1])
+                self.assertEqual(config.parent, destination)
+                if config.suffix == ".toml":
+                    line = next(line for line in config.read_text(encoding="utf-8").splitlines()
+                                if line.startswith("path = "))
+                    output = json.loads(line.partition(" = ")[2])
+                else:
+                    output = json.loads(config.read_text(encoding="utf-8"))["output"]["path"]
+                self.assertEqual(Path(output).parent, destination)
+                Path(output).write_text(json.dumps({"records": [complete_record()]}),
+                                        encoding="utf-8")
+                seen.append(config.suffix)
+
+            with mock.patch.object(smoke.subprocess, "run", side_effect=execute):
+                smoke.run_smoke(solver, destination)
+            self.assertEqual(seen, [".toml", ".json"])
 
     def test_existing_destination_is_untouched(self):
         with tempfile.TemporaryDirectory() as temporary:

@@ -1,0 +1,1251 @@
+{
+  "version": 1,
+  "kind": "completed-extraction-file-inventory",
+  "source_commit": "55ed6ee4c1940dbfd2be13374ce3caf45169f515",
+  "entries": [
+    {
+      "source": ".gitignore",
+      "destination": ".gitignore",
+      "action": "adapt",
+      "source_sha256": "4737b6f94f37fafeaab7e2a47e6075b601c9db5fb0517461518727f5c8372810",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "5eab9d7761368c8810a71486b5eb46f3ebcca9f437c2e1904281a23249f32b9d"
+    },
+    {
+      "source": "Cargo.lock",
+      "destination": "Cargo.lock",
+      "action": "adapt",
+      "source_sha256": "1b6649c23e6650edbb27c823273903822a783c5ba1e27411226c97f6c1ef326a",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "02b4a6ea7d36c9c05b7b028b17cdc558aae4e2ee6da63b5daff46d2ff0bd27db"
+    },
+    {
+      "source": "Cargo.toml",
+      "destination": "Cargo.toml",
+      "action": "adapt",
+      "source_sha256": "7eb5e7cb7bff99d56f83006ed22c942d12c8f338e1ccbe56647dd45fc4708370",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "fe610a7c025890af5a5c126b45e6b5d8bd4f1f76d7da17b005adf604e5b95802"
+    },
+    {
+      "source": "README.md",
+      "destination": "README.md",
+      "action": "adapt",
+      "source_sha256": "e74e4873883b4e60bc88aed62b96e8dec61bd310d884cbad892ba88f357b0a1f",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "ae6b1e49cc17f33c52c53269fab32388d005680c843501ca63e70ada4d2ed740"
+    },
+    {
+      "source": "configs/aklt.toml",
+      "destination": "configs/aklt.toml",
+      "action": "copy",
+      "source_sha256": "a95346e0e94e00bbe6102bf228523223f48cfb2898fb09d796cfc621a5051431",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "a95346e0e94e00bbe6102bf228523223f48cfb2898fb09d796cfc621a5051431"
+    },
+    {
+      "source": "configs/aklt_imst_ref.toml",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "4fe947225cb44768e3d9044fed9bceb8b8c885e9435ef3e69d6aa4e22898421d",
+      "reason": "Research-only settings outside initial public examples",
+      "destination_sha256": null
+    },
+    {
+      "source": "configs/aklt_imst_ref64.toml",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "8974a0b97690e7fdb5b4e0d5c05bfad54ddb60bf4bcdfa5933f06e840f65051e",
+      "reason": "Research-only settings outside initial public examples",
+      "destination_sha256": null
+    },
+    {
+      "source": "configs/aklt_projector.json",
+      "destination": "configs/aklt_projector.json",
+      "action": "copy",
+      "source_sha256": "2d9f21a94ab3679b117f066e60779871528d628bd710972378bdd60709c2ac2d",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "2d9f21a94ab3679b117f066e60779871528d628bd710972378bdd60709c2ac2d"
+    },
+    {
+      "source": "configs/aklt_projector.toml",
+      "destination": "configs/aklt_projector.toml",
+      "action": "copy",
+      "source_sha256": "7a222d3f2d932255b1c55eefbff03630bb7597115d87d6854b9967e0b1ae6a4a",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "7a222d3f2d932255b1c55eefbff03630bb7597115d87d6854b9967e0b1ae6a4a"
+    },
+    {
+      "source": "configs/phase_tfim.json",
+      "destination": "configs/phase_tfim.json",
+      "action": "copy",
+      "source_sha256": "763218b8930111ec04cc156543ad2cbcd8ec075440f09e18a96381457a3b2c95",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "763218b8930111ec04cc156543ad2cbcd8ec075440f09e18a96381457a3b2c95"
+    },
+    {
+      "source": "configs/phase_tfim.toml",
+      "destination": "configs/phase_tfim.toml",
+      "action": "copy",
+      "source_sha256": "83938640126fa74e63e652246cb8026211d545f96ab10ef22a08e119b6383f14",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "83938640126fa74e63e652246cb8026211d545f96ab10ef22a08e119b6383f14"
+    },
+    {
+      "source": "configs/phase_tfim_checkpoint.toml",
+      "destination": "configs/phase_tfim_checkpoint.toml",
+      "action": "copy",
+      "source_sha256": "16f66bf54fad33b30a3c8f793108a53a8efa1f4f37cbabe422c50eab41b39f43",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "16f66bf54fad33b30a3c8f793108a53a8efa1f4f37cbabe422c50eab41b39f43"
+    },
+    {
+      "source": "configs/phase_tfim_restart.json",
+      "destination": "configs/phase_tfim_restart.json",
+      "action": "copy",
+      "source_sha256": "ab83dff4ef4bb8e702e5cb9945141307cfda207bed575526cd3d25c0bd9fb738",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "ab83dff4ef4bb8e702e5cb9945141307cfda207bed575526cd3d25c0bd9fb738"
+    },
+    {
+      "source": "configs/tfim.toml",
+      "destination": "configs/tfim.toml",
+      "action": "copy",
+      "source_sha256": "386a45679a455c1dbd66642eee4d98f427df13fd843a397385918a097e804ce8",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "386a45679a455c1dbd66642eee4d98f427df13fd843a397385918a097e804ce8"
+    },
+    {
+      "source": "configs/tfim_checkpoint.toml",
+      "destination": "configs/tfim_checkpoint.toml",
+      "action": "copy",
+      "source_sha256": "29e5faa7a10ea3396ee1055782eb8d6f8f12ddb4d988c0b376dfd297bd848014",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "29e5faa7a10ea3396ee1055782eb8d6f8f12ddb4d988c0b376dfd297bd848014"
+    },
+    {
+      "source": "configs/tfim_restart.toml",
+      "destination": "configs/tfim_restart.toml",
+      "action": "copy",
+      "source_sha256": "225d2a5aba3683596a04f3e99a2b19f4c0657fbd0862c34c1e870ae8cd96b153",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "225d2a5aba3683596a04f3e99a2b19f4c0657fbd0862c34c1e870ae8cd96b153"
+    },
+    {
+      "source": "configs/tfim_second_order.toml",
+      "destination": "configs/tfim_second_order.toml",
+      "action": "copy",
+      "source_sha256": "88adc3fc8b8be7f741ccfe5e1d34fa8bf4bb74fc7a18633e6a03d9098d033daf",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "88adc3fc8b8be7f741ccfe5e1d34fa8bf4bb74fc7a18633e6a03d9098d033daf"
+    },
+    {
+      "source": "configs/xy.toml",
+      "destination": "configs/xy.toml",
+      "action": "copy",
+      "source_sha256": "15a79e69e0c5bee4631739e2c1762b8137b49e455ff2d5d850bb6b723790e8cb",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "15a79e69e0c5bee4631739e2c1762b8137b49e455ff2d5d850bb6b723790e8cb"
+    },
+    {
+      "source": "examples/itebd_checkpoint_rdm.rs",
+      "destination": "examples/itebd_checkpoint_rdm.rs",
+      "action": "copy-rename",
+      "source_sha256": "f725e7f94bfd063891ac400b3e1c7fec317b10208737b598fe534ca91255adc9",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "f61c4c0551b70d1b83a39ac9e3c0d6114ff52a775729b7fa6b5803ba70dbcf5a"
+    },
+    {
+      "source": "scripts/plot_run.py",
+      "destination": "scripts/plot_run.py",
+      "action": "copy",
+      "source_sha256": "a63d07528fbbac0009faa0c1e87d31796b5366aa005e5e0752115c915d7ad70a",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "a63d07528fbbac0009faa0c1e87d31796b5366aa005e5e0752115c915d7ad70a"
+    },
+    {
+      "source": "scripts/plot_uniform_tdvp_tfim_sweep.py",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "6779bc559fdff30c7fb0663d03632e6048efd25d578d44d0923a7a3138235e15",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "scripts/tests/test_verify.py",
+      "destination": "scripts/tests/test_verify.py",
+      "action": "adapt",
+      "source_sha256": "5df19f87e23ba0d91f081e26f78a33538b8d3ee25adb5298acec2a2e215a0f7b",
+      "reason": "Retain wrapper behavior tests; expect empty extracted warning baseline and read public README verification policy instead of private AGENTS.md",
+      "destination_sha256": "05f36b8259d1edba30056b4b3a88c894cf7871587658cf34a410a8146ed55624"
+    },
+    {
+      "source": "scripts/verify.py",
+      "destination": "scripts/verify.py",
+      "action": "copy",
+      "source_sha256": "1d2974d07bd8e2434d87500b97bc2ab3c9d8d3bf0c2f056cf8041c7920422997",
+      "reason": "Preserve iTEBD functionality and its validation",
+      "destination_sha256": "1d2974d07bd8e2434d87500b97bc2ab3c9d8d3bf0c2f056cf8041c7920422997"
+    },
+    {
+      "source": "scripts/verify_known_warnings.json",
+      "destination": "scripts/verify_known_warnings.json",
+      "action": "adapt",
+      "source_sha256": "e66dbef58b5e5758fddfce53788f72ef6755283bb3f988122fff091586722922",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "4e9ce979289adf659255b8493dda602d6f0199a7796add8618890bc2546e21f1"
+    },
+    {
+      "source": "src/bin/solve.rs",
+      "destination": "src/bin/solve.rs",
+      "action": "copy-rename",
+      "source_sha256": "591f637fd1919f0511cf10b7f0c59e4d0dbde89833098081ecdb810478c5c29e",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "82d9d904a18ee4177f5cd8a27f93b029f600fb1b5af3a513115758eb80ce4737"
+    },
+    {
+      "source": "src/bin/uniform_tdvp_tfim_sweep.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "cda97e49fa0f4ff38cd0ca51c0aa334a9ed1c955556bc8ca52ccd18e7fa2c23c",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/canonicalize.rs",
+      "destination": "src/canonicalize.rs",
+      "action": "copy-rename",
+      "source_sha256": "a0387d981d3fec9845648658c57f0d02d82768f54e8001be886e59e37b2eebfc",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "a0387d981d3fec9845648658c57f0d02d82768f54e8001be886e59e37b2eebfc"
+    },
+    {
+      "source": "src/config.rs",
+      "destination": "src/config.rs",
+      "action": "copy-rename",
+      "source_sha256": "c5294a013a1de3851d5075be90118d719e9fc735eda8e85743eb75f626bb42f3",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "c5294a013a1de3851d5075be90118d719e9fc735eda8e85743eb75f626bb42f3"
+    },
+    {
+      "source": "src/config/matrix.rs",
+      "destination": "src/config/matrix.rs",
+      "action": "copy-rename",
+      "source_sha256": "65cab76935a1eb748db31943661fca89df05b9402a0377c372ea5fc2d0e8d77d",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "65cab76935a1eb748db31943661fca89df05b9402a0377c372ea5fc2d0e8d77d"
+    },
+    {
+      "source": "src/contraction_boundary_audit.rs",
+      "destination": "src/contraction_boundary_audit.rs",
+      "action": "adapt",
+      "source_sha256": "c0bbe1197bff288ebc858e658a083bfd7e3d55431b93c360261170f99140cb81",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "6300f84a655cac7e5c3e02323cb68b2c1f2ea39f95f54e2d6e581a3a0ff232db"
+    },
+    {
+      "source": "src/contraction_boundary_audit/deterministic_boundary.rs",
+      "destination": "src/contraction_boundary_audit/deterministic_boundary.rs",
+      "action": "adapt",
+      "source_sha256": "baf6e5b3b97f4b7a4fa907ea6759377a5574a25f8d4989f5393b8ef673055a05",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "58565752f3db1b59e7c05c12f8cf860b179767f5e31cf6b649e5a026fc975168"
+    },
+    {
+      "source": "src/exact.rs",
+      "destination": "src/exact.rs",
+      "action": "copy-rename",
+      "source_sha256": "62a57df4328e1fc85bc56bd8ca794c20457f02823a05c0356089cdf4d317a48e",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "62a57df4328e1fc85bc56bd8ca794c20457f02823a05c0356089cdf4d317a48e"
+    },
+    {
+      "source": "src/git_process.rs",
+      "destination": "src/git_process.rs",
+      "action": "copy-rename",
+      "source_sha256": "9fe6d67fef5b7b6d32ca927b995aaa7fab5bf0fa5975182044a1dfb41d051de6",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9fe6d67fef5b7b6d32ca927b995aaa7fab5bf0fa5975182044a1dfb41d051de6"
+    },
+    {
+      "source": "src/git_process/macos.rs",
+      "destination": "src/git_process/macos.rs",
+      "action": "copy-rename",
+      "source_sha256": "85b5974dc70ae1548ead2c972918f0d6c8f93cd9539027103ba2925611bfe6f7",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "85b5974dc70ae1548ead2c972918f0d6c8f93cd9539027103ba2925611bfe6f7"
+    },
+    {
+      "source": "src/git_process/tests.rs",
+      "destination": "src/git_process/tests.rs",
+      "action": "copy-rename",
+      "source_sha256": "6a1723fecd84f95b754c729a4fc7677b24f618327bcf4a13277c78929aa0465b",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "6a1723fecd84f95b754c729a4fc7677b24f618327bcf4a13277c78929aa0465b"
+    },
+    {
+      "source": "src/itebd.rs",
+      "destination": "src/itebd.rs",
+      "action": "copy-rename",
+      "source_sha256": "e39a3c6048c2a8d2db3943cc8edc01305f8b5c7c94833ed7a34ed8c1d2cce5a1",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "e39a3c6048c2a8d2db3943cc8edc01305f8b5c7c94833ed7a34ed8c1d2cce5a1"
+    },
+    {
+      "source": "src/itebd_auto.rs",
+      "destination": "src/itebd_auto.rs",
+      "action": "copy-rename",
+      "source_sha256": "9ea162b1567bea839b7cd2e8458f374f21d604f0b65c62831d67a274b4f189bb",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9ea162b1567bea839b7cd2e8458f374f21d604f0b65c62831d67a274b4f189bb"
+    },
+    {
+      "source": "src/itebd_checkpoint/io.rs",
+      "destination": "src/itebd_checkpoint/io.rs",
+      "action": "copy-rename",
+      "source_sha256": "eb2322a17fdf98c8928b2279fe94defc3a98d43b0b65d5530e4555ac7973231e",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "eb2322a17fdf98c8928b2279fe94defc3a98d43b0b65d5530e4555ac7973231e"
+    },
+    {
+      "source": "src/itebd_checkpoint/mod.rs",
+      "destination": "src/itebd_checkpoint/mod.rs",
+      "action": "copy-rename",
+      "source_sha256": "ef6181dbfbe5f4f7a9bb93adc6cac76e14430125a33339ac061f4ffe0f52ff04",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "ef6181dbfbe5f4f7a9bb93adc6cac76e14430125a33339ac061f4ffe0f52ff04"
+    },
+    {
+      "source": "src/itebd_checkpoint/schema.rs",
+      "destination": "src/itebd_checkpoint/schema.rs",
+      "action": "copy-rename",
+      "source_sha256": "93d5d8d5142d0669861311f60d20fd5ff9118979d657d0414a7434cd1fdf7d13",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "93d5d8d5142d0669861311f60d20fd5ff9118979d657d0414a7434cd1fdf7d13"
+    },
+    {
+      "source": "src/itebd_complex/canonicalize.rs",
+      "destination": "src/itebd_complex/canonicalize.rs",
+      "action": "copy-rename",
+      "source_sha256": "3eeb4758d41b0d225e9b7a7441d2180775f92a7ba2d3292a9bf995179b1e3899",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "6942d02f35ea2d75994d23774eb9df966261fa91baae485f90381dd0febe0832"
+    },
+    {
+      "source": "src/itebd_complex/evolution.rs",
+      "destination": "src/itebd_complex/evolution.rs",
+      "action": "copy-rename",
+      "source_sha256": "28f78786677e297ce25e197b01d4e462a150f02bbe3082428f81979d7a97e640",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "a2bf981d37605097731e8e30a0b8825742ab766bd5a63f49d6549f7898bf8553"
+    },
+    {
+      "source": "src/itebd_complex/hamiltonian.rs",
+      "destination": "src/itebd_complex/hamiltonian.rs",
+      "action": "copy-rename",
+      "source_sha256": "792599863234d925e693c4cf7f8c8b34d4fde98c4999d938716e36beae824fe5",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "792599863234d925e693c4cf7f8c8b34d4fde98c4999d938716e36beae824fe5"
+    },
+    {
+      "source": "src/itebd_complex/mod.rs",
+      "destination": "src/itebd_complex/mod.rs",
+      "action": "copy-rename",
+      "source_sha256": "3e10c35559a48efb4c32765422b0bf7209810b55cf9280fefefbf4ba0a99149b",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "3e10c35559a48efb4c32765422b0bf7209810b55cf9280fefefbf4ba0a99149b"
+    },
+    {
+      "source": "src/itebd_complex/observable.rs",
+      "destination": "src/itebd_complex/observable.rs",
+      "action": "copy-rename",
+      "source_sha256": "ddf68b191557ea694baecc0833ab91173c842c0fa7203500ae5c6a56824a4010",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "4695d45987cdd2dece9d13d19cc4bb8e3a12311a3307af9eff4f670e88348b44"
+    },
+    {
+      "source": "src/itebd_complex/state.rs",
+      "destination": "src/itebd_complex/state.rs",
+      "action": "copy-rename",
+      "source_sha256": "7620943c7e67b9ab09fb3d6c5c34add33fce0da80b2243624efc9e748f3f6bde",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "7620943c7e67b9ab09fb3d6c5c34add33fce0da80b2243624efc9e748f3f6bde"
+    },
+    {
+      "source": "src/itebd_complex/tensor.rs",
+      "destination": "src/itebd_complex/tensor.rs",
+      "action": "copy-rename",
+      "source_sha256": "d1222d3456cb85befa91a395d82ac67519465f178fa8d34d4f9086d63fbbec11",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "8e20de29a00ffff6b0f77496e423d2bbe0e54d0de7121d3332c6c706a6fd0eec"
+    },
+    {
+      "source": "src/itebd_complex/transfer.rs",
+      "destination": "src/itebd_complex/transfer.rs",
+      "action": "copy-rename",
+      "source_sha256": "268823c8e027c0294eedd109e0525cc87016540a00f7da43868e68d615df3640",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "a78c6f4c483b6891fbb76db2c2c0b01a82853924631b5a07068d9f77e0db13b1"
+    },
+    {
+      "source": "src/itebd_complex/variance.rs",
+      "destination": "src/itebd_complex/variance.rs",
+      "action": "copy-rename",
+      "source_sha256": "2b5753af663cf8db7fcad7f4b4c76b727c0eba4334c89ff54d4c5407a2cc062c",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "38f1bb5e4ca9fb9075ac1f1493a6d62f8db4cf90c88c84a4a79affa518f4a45a"
+    },
+    {
+      "source": "src/itebd_error.rs",
+      "destination": "src/itebd_error.rs",
+      "action": "copy-rename",
+      "source_sha256": "be2a85d39861aa122c54005ad0169bba0889f8b51c06b06d46570f42309a39ff",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "be2a85d39861aa122c54005ad0169bba0889f8b51c06b06d46570f42309a39ff"
+    },
+    {
+      "source": "src/itebd_rdm/benchmarks.rs",
+      "destination": "src/itebd_rdm/benchmarks.rs",
+      "action": "copy-rename",
+      "source_sha256": "9d8f0888c52dc61a0e9f4d69d009bce629e628b2e368b43a438da75245fcda14",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9d8f0888c52dc61a0e9f4d69d009bce629e628b2e368b43a438da75245fcda14"
+    },
+    {
+      "source": "src/itebd_rdm/environment.rs",
+      "destination": "src/itebd_rdm/environment.rs",
+      "action": "copy-rename",
+      "source_sha256": "54d8eadb831387eefa9b669dd72c843925a95bf2f0d673243a179fa5e024efa6",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "54d8eadb831387eefa9b669dd72c843925a95bf2f0d673243a179fa5e024efa6"
+    },
+    {
+      "source": "src/itebd_rdm/error.rs",
+      "destination": "src/itebd_rdm/error.rs",
+      "action": "copy-rename",
+      "source_sha256": "085e87ff43f6528919b2c7e506aef9adfdfee9c20fb642acddc200610b0013e2",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "085e87ff43f6528919b2c7e506aef9adfdfee9c20fb642acddc200610b0013e2"
+    },
+    {
+      "source": "src/itebd_rdm/interval.rs",
+      "destination": "src/itebd_rdm/interval.rs",
+      "action": "copy-rename",
+      "source_sha256": "7168775d6a6ed87fcaafcf8acd0ab9eb9b3fba35ae81129636e5a61fe573ba62",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "7168775d6a6ed87fcaafcf8acd0ab9eb9b3fba35ae81129636e5a61fe573ba62"
+    },
+    {
+      "source": "src/itebd_rdm/mod.rs",
+      "destination": "src/itebd_rdm/mod.rs",
+      "action": "copy-rename",
+      "source_sha256": "ef2603ce0cf78930e3907d1030eaa9b316d3a8235ad36faa08271dd5dda8ff79",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "ef2603ce0cf78930e3907d1030eaa9b316d3a8235ad36faa08271dd5dda8ff79"
+    },
+    {
+      "source": "src/itebd_rdm/oracles.rs",
+      "destination": "src/itebd_rdm/oracles.rs",
+      "action": "copy-rename",
+      "source_sha256": "af568195d62e737f81a613e3fea969e308a0c072a7051905c89a6d1187c9e1f8",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "af568195d62e737f81a613e3fea969e308a0c072a7051905c89a6d1187c9e1f8"
+    },
+    {
+      "source": "src/itebd_rdm/tensor.rs",
+      "destination": "src/itebd_rdm/tensor.rs",
+      "action": "copy-rename",
+      "source_sha256": "01a2ae5b594f2848080ce32dd6aab26cda1096530fb29a45ef832b3be32f9688",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "765cba763eb98d5e4e14592fe90b2d06e24bc7707b03878d9f699a950fef6f89"
+    },
+    {
+      "source": "src/itebd_state_view.rs",
+      "destination": "src/itebd_state_view.rs",
+      "action": "copy-rename",
+      "source_sha256": "cf66f5a882722261de4b3ad77140487821d6cce24af707ec1164f18af5ba02ec",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "cf66f5a882722261de4b3ad77140487821d6cce24af707ec1164f18af5ba02ec"
+    },
+    {
+      "source": "src/lib.rs",
+      "destination": "src/lib.rs",
+      "action": "adapt",
+      "source_sha256": "1ab3365097d499d2e3ac3c1e87edffa1844a63480d3a22b0dff11046765adacb",
+      "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
+      "destination_sha256": "0bb452ecf7d980d375399812bb2d58151f87462bafcc7770ae7e99197b4110ea"
+    },
+    {
+      "source": "src/model.rs",
+      "destination": "src/model.rs",
+      "action": "copy-rename",
+      "source_sha256": "526e8670f326b726c9967ed1f58f87a073767fbe4c233809326417247bcd9c51",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "526e8670f326b726c9967ed1f58f87a073767fbe4c233809326417247bcd9c51"
+    },
+    {
+      "source": "src/observable.rs",
+      "destination": "src/observable.rs",
+      "action": "copy-rename",
+      "source_sha256": "e5c6b11b2d63bb5b276c0fad662a6989af6f6479a0038d8e8cec42417b0bdda9",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "e5c6b11b2d63bb5b276c0fad662a6989af6f6479a0038d8e8cec42417b0bdda9"
+    },
+    {
+      "source": "src/purified_mps.rs",
+      "destination": "src/purified_mps.rs",
+      "action": "copy-rename",
+      "source_sha256": "9150202836cb7685c0d33b8fb376cfda20b304f5bb37ef404f48045e3b40bf69",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9150202836cb7685c0d33b8fb376cfda20b304f5bb37ef404f48045e3b40bf69"
+    },
+    {
+      "source": "src/runner.rs",
+      "destination": "src/runner.rs",
+      "action": "copy-rename",
+      "source_sha256": "5940333753ee9aa6b111c91b4c4347789e5bed08bf309c7211c8c18bffee58ca",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "5940333753ee9aa6b111c91b4c4347789e5bed08bf309c7211c8c18bffee58ca"
+    },
+    {
+      "source": "src/solve_run.rs",
+      "destination": "src/solve_run.rs",
+      "action": "copy-rename",
+      "source_sha256": "b841a27dec820d9ba0a890a89cda56caa4c0bbaf8251a9c72d1c71cb9d853af2",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "b841a27dec820d9ba0a890a89cda56caa4c0bbaf8251a9c72d1c71cb9d853af2"
+    },
+    {
+      "source": "src/solve_run/output.rs",
+      "destination": "src/solve_run/output.rs",
+      "action": "copy-rename",
+      "source_sha256": "c38ed7e5fc5413cfc4f8dbd3a1a79d33715791456f4c9131ee721e88c5730cab",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "c38ed7e5fc5413cfc4f8dbd3a1a79d33715791456f4c9131ee721e88c5730cab"
+    },
+    {
+      "source": "src/solve_run/tests.rs",
+      "destination": "src/solve_run/tests.rs",
+      "action": "copy-rename",
+      "source_sha256": "2a6e5ef405dbbd6ab0a99aa7b68da07cd08a1246ca26abaf278edcdfe4b3025e",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "2a6e5ef405dbbd6ab0a99aa7b68da07cd08a1246ca26abaf278edcdfe4b3025e"
+    },
+    {
+      "source": "src/solve_run/validation.rs",
+      "destination": "src/solve_run/validation.rs",
+      "action": "copy-rename",
+      "source_sha256": "bdac66f3cc64c3707d4195f067e4fca2259365534a35aca296c48768c4419de1",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "bdac66f3cc64c3707d4195f067e4fca2259365534a35aca296c48768c4419de1"
+    },
+    {
+      "source": "src/specific_heat.rs",
+      "destination": "src/specific_heat.rs",
+      "action": "copy-rename",
+      "source_sha256": "78f48c06b7db8bbc0ee96e998e77e44997d6d22937873366aaa35022ebea23d8",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "78f48c06b7db8bbc0ee96e998e77e44997d6d22937873366aaa35022ebea23d8"
+    },
+    {
+      "source": "src/tensor.rs",
+      "destination": "src/tensor.rs",
+      "action": "copy-rename",
+      "source_sha256": "da0eb6e4e5f832fcbc4e0a1e176e8a1cad5e77b25845ca615bafb94f59b33395",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "f0c32e929e3ce0f794817875573679b66e6373562203c819ed06ba1a1aa16553"
+    },
+    {
+      "source": "src/transfer.rs",
+      "destination": "src/transfer.rs",
+      "action": "copy-rename",
+      "source_sha256": "f6bd3a71a54c7d50a34dda40887a5b5434808356ed640c238b4453b3f2a47c61",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "4e3286b01e463db587799331c3e4e57eceda815b9e2b25c74910a5bc08b513ef"
+    },
+    {
+      "source": "src/umps_hdf5.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "36f3aa2583daadca8524d83a17d83b7c7314e3118a46bae6a5876a2c4c42a634",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_bond_expansion.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "228b2a532ea30e30fc4156044761b66b30adb1f8e719272e73daadabade31c87",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_contraction_benchmark.rs",
+      "destination": "src/contraction_benchmark.rs",
+      "action": "adapt-shared",
+      "source_sha256": "af7de46479580fa84b0740444f18cec3797c4c698c8e9ab4e223ba0bebba8396",
+      "reason": "Keep generic sampling helpers/iTEBD benchmark support; exclude TDVP include_str contract test",
+      "destination_sha256": "aa9164befbb91fa4012648dbd7481f7a639e27a2211cc634454e9a077a9b432b"
+    },
+    {
+      "source": "src/uniform_contraction_contract_candidate.rs",
+      "destination": "src/contraction_contract_candidate.rs",
+      "action": "adapt-shared",
+      "source_sha256": "febd504696c53fee886281aa34ec6fefdacc3cf231242f0d3e527c5173f4a924",
+      "reason": "Keep binary N-ary comparison test-only; rename owner and helpers",
+      "destination_sha256": "a4982702922a10d1f89836e7d0c1eed82defbc938e612bd99147b682a383c881"
+    },
+    {
+      "source": "src/uniform_contraction_dense_oracle.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "3eba2388f5dd570918fe4c16ed19d5f6e02d20a57884df7fa7c6bb9fee46f7e2",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_contraction_pairwise.rs",
+      "destination": "src/contraction_pairwise.rs",
+      "action": "adapt-shared",
+      "source_sha256": "2572c3930d6de1193158c7db3576d92ec4bee76b3e1807b0f4e16a746fb3dd7a",
+      "reason": "Preserve production adapter; rename imports and test helpers",
+      "destination_sha256": "3fc8da245487b254eb92c629367c3c898717c7d55f2b9b9e8572a0c67fc4d59b"
+    },
+    {
+      "source": "src/uniform_effective.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "446527cb17a43b010dd9f91bdadfd661c216463b88ca79fbdfb032b9747d5434",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_environment.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "71e6e15c4be8f137ffabc2940f1fbd5259388b3754e01c7583a53e13a76248a7",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_expansion_subspace.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "f411912f6bd9b95b9acd3e43164d0eaf2e41285e27ee1cf07478b264148708d0",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_gauge.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "5d9ba776e7aa6e16ba70c6fd6a7074c65a52c098acacd80b94346e2251bb1759",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_hamiltonian_dense_oracle.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "b0b09ab70fb63077f3801e1543d185857f2372db2d8a234889c631bd80243dcd",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_hamiltonian_kernel.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "d1c9f370d0ce64998cc2bc153c821a17f41f594d1f4ae4fe1d0f260c762cd8d9",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_nearest_neighbor.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "65ca0bd5cc9e7cbc2d617ec91e74f99bc96ff2afbdecbadaf54a942446a1a5ac",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_numerical_support.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "e4f19f02ba6f2944a1b1de0c67e1c10c267807d61ef79e2e6c7ed318ae245ffe",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_observable.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "fc8952c22aac1bcbd455ec63aee38674a3f90a8fe43808d29c18a2e6323fc1c4",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_operator_schmidt.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "20c9ae031e4df49ba7ddc29cca23998a9047b020ac0f9f1054900f03ecdf4226",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_purified_mps.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "9ebc7b20c38b7527ab75b6f1408b5689b269fd211c7e027ba265a47a86898bc6",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_tdvp.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "7a0a9a9eb034ac5e8b30e244eae2ac893900b1376b54fc030a020f1c4b60a190",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_tdvp_second_order.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "b69d6d70daf5afb3ca00c6326425c1daf109e026894e5c72662156d18e6ef324",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_tdvp_sweep.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "638e21c52fa921cc253754c6acb736dae8b83039d646f47a28ef13011085cd63",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_tensor.rs",
+      "destination": "src/test_tensor_support.rs",
+      "action": "adapt-shared",
+      "source_sha256": "7ad2ab535ae4c4d20f33e4f93aa950456255184b5ba284577a1d3cca0df93436",
+      "reason": "Extract only dense_c64, frobenius_norm, relative_distance for test-only use; remove UniformTdvpError dependency",
+      "destination_sha256": "56a0b608d1945d4eea95ae66bc07079048ac484b269a30436e317263d18b39c2"
+    },
+    {
+      "source": "src/uniform_tfim_sweep.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "aa82ca1bc72fe0cacf53cf73123050e66406fb2d264d1a83df07aecaa8eb066e",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/uniform_transfer_kernel.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "543240d4fc26048b6f022ac3c8e827b9f85ab69bfbd97d07a511eaa8ee8f034c",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "src/variance.rs",
+      "destination": "src/variance.rs",
+      "action": "copy-rename",
+      "source_sha256": "006baff4b4c03fa2ec4469034c03346dd3b1be51871889e314551a73bad3203e",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "af5757102b5a1a546a240de68f45280b06fcd655c653f0235be3030791b5d6fd"
+    },
+    {
+      "source": "tests/aklt_finite_t.rs",
+      "destination": "tests/aklt_finite_t.rs",
+      "action": "copy-rename",
+      "source_sha256": "1b92368c0e1846ba3d8fc623b3157d70afa953964173d36732af26a877f0a3bf",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "18e3c0a5d542e3052bd3a077006541a8a494efbfe3eaa2ea3a68ce47a7a82a15"
+    },
+    {
+      "source": "tests/aklt_projector.rs",
+      "destination": "tests/aklt_projector.rs",
+      "action": "copy-rename",
+      "source_sha256": "93855f7215f9a280d829723716432748e356566a386925156fc50763b80f5b0b",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9b78db04efd245688fefc90c2c768aaa389f2f1888acb1906f52433c1a370d4f"
+    },
+    {
+      "source": "tests/aklt_projector_evidence.rs",
+      "destination": "tests/aklt_projector_evidence.rs",
+      "action": "copy-rename",
+      "source_sha256": "42962a324e022ba85fa4d6b0a2a6db19c56dc1e7def2c6070e3148c4e797644a",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "e33337aa28c3ab6b3aeb28b66924e9a43170d2c3e82aa0027d843173e3e6c69a"
+    },
+    {
+      "source": "tests/integration_energy.rs",
+      "destination": "tests/integration_energy.rs",
+      "action": "copy-rename",
+      "source_sha256": "328d520e7adfacddc491a10028f0142703c9bc3416a92e8159b4b463bb52ed81",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9a7c35e3a20d01e4d7fec9d774cbc0a220f48a6b85b37963ca41427c6c3806f6"
+    },
+    {
+      "source": "tests/integration_xy.rs",
+      "destination": "tests/integration_xy.rs",
+      "action": "copy-rename",
+      "source_sha256": "0f12ed749e0aee5bea2a8726780efbdd72766123abc5c064f2f7d2040fa66141",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9d9deba643888d2c0f3c1852f1d2179a97d46f3a0fbdd1abd6e1d74c004a79ad"
+    },
+    {
+      "source": "tests/itebd_checkpoint_continuation.rs",
+      "destination": "tests/itebd_checkpoint_continuation.rs",
+      "action": "copy-rename",
+      "source_sha256": "c201d05aeb9c6dfe50e031511b4757257bd1f2828defbd418d9f645a316687c3",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "bd48772283c7574b9a32ec3cdb9c9243eb153611348c75b13e82b7eef4dc92d1"
+    },
+    {
+      "source": "tests/itebd_checkpoint_rdm_evidence.rs",
+      "destination": "tests/itebd_checkpoint_rdm_evidence.rs",
+      "action": "copy-rename",
+      "source_sha256": "10483d9cbda080df4ea148c3cd06047bc7fa83ac9669e3d623f0657e6459006c",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "ebf47b2021d181714af8f13ae9f8b34124fe1edc2b4c99b9ae768b5831f61792"
+    },
+    {
+      "source": "tests/itebd_checkpoints.rs",
+      "destination": "tests/itebd_checkpoints.rs",
+      "action": "copy-rename",
+      "source_sha256": "33b3dc7a9bf13107da2afcdf0538778c791473df0d2dc3c55e37fcb71370b3fa",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "101d4215ae3bfbeae8a8047c0e95324ae1e18271f88276d4f6816a067b901d13"
+    },
+    {
+      "source": "tests/itebd_complex.rs",
+      "destination": "tests/itebd_complex.rs",
+      "action": "copy-rename",
+      "source_sha256": "0df04a051cf2611f882e8456b57d1ac27934184e9045f34a4ea51c5b0e67b132",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "f21dc1d9209c48e537717fce4438ba77d0d3408b6eeaaa20fb6d7bab7c0f877c"
+    },
+    {
+      "source": "tests/itebd_complex_benchmark.rs",
+      "destination": "tests/itebd_complex_benchmark.rs",
+      "action": "copy-rename",
+      "source_sha256": "abe7007f09e50812e50487afe23b189eab2f89ef4571c9c22ae19518f319e62d",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "846a52e69322d8e2d7075f1bc19b80942b007f240e97bcaeacc20be6c112631d"
+    },
+    {
+      "source": "tests/itebd_rdm.rs",
+      "destination": "tests/itebd_rdm.rs",
+      "action": "copy-rename",
+      "source_sha256": "ce4863ca30cdec7e1f07f8bbbf24828a2173bfa44dc85101976b419937c2f966",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "563b9927a8e1d9e78238675e55ee301a8dd0c080f55e7cd591c474e2d431d5e4"
+    },
+    {
+      "source": "tests/itebd_second_order.rs",
+      "destination": "tests/itebd_second_order.rs",
+      "action": "copy-rename",
+      "source_sha256": "e5397dfbc29958109deeabaf5c8d1516892e62689c1a3bba385051549fc79000",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "d1428a6f7147e0e235ed284102fb4926f38f1dfdcd9529b0a1e0db1053326e7f"
+    },
+    {
+      "source": "tests/itebd_state_view.rs",
+      "destination": "tests/itebd_state_view.rs",
+      "action": "copy-rename",
+      "source_sha256": "4e4ecdd8f0e3ec11a13024a9f5d2899a9a975dd447b1c5cc0dc5258b66b2bd8b",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "d8390d7ae8f36c1822cc71303f383a0aa4ef96fa2630037a0446ed8368c369af"
+    },
+    {
+      "source": "tests/solve_aklt_projector.rs",
+      "destination": "tests/solve_aklt_projector.rs",
+      "action": "copy-rename",
+      "source_sha256": "9b0c32ecc33f1cfb287a71ac1cba555538ce76bcb59db5c0a99aef0f84fdb00a",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9fe6ca0a07257ec3ab601fa291b4ccd6d88762db5ff5fe4c3b69f0cf2228d0bb"
+    },
+    {
+      "source": "tests/solve_aklt_projector_restart.rs",
+      "destination": "tests/solve_aklt_projector_restart.rs",
+      "action": "copy-rename",
+      "source_sha256": "a3755361ba87931ae0994ac8863c5690b7bf1eceb4bde9f68168dfe074ff4a0d",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "5b48ba1f1505dd8390e98ce8ebc6eecaf2f7590b8c9c68d12c094a785406b5c3"
+    },
+    {
+      "source": "tests/solve_checkpoint_config.rs",
+      "destination": "tests/solve_checkpoint_config.rs",
+      "action": "copy-rename",
+      "source_sha256": "197dc91c5538d1ce0d8db364f7d69a2277832530b18dd37d22e070b01321cee2",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "c15a310bcfa7dee23d1ab9b8465a5d074da754a770f5bc2bf073d16020962462"
+    },
+    {
+      "source": "tests/solve_checkpoint_restart.rs",
+      "destination": "tests/solve_checkpoint_restart.rs",
+      "action": "copy-rename",
+      "source_sha256": "62cdd1e96b9ebecfa8882e73536869c8e35264f644809d362ad181d104b5db5f",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "d1777ee2188354820702a9e009cf4e1a4407df5eaa0214d5e6f9e56e62e7edb4"
+    },
+    {
+      "source": "tests/solve_cli.rs",
+      "destination": "tests/solve_cli.rs",
+      "action": "copy-rename",
+      "source_sha256": "8cb5f84296a97fff95f34c0885a511a5a0eda529dd8afda905ddab5c4b2bce7b",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "a3912a3987cd2a28164d46757b88f3710c8a5a983460a71ef1c1120806ebd2b7"
+    },
+    {
+      "source": "tests/solve_continuation_evidence.rs",
+      "destination": "tests/solve_continuation_evidence.rs",
+      "action": "copy-rename",
+      "source_sha256": "2ffd02d4e7a0ff7fa5977082055a4f4cbd70696d52d65624c924acbca583bedf",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "a3460249c3b94f10689451a2213b9d1d934aa659f50cec1f37b01cfa98265bc8"
+    },
+    {
+      "source": "tests/solve_matrix_cli.rs",
+      "destination": "tests/solve_matrix_cli.rs",
+      "action": "copy-rename",
+      "source_sha256": "2bc73699a508865098586c5ead484a9806a47730cdee4bdf2faa999cdbc030c2",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "ac933dd8b51e6804807b11e328fb5a1daf9a032c1f01f48014032a5df0b0312e"
+    },
+    {
+      "source": "tests/solve_matrix_config.rs",
+      "destination": "tests/solve_matrix_config.rs",
+      "action": "copy-rename",
+      "source_sha256": "a7a909e3912b9cedd7b291d27d752d3cbb849d1f6391161a8029560fbdd068dd",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "c45cb9be17949a060b5f413a9dc02c0bf334544d7a61212e98d06c52fafb378f"
+    },
+    {
+      "source": "tests/solve_matrix_continuation.rs",
+      "destination": "tests/solve_matrix_continuation.rs",
+      "action": "copy-rename",
+      "source_sha256": "83ea703c2d3f07ec4a747f68ff5a73fe52c811c1618614ffce539108064c61dc",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "deb636fd6af3c9b75ff59c5db88982c43380d0a57e497499a0b8c52bee9be4f9"
+    },
+    {
+      "source": "tests/solve_matrix_evidence.rs",
+      "destination": "tests/solve_matrix_evidence.rs",
+      "action": "copy-rename",
+      "source_sha256": "b35c926c0e5d64dbe1912f29a7cdb74f95672ebfece62f407d7502ce306d5fb7",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "f673432d601d378307927baa1868446dd775a6e7884391f0d2ac9a58f2d96eec"
+    },
+    {
+      "source": "tests/solve_matrix_restart.rs",
+      "destination": "tests/solve_matrix_restart.rs",
+      "action": "copy-rename",
+      "source_sha256": "df829a6ffa6813c4333a7499cb67b4668d4e02c9ec8d2db41eb2c1f5185984bd",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "5008c9da0c5df0e4d5a2cb1a87954f66b413428584f08201e9e2e4103b975116"
+    },
+    {
+      "source": "tests/solve_matrix_runner.rs",
+      "destination": "tests/solve_matrix_runner.rs",
+      "action": "copy-rename",
+      "source_sha256": "bda330ebd4e7de9eda97c769cf26a44061b0ff5a176a337286802b9d980ea4c8",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "72756a78e50cb649a0d86915cd3b89fef62020086c7a0637464ee0c9decda070"
+    },
+    {
+      "source": "tests/solve_output.rs",
+      "destination": "tests/solve_output.rs",
+      "action": "copy-rename",
+      "source_sha256": "98b0a7fab74f22c1d39ff2fc7bf0e86c1c3d2f9c3d8f6bc4fb697aa9fe18371d",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "98b0a7fab74f22c1d39ff2fc7bf0e86c1c3d2f9c3d8f6bc4fb697aa9fe18371d"
+    },
+    {
+      "source": "tests/specific_heat.rs",
+      "destination": "tests/specific_heat.rs",
+      "action": "copy-rename",
+      "source_sha256": "3ebfe6902f8d40dbadeeef5b3a3b3e7a3ef6b53148e932f6917846224288bc08",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "9ca4fcc0b2a5e172d900be75e0c7c2f91b56ebe8826446aae9437b2cc1c60dd2"
+    },
+    {
+      "source": "tests/specific_heat_benchmark.rs",
+      "destination": "tests/specific_heat_benchmark.rs",
+      "action": "copy-rename",
+      "source_sha256": "c883c69cd70b9676cb076af68d1f2d2e77fc6f0a7977d2e2fe5e2921f005dad1",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "a681d60ce287bf9460ded215d51e40411d1cf41d09cb9bb1882b70b03acceae4"
+    },
+    {
+      "source": "tests/support/aklt_projector_oracle.rs",
+      "destination": "tests/support/aklt_projector_oracle.rs",
+      "action": "copy-rename",
+      "source_sha256": "bd13ad5e09a11645aa0fce275eb2b375fc9b12f2aa10529a972457da5e942e13",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "bd13ad5e09a11645aa0fce275eb2b375fc9b12f2aa10529a972457da5e942e13"
+    },
+    {
+      "source": "tests/support/aklt_projector_solve.rs",
+      "destination": "tests/support/aklt_projector_solve.rs",
+      "action": "copy-rename",
+      "source_sha256": "60c24922d2c3c642c11e1d05004e8c3fe3dda6a6f75ea4628a7f0931e35aa8a7",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "b3dd3331e1b4fc9bb02c8aec8abed56135a2efdf40963288f948e367b62da7d0"
+    },
+    {
+      "source": "tests/support/itebd_checkpoint_rdm.rs",
+      "destination": "tests/support/itebd_checkpoint_rdm.rs",
+      "action": "copy-rename",
+      "source_sha256": "2c2d4af813305b4471f8f502bb457b81fc1c1bcd00bc7ea5abc669f77076d4aa",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "2a92fa67eff8b835b6e5ae307faae3cd137a194d7497e9d78094cd7f5abb029a"
+    },
+    {
+      "source": "tests/support/itebd_evidence.rs",
+      "destination": "tests/support/itebd_evidence.rs",
+      "action": "copy-rename",
+      "source_sha256": "adb1fa8a2d3ed6468b7c5e6ef7f28746709439e6bc41e11c89b2f992e50adb87",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "adb1fa8a2d3ed6468b7c5e6ef7f28746709439e6bc41e11c89b2f992e50adb87"
+    },
+    {
+      "source": "tests/support/itebd_rdm.rs",
+      "destination": "tests/support/itebd_rdm.rs",
+      "action": "copy-rename",
+      "source_sha256": "0cf6a18056f253b0f1c1d64ee89e48cb15d6adbf99bb623a1e151ff07f2ffe19",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "aadc0586fbab7fe5cf678f2e2909d6ab92f23ee1c0578d5aad7aeea9fc7726ef"
+    },
+    {
+      "source": "tests/support/itebd_rdm_invariants.rs",
+      "destination": "tests/support/itebd_rdm_invariants.rs",
+      "action": "copy-rename",
+      "source_sha256": "a4f84f9362da2606babf555c6cf67c1d05579d463516136c6e411f2baa2d8bf7",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "c8aecf48d605bc36ee145a599ca3bc2540b40c6286187a528ccf47aa97b943f2"
+    },
+    {
+      "source": "tests/support/solve_matrix.rs",
+      "destination": "tests/support/solve_matrix.rs",
+      "action": "copy-rename",
+      "source_sha256": "df03b80dba087ac33387af8d2fb7e92e5255fa360252154a98e924de01058839",
+      "reason": "Only crate/import renames unless an explicit plan step authorizes an adaptation",
+      "destination_sha256": "349e313f9f94dba144d49592bf0b17d94a01084385bf0cb4ff1cbcb2f7ff5cd3"
+    },
+    {
+      "source": "tests/umps_hdf5.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "c0695f7141cf9722d1e701a3621cc146ecc6c3e22682effcd17ab79bab139b0d",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "tests/uniform_bond_expansion.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "9a6594621856b3559b8bdd299967008dc8e95401ecd197bcfe72471e918952b9",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "tests/uniform_expansion_cutoff.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "f17d6c58c39eceae416838c13513acd8dcbd3a2e115c5b8546aa9d5289d5d817",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "tests/uniform_purified_mps.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "f982ca6b3fcce3cd78b4ea4b206b8f2e3f5e192d6d5cb439317a0553f7161d12",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "tests/uniform_tdvp.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "0391e01e5aca27d09fd4d39eea05ca40b7b1aac089d250934a61d8d2782bbde9",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "tests/uniform_tdvp_second_order.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "054b0af506c102df390dfaa540c479462f2ca389c16ce683f7f7355bcf6dfc07",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": "tests/uniform_tfim_sweep.rs",
+      "destination": null,
+      "action": "exclude",
+      "source_sha256": "800a553fdf82edc3f6a9b06bde39c52a2119559edc4d43ae486a485bd2ba9748",
+      "reason": "Uniform TDVP/one-site uMPS only; user explicitly excludes",
+      "destination_sha256": null
+    },
+    {
+      "source": null,
+      "destination": ".github/workflows/ci.yml",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "07c8e3cd023eb7da7a300ba9a717bfa612d4647b5979428a631a5c5ec85c7066",
+      "reason": "Prepare locked macOS/Linux CI; hosted execution is unverified."
+    },
+    {
+      "source": null,
+      "destination": "configs/quickstart.toml",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "7e8de39241a6339f1bf61230b7fe0ed6b66e1984c3895aa7e7d394a39334924a",
+      "reason": "Provide a bounded executable real-TFIM quickstart."
+    },
+    {
+      "source": null,
+      "destination": "docs/limitations.md",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "9fbeb0301862bb8a9349dc771e9bceefe40d780ad5413392374730db85984471",
+      "reason": "Retain qualified numerical and API limitations."
+    },
+    {
+      "source": null,
+      "destination": "docs/numerical-conventions.md",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "0601c2872c747b9e08ea27256c0e7346b88382802744ed9ee38e18cfd9377992",
+      "reason": "Document retained physical and persistence conventions."
+    },
+    {
+      "source": null,
+      "destination": "docs/provenance.md",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "c9d428b38995b75514e8ec2950461176808e8d6c6679e5e413f86da5d0e27145",
+      "reason": "Document extraction scope, dependencies and publication boundaries."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation.md",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "d6e85074a67e1976fe71283f19d9748df293367a1c4f4fc73163f87a7e2892a9",
+      "reason": "Summarize measured scientific, compatibility and platform evidence."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation/aklt-first.log",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "ae4fd8fc4f5d03383c558f335d1fdcf4cbcc9de47eac80a2ed2d40f8c70306d8",
+      "reason": "Publish compact scientific evidence with private host paths removed; retain measured values."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation/aklt-grid.log",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "0c8e104c28e9f8c66b70e3afb9a80879ba2615add39aa36f973b2ac9867a6bdb",
+      "reason": "Publish compact scientific evidence with private host paths removed; retain measured values."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation/checkpoint-rdm.json",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "56660c6063d6fe8d27e6c44073d3104e8582b759f42a04cdfb3bff76ea81be9f",
+      "reason": "Publish compact scientific evidence with private host paths removed; retain measured values."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation/coverage-list.log",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "842d5c8e02e6a2c07b95d345c2d85b9a80c3ece8d3d09b49702eabcb50159fe8",
+      "reason": "Publish compact scientific evidence with private host paths removed; retain measured values."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation/list.log",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "ef63851dfb72a6bee66d562addcbef9b9c7ee219d4ec34511f73da85ee000862",
+      "reason": "Publish compact scientific evidence with private host paths removed; retain measured values."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation/matrix.log",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "6a526bff07ec20c32e73a0532b7624850512616fb4bd50e669c8191d27b48e47",
+      "reason": "Publish compact scientific evidence with private host paths removed; retain measured values."
+    },
+    {
+      "source": null,
+      "destination": "docs/validation/summary.json",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "c9cc2bca901cdf598f1f5e05572bc0416eb90bb8076844ae6aef9e650f62cbbd",
+      "reason": "Publish compact scientific evidence with private host paths removed; retain measured values."
+    },
+    {
+      "source": null,
+      "destination": "requirements-plot.txt",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "c89217e7e8c66409895e12284df8a3f921f16a46bdd0168e13771b451d1d5a82",
+      "reason": "Declare optional plotting dependencies."
+    },
+    {
+      "source": null,
+      "destination": "rust-toolchain.toml",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "273a7ddff4102804c82b1abd15265f4d339d78c4c47d617e00693e2679ba2eb3",
+      "reason": "Pin the independently tested Rust toolchain."
+    },
+    {
+      "source": null,
+      "destination": "scripts/smoke.py",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "23e4efd8b9a66f433a56ea88ab9c0173108c6c5dfe086a2141cc9be76970e18e",
+      "reason": "Exercise real/complex solver output with finite checks and escaped paths."
+    },
+    {
+      "source": null,
+      "destination": "scripts/tests/test_smoke.py",
+      "action": "new",
+      "source_sha256": null,
+      "destination_sha256": "951e83faaf1f34dd4e3a289591d9bd319316794bcfa3d40e2e5b0358bd9df6fc",
+      "reason": "Regress smoke output validation, process failures and unusual paths."
+    }
+  ],
+  "excluded_directory_trees": [
+    ".git/",
+    ".worktrees/",
+    "target/",
+    "refs/",
+    "results/",
+    "figures/",
+    "notes/",
+    "knowledge/",
+    "docs/superpowers/"
+  ],
+  "self_hash_exclusion": {
+    "path": "docs/source-manifest.json",
+    "reason": "Avoid recursive self-hashing; SHA-256 is retained in the private final delivery inventory."
+  },
+  "notes": [
+    "All destination hashes identify final file bytes after the smoke-path fix and public documentation reconciliation.",
+    "Execution-generated private results and command hashes are retained separately in the private final delivery inventory.",
+    "Excluded rows preserve the planned source inventory and are not destination files."
+  ]
+}

@@ -7,6 +7,42 @@ There were no failed or blocked required rows and no relaxed thresholds. This es
 specific refinement, persistence and normalization checks below, within their measured windows.
 The broader [known limitations](limitations.md) still apply.
 
+## Extraction compatibility and local build coverage
+
+The source baseline `55ed6ee4c1940dbfd2be13374ce3caf45169f515` and extracted code
+`e9e732a99f6e2937dcd4d112469bc93e451c0b37` passed eight fixed compatibility cases and
+536 comparison groups. These covered first/second-order real TFIM, phase-rotated complex TFIM,
+AKLT projector, off-cadence observations/checkpoints, and source-file restart in the extracted
+build. Maximum absolute and scaled differences were 0 for all compared physical and CLI fields,
+with fixed tolerance `abs(a-b)<=1e-10*max(1,abs(a),abs(b))`. Loading the same checkpoint preserved
+stored components bit-exactly; fresh trajectory Gamma gauges/UUIDs were not compared. Explicitly
+complex storage with an all-real Hamiltonian retained its backend, and incompatible historical
+AKLT/projector restart was rejected. Detailed compatibility harnesses and original command
+records remain in the private source extraction evidence; they are not public dependencies.
+
+On 2026-09-07, commit `a2714c2c64e36477979d55e8f656885688876888` passed an independent
+local macOS arm64 build from a `git clone --no-hardlinks` checkout, an observed empty dedicated
+Cargo home, and an empty target directory. The recorded locked fetch preceded a successful
+release all-target build, including vendored static HDF5. Metadata found 233 packages (one local
+root, 209 registry and 23 Git packages), all under that clone or its dedicated cache, with no
+source-repository or `refs/` dependency. Lockfile bytes remained unchanged. Complete original
+stdout/stderr, argv, statuses and initial empty-cache/clone proof are retained privately.
+
+That cold-environment run passed routine verification (31 binaries; 409 passed, zero failed,
+16 ignored; zero warning categories), documentation tests (zero selected, zero failed), 49 Python
+tests, and real/complex smoke cases with two finite records each through beta .2. A separate local
+execution of the workflow's verification block also passed. These are macOS 26.6.2 arm64 local
+results: **Linux, GitHub-hosted Linux and GitHub-hosted macOS are unverified**. The CI matrix is
+prepared, but no remote or GitHub Actions run exists.
+
+Finalization changed only smoke-path serialization, its regression test, and public documentation.
+The final Python suite passed 50 tests; both focused README Rust tests passed; ordinary and
+quote/backslash/Unicode/tab/DEL output-directory smoke runs each passed real and complex solver
+cases through beta .2. The smoke regression checks config output paths and argument-list process
+invocation; real solver runs check the production TOML/JSON parsers. No numerical kernels,
+measurement drivers, library/config contracts, or dependency resolutions changed, so the accepted
+routine, compatibility and scientific results above were retained without repeating their grids.
+
 ## Reproducibility
 
 The tested code was extracted from `55ed6ee4c1940dbfd2be13374ce3caf45169f515`. All three
