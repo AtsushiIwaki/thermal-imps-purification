@@ -33,7 +33,7 @@
       "action": "adapt",
       "source_sha256": "e74e4873883b4e60bc88aed62b96e8dec61bd310d884cbad892ba88f357b0a1f",
       "reason": "Adjust package/module boundary, public documentation or live audit to retained sources",
-      "destination_sha256": "ae6b1e49cc17f33c52c53269fab32388d005680c843501ca63e70ada4d2ed740"
+      "destination_sha256": "3004f5680b0a22593680cfa23bebc8a742120aa028645d88be18570f8074087b"
     },
     {
       "source": "configs/aklt.toml",

@@ -590,8 +590,8 @@ The test suite pins the method against known limits:
   AKLT ground state has zero energy. The measured normalization comparison covers only the
   documented finite beta, step, cutoff and bond-cap grid.
 
-Heavy d = 3 / large-β tests are `#[ignore]`d; run them with
-`cargo test --release -- --ignored`.
+Heavy d = 3 / large-β tests are `#[ignore]`d. Run them with the individually scoped
+commands in [Retained coverage and additional commands](docs/validation.md#retained-coverage-and-additional-commands).
 
 ## Verification
 
