@@ -98,9 +98,17 @@ fn holds_path(path: &Path) -> bool {
     })
 }
 
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn holds_path(path: &Path) -> bool {
+    std::fs::read_dir("/proc/self/fd")
+        .unwrap()
+        .filter_map(Result::ok)
+        .any(|entry| std::fs::read_link(entry.path()).is_ok_and(|target| target == path))
+}
+
 #[test]
 fn subprocess_entry() {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
     if let Some(target) = marker("target") {
         let inherited = holds_path(&target);
         if let Some(dir) = marker("hold") {
@@ -123,7 +131,7 @@ fn subprocess_entry() {
     }
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
 #[test]
 fn open_hdf5_file_is_not_inherited_and_reopens_before_child_exit() {
     let dir = tempfile::tempdir().unwrap();
@@ -225,7 +233,10 @@ pub(crate) fn revision_contract(test_name: &str, revision: fn() -> Option<String
     }
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().canonicalize().unwrap();
-    let scan = if cfg!(target_os = "macos") {
+    let scan = if cfg!(any(
+        target_os = "macos",
+        all(target_os = "linux", target_env = "gnu")
+    )) {
         "\"$GIT_PROCESS_TEST_EXE\" --exact git_process::tests::subprocess_entry --skip \"target=$GIT_PROCESS_TEST_DIR/checkpoint.h5\" >/dev/null || exit $?\n"
     } else {
         ""
@@ -312,7 +323,7 @@ exec "$2" --exact "$3" --skip "$4" > "$1/child.log" 2>&1
     );
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
 #[test]
 fn handles_closed_parent_standard_descriptors() {
     if marker("closed-stdio").is_some() {
@@ -339,7 +350,7 @@ fn handles_closed_parent_standard_descriptors() {
     );
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
 #[test]
 fn resets_sigpipe_to_default_in_child() {
     // Rust ignores SIGPIPE; a child must terminate here rather than reach exit 0.
@@ -360,12 +371,12 @@ pub(crate) fn in_isolated_test(test: &str) -> bool {
     false
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
 thread_local! {
     static SPAWN_FILE_ACTION_GATE: std::cell::RefCell<Option<(PathBuf, PathBuf)>> = const { std::cell::RefCell::new(None) };
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
 pub(super) fn configure_spawn_file_actions(
     actions: &mut libc::posix_spawn_file_actions_t,
 ) -> io::Result<()> {
@@ -395,7 +406,7 @@ pub(super) fn configure_spawn_file_actions(
     Ok(())
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))]
 #[test]
 fn hdf5_close_reopen_is_safe_during_native_spawn() {
     use std::ffi::CString;
@@ -495,7 +506,7 @@ fn hdf5_close_reopen_is_safe_during_native_spawn() {
     }));
     started_rx.recv_timeout(Duration::from_secs(20)).unwrap();
     // Give the real close/reopen request an interval while native spawn is held.
-    // Without coordination it completes with errno 35; with coordination it is
+    // Without coordination the inherited descriptor prevents reopening; with coordination it is
     // blocked until release. The substantive assertion below is actual HDF5 I/O.
     let early_result = done_rx.recv_timeout(Duration::from_millis(250));
     guard.release_spawn();

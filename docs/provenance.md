@@ -48,9 +48,11 @@ attribution. This guidance is included in the MIT grant for project-authored mat
 release or publication claim.
 
 The [validation record](validation.md) distinguishes extraction compatibility, scientific
-qualification, and an independent cold-cache local macOS build. The prepared CI workflow has
-not run on GitHub, and Linux execution has not been verified. This is a verified local candidate,
-not a claim of a completed public release.
+qualification, and an independent cold-cache local macOS build. At extraction acceptance,
+the prepared workflow had not run on GitHub and Linux execution was unverified. Later hosted
+CI and the GNU/Linux process-launch investigation are recorded separately in the
+[validation record](validation.md) and [dated investigation](investigations/2026-09-08-linux-hdf5-spawn.md).
+Source publication does not by itself establish a tagged release or registry publication.
 
 ## Reader-focused documentation
 

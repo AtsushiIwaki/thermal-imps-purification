@@ -18,6 +18,7 @@ method references, and the exact component scope.
 - Rust 1.96.1
 - a C compiler and build tool
 - CMake 3.26 or newer
+- GNU/Linux builds: glibc 2.34 or newer
 - Python 3 for plotting
 
 The lockfile pins Rust dependencies. Vendored static HDF5 means that a system HDF5,

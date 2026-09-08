@@ -1,4 +1,4 @@
-//! Close unmentioned descriptors at exec and coordinate the transient spawn window.
+//! Isolate child descriptors and coordinate native spawn with HDF5 close/open.
 use std::ffi::{CString, OsStr};
 use std::fs::File;
 use std::io::{self, Read};
@@ -117,6 +117,7 @@ pub(super) fn stdout(program: &OsStr, args: &[&OsStr]) -> io::Result<Option<Vec<
             writer.as_raw_fd(),
             libc::STDOUT_FILENO,
         ))?;
+        #[cfg(target_os = "macos")]
         native_result(libc::posix_spawn_file_actions_addclose(
             &mut actions.0,
             writer.as_raw_fd(),
@@ -133,14 +134,25 @@ pub(super) fn stdout(program: &OsStr, args: &[&OsStr]) -> io::Result<Option<Vec<
             &mut attributes.0,
             &defaults,
         ))?;
+        let flags = libc::POSIX_SPAWN_SETSIGDEF as i32;
+        #[cfg(target_os = "macos")]
+        let flags = flags | libc::POSIX_SPAWN_CLOEXEC_DEFAULT;
         native_result(libc::posix_spawnattr_setflags(
             &mut attributes.0,
-            (libc::POSIX_SPAWN_CLOEXEC_DEFAULT | libc::POSIX_SPAWN_SETSIGDEF as i32) as i16,
+            flags as i16,
         ))?;
         #[cfg(test)]
         super::tests::configure_spawn_file_actions(&mut actions.0)?;
-        // XNU first clones fileglob references, then closes unmentioned FDs at
-        // exec. Coordinate that transient interval with native HDF5 close/open.
+        #[cfg(all(target_os = "linux", target_env = "gnu"))]
+        // GNU libc >=2.34 closes the child's descriptors after stdout is duplicated.
+        // Keep this after the test gate so the regression observes the inherited
+        // descriptors during spawn, before the close-from action has run.
+        native_result(libc::posix_spawn_file_actions_addclosefrom_np(
+            &mut actions.0,
+            3,
+        ))?;
+        // Native spawn temporarily retains the parent's open file descriptions.
+        // Coordinate that interval with HDF5 close/open, even when exec closes FDs.
         // Release this existing recursive HDF5 mutex before pipe draining/waiting.
         native_result(hdf5_metno::sync::sync(|| {
             libc::posix_spawnp(

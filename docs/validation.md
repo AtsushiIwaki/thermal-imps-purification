@@ -32,8 +32,8 @@ That cold-environment run passed routine verification (31 binaries; 409 passed, 
 16 ignored; zero warning categories), documentation tests (zero selected, zero failed), 49 Python
 tests, and real/complex smoke cases with two finite records each through beta .2. A separate local
 execution of the workflow's verification block also passed. These are macOS 26.6.2 arm64 local
-results: **Linux, GitHub-hosted Linux and GitHub-hosted macOS are unverified**. The CI matrix is
-prepared, but no remote or GitHub Actions run exists.
+results. At that extraction checkpoint, Linux and GitHub-hosted execution were unverified;
+the CI matrix was prepared but no remote or GitHub Actions run existed.
 
 Finalization changed only smoke-path serialization, its regression test, and public documentation.
 The final Python suite passed 50 tests; both focused README Rust tests passed; ordinary and
@@ -42,6 +42,18 @@ cases through beta .2. The smoke regression checks config output paths and argum
 invocation; real solver runs check the production TOML/JSON parsers. No numerical kernels,
 measurement drivers, library/config contracts, or dependency resolutions changed, so the accepted
 routine, compatibility and scientific results above were retained without repeating their grids.
+
+## Subsequent platform verification — 2026-09-08
+
+The [first hosted run](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/34218807282)
+at `641bd45cc4b7bc1b954de940b5b3553020696f66` passed on macOS and failed on Ubuntu during
+complex HDF5 checkpoint creation. A bounded GNU/Linux process-launch repair passes local
+descriptor-lifetime, spawn-window, caller and beta-zero checkpoint regressions. The local full
+routine run still fails `twisted_xx_matches_untwisted_report_and_exact_heat`: the same imaginary
+residual occurs on an independent clean checkout of the original commit. No numerical tolerance
+was changed, and this does not establish full Linux suite success or new numerical qualification.
+The [dated investigation](investigations/2026-09-08-linux-hdf5-spawn.md) records exact checks,
+environment, Windows smoke coverage and the remaining hosted-verification boundary.
 
 ## Reproducibility
 
