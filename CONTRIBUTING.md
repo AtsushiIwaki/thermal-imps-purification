@@ -4,6 +4,10 @@ Use the [README](README.md) for setup and runnable examples. Before changing num
 the authoritative [numerical conventions](docs/numerical-conventions.md),
 [validation record and commands](docs/validation.md), and [known limitations](docs/limitations.md).
 Repository-specific engineering rules are in [AGENTS.md](AGENTS.md).
+Contributions to project-authored code, documentation, test harnesses, and knowledge material are
+accepted under the repository's [MIT License](LICENSE). Preserve applicable upstream notices and
+license texts described in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), and keep scientific
+references current in [docs/references.md](docs/references.md) when dependency or method use changes.
 The current standalone position and unresolved constraints are in [STATE.md](STATE.md); use the
 [knowledge index](knowledge/index.md) to find focused background for the part of the system being
 changed.

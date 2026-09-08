@@ -16,8 +16,9 @@ metadata decoding. `hdf5-metno` uses its static feature and builds the vendored 
 Reproduction starts from this repository and its lockfile with Rust 1.96.1, a C toolchain, and
 CMake 3.26 or newer. No sibling source checkout, `refs/` tree, local dependency patch, or symlink
 is required. See the README for locked build and executable smoke commands. Repository hosting,
-licensing, release tags, and registry publication are separate decisions and are not asserted by
-this document.
+release tags, and registry publication remain separate actions. Project-authored material uses
+the repository [MIT License](../LICENSE); copied upstream material retains the terms in the
+[third-party notices](../THIRD_PARTY_NOTICES.md). See [references](references.md) for sources.
 
 ## Extraction inventory and scope
 
@@ -32,8 +33,9 @@ The retained scope is two-site thermal purification/iTEBD, its real and complex 
 checkpoint/restart and reduced-density-matrix APIs, solver, examples, and validation. Uniform
 TDVP and one-site uMPS persistence APIs, executables, and dedicated tests were excluded. Shared
 iTEBD helpers have neutral module names. Private project memory, research history, local caches,
-and source execution records were not copied. Original source attribution is preserved; no
-license grant, copyright owner, repository remote, release, or publication is invented.
+and source execution records were not copied. Original source attribution is preserved. The
+historical extraction record did not itself create a license grant, copyright owner, repository
+remote, release, or publication; the current MIT grant is documented separately above.
 
 ## Later curated guidance
 
@@ -42,7 +44,8 @@ adaptations of project-maintenance material from the same source project. They w
 refer only to files, tests, and evidence available in this standalone checkout. This later
 documentation addition does not alter the original extraction manifest or imply that private
 memory and execution records were part of the extraction. The adaptation preserves source
-attribution while making no new license grant or publication claim.
+attribution. This guidance is included in the MIT grant for project-authored material and makes no
+release or publication claim.
 
 The [validation record](validation.md) distinguishes extraction compatibility, scientific
 qualification, and an independent cold-cache local macOS build. The prepared CI workflow has

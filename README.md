@@ -47,9 +47,10 @@ python3 scripts/smoke.py target/release/solve results/smoke-001
 Use a new directory such as `results/smoke-002` for every repeat. The smoke cases are short
 interface checks, not convergence measurements.
 
-Numerical conventions, qualified limits, and extraction/dependency provenance are documented in
+Numerical conventions, qualified limits, extraction/dependency provenance, and upstream references are documented in
 [`docs/numerical-conventions.md`](docs/numerical-conventions.md),
-[`docs/limitations.md`](docs/limitations.md), and [`docs/provenance.md`](docs/provenance.md).
+[`docs/limitations.md`](docs/limitations.md), [`docs/provenance.md`](docs/provenance.md), and
+[`docs/references.md`](docs/references.md).
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository development workflow and the
 [knowledge index](knowledge/index.md) for focused explanations of numerical, persistence, process,
 and verification contracts.
@@ -601,3 +602,13 @@ commands in [Retained coverage and additional commands](docs/validation.md#retai
 Run python3 scripts/verify.py routine for ordinary full verification. It runs
 cargo test --all-targets and does not reduce verification scope. Run cargo test --doc
 and ignored release benchmarks separately. Unknown project warnings fail verification.
+
+## License and third-party material
+
+Project-authored code, documentation, test harnesses, and knowledge material are licensed under
+the [MIT License](LICENSE), copyright 2026 Atsushi Iwaki. Copied upstream material remains under
+its upstream terms; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [`licenses/`](licenses/).
+These notices cover this source checkout, not a legal audit of a separately assembled binary.
+
+Upstream software and method references are collected in [`docs/references.md`](docs/references.md).
+No scholarly citation of this repository is requested. MIT notice obligations still apply.
