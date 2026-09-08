@@ -63,8 +63,8 @@ second-order Strang evolution; set it to `1` for historical first-order runs.
 | `heisenberg` | none | spin-1 Heisenberg preset | no |
 | `matrix` | matrices, observable | custom Hermitian model | no |
 
-`include_exact = true` is accepted only for TFIM and XY. The precise AKLT normalization
-relation is in [numerical conventions](numerical-conventions.md).
+`include_exact = true` is accepted only for TFIM and XY. The precise relation is in the
+[AKLT normalization guide](../knowledge/topics/aklt-normalization.md).
 
 ## Matrix models
 

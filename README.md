@@ -76,7 +76,7 @@ path = "results/quickstart.json"
 include_exact = true
 ```
 
-Each step advances \(\beta\) by `2 * dtau`. Second-order Strang evolution is the default.
+Each step advances `beta` by `2 * dtau`. Second-order Strang evolution is the default.
 `epsilon` controls relative discarded weight, `max_bond` caps the bond dimension, and
 `record_every_beta` sets the observation interval.
 
@@ -99,13 +99,14 @@ Supported nearest-neighbor model types include:
 
 Set `include_exact = false` for every model except `tfim` and `xy`.
 
-The AKLT normalization relation is documented in
-[numerical conventions](docs/numerical-conventions.md). Do not interchange their configurations
+The AKLT normalization relation is documented in the
+[AKLT normalization guide](knowledge/topics/aklt-normalization.md). Do not interchange their configurations
 or checkpoints by renaming the model tag.
 
 Result JSON contains run metadata and records with `beta`, energy density `u`, specific heat
 `c`, free-energy density `f`, the configured local observable in the compatibility field
-`magnetization`, the reached `max_bond`, and optional `exact` values.
+`magnetization`, the largest bond dimension reached in that step as `max_bond`, and optional
+`exact` values.
 
 See [CLI usage](docs/usage.md) for model schemas, matrix input, smoke runs, outputs, checkpoints,
 restarts, and figure reproduction. See the [library API guide](docs/library-api.md) for direct
