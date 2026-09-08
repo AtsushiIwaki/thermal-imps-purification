@@ -8,6 +8,8 @@ tools, and a prepared macOS/Linux CI configuration. Its development guidance and
 knowledge pages are self-contained within this checkout. The authoritative numerical contracts,
 measured evidence, and qualified limits remain in the linked public documents.
 MIT is applied to project-authored material; copied upstream material retains its own terms.
+The README is a short finite-temperature quickstart; advanced CLI and library details live in
+the linked usage and API guides.
 
 ## Unresolved constraints
 
@@ -34,6 +36,8 @@ remote, and observe the hosted macOS/Linux workflow before claiming that platfor
 ## Relevant links
 
 - [README](README.md) — build, usage, model, output, and verification entry points.
+- [Usage guide](docs/usage.md) — configuration, matrix input, output and restart details.
+- [Library APIs](docs/library-api.md) — evolution, specific heat, checkpoints and RDM contracts.
 - [Contributing](CONTRIBUTING.md) — scoped development and review procedure.
 - [Development workflow](docs/development-workflow.md) — handoff, checks, evidence, and cleanup.
 - [Knowledge index](knowledge/index.md) — focused numerical and engineering background.

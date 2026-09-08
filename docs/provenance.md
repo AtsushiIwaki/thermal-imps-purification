@@ -51,3 +51,12 @@ The [validation record](validation.md) distinguishes extraction compatibility, s
 qualification, and an independent cold-cache local macOS build. The prepared CI workflow has
 not run on GitHub, and Linux execution has not been verified. This is a verified local candidate,
 not a claim of a completed public release.
+
+## Reader-focused documentation
+
+The README presents the finite-temperature quickstart and credits the tensor4all/tenferro
+implementation stack near the beginning. Detailed configuration, output and restart instructions
+are in the [usage guide](usage.md); Rust evolution, specific-heat, checkpoint and RDM contracts
+are in the [library guide](library-api.md). Existing documentation-contract tests follow those
+guides and CONTRIBUTING. This reorganization preserves the numerical implementation, input
+schemas, dependency pins, license terms and historical extraction/validation records.

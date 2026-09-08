@@ -33,10 +33,11 @@ CARGO_INCREMENTAL=0 python3 scripts/verify.py routine
 CARGO_INCREMENTAL=0 cargo test --doc
 ```
 
-The wrapper retains the full `cargo test --all-targets` scope and fails on unknown project
-warnings. Select focused tests for the interface being changed and confirm that filters select a
-nonzero number of tests. Scientific and ignored release checks are separate; run only the exact
-drivers identified in [validation](docs/validation.md), with fresh output paths where required.
+The wrapper retains the full `cargo test --all-targets` scope; its compact output
+does not reduce verification scope, and it fails on unknown project warnings. Select focused tests
+for the interface being changed and confirm that filters select a nonzero number of tests.
+Scientific checks and ignored release benchmarks are separate; run only the exact drivers
+identified in [validation](docs/validation.md), with fresh output paths where required.
 
 Before committing, inspect all four Git views described in the workflow, review newly created
 files directly, run `git diff --check`, and stage explicit paths only. Report what each check

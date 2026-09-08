@@ -707,10 +707,10 @@ fn automatic_real_specific_heat_rejects_gamma_index_dimension_mismatch() {
 }
 
 #[test]
-fn readme_documents_fallible_specific_heat_api() {
+fn library_api_documents_fallible_specific_heat_api() {
     // Mutation caught: removing the public scalar, options/report, or typed-tail-error guidance
     // leaves users without the documented fallible API contract.
-    let readme = include_str!("../README.md");
+    let library_api = include_str!("../docs/library-api.md");
     for required in [
         "specific_heat(&state, &hamiltonian, beta)?",
         "SpecificHeatOptions",
@@ -718,6 +718,9 @@ fn readme_documents_fallible_specific_heat_api() {
         "SpecificHeatTailNonConvergence",
         "reconstruct `raw_energy_variance_per_site`",
     ] {
-        assert!(readme.contains(required), "README missing {required}");
+        assert!(
+            library_api.contains(required),
+            "library API documentation missing {required}"
+        );
     }
 }

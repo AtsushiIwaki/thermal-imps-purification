@@ -2099,8 +2099,8 @@ fn documented_configs_resolve_expected_trotter_order() {
 }
 
 #[test]
-fn readme_complex_example_compiles_and_steps() {
-    let readme = include_str!("../README.md");
+fn library_api_complex_example_compiles_and_steps() {
+    let library_api = include_str!("../docs/library-api.md");
     for required_fragment in [
         "ItebdHamiltonian::try_from_complex",
         "ItebdState::infinite_temperature",
@@ -2113,8 +2113,8 @@ fn readme_complex_example_compiles_and_steps() {
         "max_bond: Some(64)",
     ] {
         assert!(
-            readme.contains(required_fragment),
-            "README complex example is missing {required_fragment}"
+            library_api.contains(required_fragment),
+            "library API complex example is missing {required_fragment}"
         );
     }
 

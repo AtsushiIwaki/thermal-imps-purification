@@ -675,16 +675,18 @@ class RoutineCliTests(unittest.TestCase):
         self.assertIn("VERIFY unsupported: ERROR:", completed.stdout)
 
 
-class ReadmeGuidanceTests(unittest.TestCase):
-    def test_readme_routes_routine_verification_without_narrowing_scope(self):
-        readme = (SCRIPT.parents[1] / "README.md").read_text(encoding="utf-8")
+class ContributingGuidanceTests(unittest.TestCase):
+    def test_contributing_routes_routine_verification_without_narrowing_scope(self):
+        contributing = (SCRIPT.parents[1] / "CONTRIBUTING.md").read_text(
+            encoding="utf-8"
+        )
         for required in [
             "python3 scripts/verify.py routine",
             "cargo test --doc",
             "ignored release benchmarks",
             "does not reduce verification scope",
         ]:
-            self.assertIn(required, readme)
+            self.assertIn(required, contributing)
 
 
 class _NoopContext:
