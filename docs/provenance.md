@@ -25,7 +25,8 @@ this document.
 at the extraction commit, final destination paths and SHA-256 values, transformation reasons,
 new files, and excluded source rows. It deliberately does not hash itself; its fingerprint is
 retained in the private extraction delivery inventory. Hashes describe file bytes, independently
-of subsequent documentation-only Git commits.
+of subsequent documentation-only Git commits. The manifest is the historical extraction snapshot,
+not a continuously updated checksum catalog for later repository changes.
 
 The retained scope is two-site thermal purification/iTEBD, its real and complex backends,
 checkpoint/restart and reduced-density-matrix APIs, solver, examples, and validation. Uniform
@@ -33,6 +34,15 @@ TDVP and one-site uMPS persistence APIs, executables, and dedicated tests were e
 iTEBD helpers have neutral module names. Private project memory, research history, local caches,
 and source execution records were not copied. Original source attribution is preserved; no
 license grant, copyright owner, repository remote, release, or publication is invented.
+
+## Later curated guidance
+
+The development guidance, templates, and knowledge pages added after extraction are selected
+adaptations of project-maintenance material from the same source project. They were rewritten to
+refer only to files, tests, and evidence available in this standalone checkout. This later
+documentation addition does not alter the original extraction manifest or imply that private
+memory and execution records were part of the extraction. The adaptation preserves source
+attribution while making no new license grant or publication claim.
 
 The [validation record](validation.md) distinguishes extraction compatibility, scientific
 qualification, and an independent cold-cache local macOS build. The prepared CI workflow has

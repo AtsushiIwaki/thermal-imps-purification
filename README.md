@@ -50,6 +50,9 @@ interface checks, not convergence measurements.
 Numerical conventions, qualified limits, and extraction/dependency provenance are documented in
 [`docs/numerical-conventions.md`](docs/numerical-conventions.md),
 [`docs/limitations.md`](docs/limitations.md), and [`docs/provenance.md`](docs/provenance.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository development workflow and the
+[knowledge index](knowledge/index.md) for focused explanations of numerical, persistence, process,
+and verification contracts.
 
 ## Configuration (TOML or JSON)
 

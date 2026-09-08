@@ -2,6 +2,10 @@
 
 Use this guide from the repository root. It supports ordinary Git review and local commands; it
 does not depend on a particular model, agent framework, hosted service, or global skill.
+Before changing numerical behavior, use the authoritative
+[numerical conventions](numerical-conventions.md), [validation record](validation.md), and
+[limitations](limitations.md). The [knowledge index](../knowledge/index.md) routes to focused
+explanations without replacing those evidence owners.
 
 ## Prepare a bounded task
 
@@ -50,7 +54,7 @@ error mapping. Keep real failure coverage alongside injection.
 For tensor call sites or fixtures, run the live policy check:
 
 ```sh
-CARGO_INCREMENTAL=0 cargo test --lib contraction_boundary_audit::repository_contraction_boundary_is_ast_audited
+CARGO_INCREMENTAL=0 cargo test --lib contraction_boundary_audit::repository_contraction_boundary_is_ast_audited -- --exact
 ```
 
 This checks the repository contraction boundary, not numerical correctness. Contraction changes

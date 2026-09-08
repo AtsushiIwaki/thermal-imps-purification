@@ -4,6 +4,9 @@ Use the [README](README.md) for setup and runnable examples. Before changing num
 the authoritative [numerical conventions](docs/numerical-conventions.md),
 [validation record and commands](docs/validation.md), and [known limitations](docs/limitations.md).
 Repository-specific engineering rules are in [AGENTS.md](AGENTS.md).
+The current standalone position and unresolved constraints are in [STATE.md](STATE.md); use the
+[knowledge index](knowledge/index.md) to find focused background for the part of the system being
+changed.
 
 For substantial work, record the objective, exact path scope, captured base, pre-existing changes,
 caller contracts, early checks, completion evidence, and cleanup owner. The

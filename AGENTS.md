@@ -1,6 +1,7 @@
 # Repository guidance
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md) and use the
+For substantial work, start with [STATE.md](STATE.md), then read only the relevant topics in the
+[knowledge index](knowledge/index.md). Use [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [development workflow](docs/development-workflow.md) for task scope, verification, review, and
 cleanup. These repository documents are self-contained; the `docs/superpowers/` directory is an
 organizational convention and does not require an external skill installation.
