@@ -1,3 +1,6 @@
+use nalgebra::DMatrix;
+use num_complex::Complex64;
+use std::f64::consts::PI;
 use thermal_imps_purification::canonicalize::canonicalize;
 use thermal_imps_purification::exact::{exact_specific_heat, xy_specific_heat};
 use thermal_imps_purification::itebd::imaginary_time_step_second_order;
@@ -17,9 +20,6 @@ use thermal_imps_purification::tensor::{new_index, Tensor, Truncation};
 use thermal_imps_purification::variance::{
     energy_variance_per_site, specific_heat, specific_heat_with_options,
 };
-use nalgebra::DMatrix;
-use num_complex::Complex64;
-use std::f64::consts::PI;
 
 const ROUTINE_TFIM_TROTTER_HEAT_TOLERANCE: f64 = 5e-5;
 const ROUTINE_TWISTED_XX_TROTTER_HEAT_TOLERANCE: f64 = 5e-5;
@@ -459,6 +459,32 @@ fn limiting_beta_zero_has_finite_variance_and_exactly_zero_heat() {
         energy_variance_per_site(&state, &hamiltonian).unwrap(),
         report.energy_variance_per_site
     );
+}
+
+#[test]
+fn twisted_xx_heat_preserves_reality_with_smaller_steps() {
+    let hamiltonian = twisted_xx(PI / 5.0);
+    let state = evolve_complex_second_order(
+        &hamiltonian,
+        0.6,
+        0.025,
+        &Truncation {
+            epsilon: 1e-12,
+            max_bond: Some(32),
+        },
+    );
+    let report = specific_heat_complex_with_options(
+        &state,
+        &hamiltonian,
+        0.6,
+        &SpecificHeatOptions::default(),
+    )
+    .unwrap();
+    let exact = xy_specific_heat(0.0, 0.4, 0.6, 16_000);
+    assert!(
+        (report.specific_heat_per_site - exact).abs() <= ROUTINE_TWISTED_XX_TROTTER_HEAT_TOLERANCE
+    );
+    assert!(report.max_imaginary_residual <= SpecificHeatOptions::default().reality_tolerance);
 }
 
 #[test]

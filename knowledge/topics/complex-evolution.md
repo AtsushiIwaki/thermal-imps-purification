@@ -28,9 +28,17 @@ uses consistently rotated Hamiltonian and observable matrices and compares direc
 TOML/JSON CLI paths. Consult its finite grid and reference-resolution diagnostics for measured
 claims. Unitary equivalence in these controls does not qualify a general complex Hamiltonian.
 
-The [limitations](../../docs/limitations.md) retain the excluded finest TFIM energy window,
-phase-twisted-XX heat reality failures and absence of off-canonical qualification. They also
-record the beta=.2 real/phase free-energy difference despite much closer agreement of other
-observables. Its normalization cause remains unresolved; these pages neither relax tolerances
-nor diagnose it. For basis, beta advancement and new-input versus legacy-order defaults, use
-[numerical conventions](../../docs/numerical-conventions.md).
+Canonical PSD factors now use the pinned tensor4all Hermitian eigensolver in both backends;
+the complex gauge SVD uses its full-rank factorization. The
+[decomposition investigation](../../docs/investigations/2026-09-08-complex-heat-reality.md)
+records direct reconstruction failures in the former routines and the resulting XX reality
+repair. Full U, including null singular columns, is retained for the unweighted canonical Gram
+normalization; exactly zero V^H rows instead become incoming zero-Schmidt Gamma rows. A direct
+product-state regression checks that this does not change physical norm or log normalization.
+
+The [limitations](../../docs/limitations.md) retain the historical excluded finest TFIM energy
+window, the newly measured finest heat windows with insufficient refinement order, and absence
+of off-canonical qualification. The repaired heat grid has 28 valid rows and two selected
+refinement windows. The earlier beta=.2 real/phase free-energy difference remains separately
+recorded; this repair does not establish its cause. For basis, beta advancement and new-input
+versus legacy-order defaults, use [numerical conventions](../../docs/numerical-conventions.md).

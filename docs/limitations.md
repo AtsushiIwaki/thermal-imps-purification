@@ -16,9 +16,16 @@ does not establish cap convergence or approach to the ground state. Its `beta=0.
 supports only the high-temperature limit.
 
 The complex-Hermitian evidence is for stated phase-rotated TFIM and phase-twisted XX controls.
-The finest TFIM energy refinement window was excluded because its observed order fell to about
-`0.829`. Some phase-twisted-XX fine-grid heat rows failed the fixed reality invariant. These
-results do not support relaxing tolerances, arbitrary-model convergence, or off-canonical input.
+The earlier finest TFIM energy refinement window was excluded because its observed order fell
+to about `0.829`; that energy qualification has not been rerun for the canonical decomposition
+repair. The [2026-09-08 heat investigation](investigations/2026-09-08-complex-heat-reality.md)
+resolves the reproduced XX reality failures: all 28 rows in the fixed heat driver return valid
+reports after the repair. Its selected `.1 -> .05` heat windows pass the existing criteria,
+but the `.025 -> .0125` windows remain rejected (orders about `1.511` for TFIM and `.756`
+for XX, below `1.6`). The grid is limited to beta1 TFIM and beta.6 XX with infinite-temperature
+initial states, canonicalization every step, and the stated cutoff/cap/tail controls. It does
+not establish arbitrary-model, low-temperature or off-canonical convergence, or sensitivity
+to other initial states. No tolerance was relaxed.
 
 Interval RDMs are approximate fixed-point reconstructions. Degenerate dominant transfer sectors
 can make identity-seeded boundaries sector-dependent even when residual checks pass. Resource

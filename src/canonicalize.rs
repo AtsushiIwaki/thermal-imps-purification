@@ -1,7 +1,7 @@
 use crate::purified_mps::{PurifiedMps, Site};
 use crate::transfer::{dominant_fixed_point_left, dominant_fixed_point_right};
 use crate::tensor::{Idx, Tensor, new_index, from_fn, contract, dim};
-use nalgebra::{DMatrix, SymmetricEigen};
+use nalgebra::DMatrix;
 
 /// χ×χ Tensor(row,col) を nalgebra DMatrix へ（どちらも col-major: (a,b) at a + b*n）。
 fn to_dmatrix(t: &Tensor, n: usize) -> DMatrix<f64> {
@@ -11,8 +11,11 @@ fn to_dmatrix(t: &Tensor, n: usize) -> DMatrix<f64> {
 /// 対称 PSD 行列の平方根因子。floor 以下（または負）の固有値はクランプして 0。
 /// 返り値 (F, Fi): rho ≈ F Fᵀ かつ Fi F = I（support 上）。F = U sqrt(Λ), Fi = sqrt(Λ)⁻¹ Uᵀ。
 fn psd_factor(rho: &DMatrix<f64>, floor: f64) -> (DMatrix<f64>, DMatrix<f64>) {
-    let eig = SymmetricEigen::new(rho.clone());
     let n = rho.nrows();
+    // Match the complex canonicalizer's stable decomposition for weakly coupled blocks.
+    let tensor = Tensor::from_dense(vec![new_index(n), new_index(n)], rho.as_slice().to_vec()).unwrap();
+    let eig = tensor.hermitian_eigendecomposition(1e-12).unwrap();
+    let eigenvectors = DMatrix::from_vec(n, n, eig.eigenvectors.to_vec::<f64>().unwrap());
     let mut sqrt_d = DMatrix::<f64>::zeros(n, n);
     let mut inv_sqrt_d = DMatrix::<f64>::zeros(n, n);
     for k in 0..n {
@@ -23,7 +26,7 @@ fn psd_factor(rho: &DMatrix<f64>, floor: f64) -> (DMatrix<f64>, DMatrix<f64>) {
             inv_sqrt_d[(k, k)] = 1.0 / s;
         }
     }
-    let u = &eig.eigenvectors;
+    let u = &eigenvectors;
     let f = u * &sqrt_d;
     let fi = &inv_sqrt_d * u.transpose();
     (f, fi)
@@ -185,6 +188,20 @@ mod tests {
     use crate::model::Tfim;
     use crate::tensor::{Truncation, dim};
     use approx::assert_abs_diff_eq;
+
+    #[test]
+    fn psd_factor_reconstructs_weakly_coupled_density() {
+        let mut density = DMatrix::<f64>::zeros(3, 3);
+        density[(0, 0)] = 1.0;
+        density[(1, 1)] = 1e-6;
+        density[(2, 2)] = 1e-3;
+        density[(1, 2)] = 1e-18;
+        density[(2, 1)] = 1e-18;
+        let (factor, inverse) = psd_factor(&density, 1e-12);
+        let residual = (&factor * factor.transpose() - &density).norm();
+        assert!(residual < 1e-14, "factor residual={residual:e}");
+        assert!((&inverse * &density * inverse.transpose() - DMatrix::identity(3, 3)).norm() < 1e-12);
+    }
 
     fn evolved(beta: f64) -> PurifiedMps {
         let m = Tfim { j: 1.0, g: 1.0 };

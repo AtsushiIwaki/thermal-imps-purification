@@ -47,15 +47,26 @@ routine, compatibility and scientific results above were retained without repeat
 
 The [first hosted run](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/34218807282)
 at `641bd45cc4b7bc1b954de940b5b3553020696f66` passed on macOS and failed on Ubuntu during
-complex HDF5 checkpoint creation. A bounded GNU/Linux process-launch repair passes local
-descriptor-lifetime, spawn-window, caller and beta-zero checkpoint regressions. The local full
-routine run still fails `twisted_xx_matches_untwisted_report_and_exact_heat`: the same imaginary
-residual occurs on an independent clean checkout of the original commit. No numerical tolerance
-was changed, and this does not establish full Linux suite success or new numerical qualification.
-The [dated investigation](investigations/2026-09-08-linux-hdf5-spawn.md) records exact checks,
-environment, Windows smoke coverage and the remaining hosted-verification boundary.
+complex HDF5 checkpoint creation. The bounded GNU/Linux process-launch repair passes local
+descriptor-lifetime, spawn-window, caller and beta-zero checkpoint regressions. The
+[hosted run at 45007b4](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/34230916826)
+passes that checkpoint regression and the macOS job, but Ubuntu fails
+`twisted_xx_matches_untwisted_report_and_exact_heat`, also reproduced on the original commit.
+The [HDF5 investigation](investigations/2026-09-08-linux-hdf5-spawn.md) retains its original checks
+and Windows smoke coverage.
 
-## Reproducibility
+The subsequent local numerical repair replaces inaccurate canonical PSD eigendecompositions
+and the complex gauge SVD with the already pinned tensor backend. It preserves all existing
+heat assertions, floors and dependency pins. On WSL Ubuntu, the final working source based on
+`45007b4c26bc7e13525088fa0d1a359324b8611a` passes 422 routine tests in 32 binaries, with
+zero failures, 16 ignored tests and zero warnings; documentation tests select zero tests, and
+the Linux Python harness passes 54. Direct matrix reconstruction, zero-Schmidt normalization
+and smaller-step XX regressions are included. See the
+[numerical investigation](investigations/2026-09-08-complex-heat-reality.md) for causal evidence,
+source fingerprints and current-source scientific measurements. These are local Linux results;
+hosted CI and macOS execution of this numerical repair remain outstanding.
+
+## Reproducibility of the 2026-09-07 qualification
 
 The tested code was extracted from `55ed6ee4c1940dbfd2be13374ce3caf45169f515`. All three
 measurement drivers and their four support files were compared byte-for-byte with that source
@@ -207,11 +218,13 @@ improvement, u/f/local error `<5e-3`, and heat error `<3e-2`. The AKLT high-temp
 requires `abs(beta*f+ln(3))<=.01` and `abs(Sz)<=1e-8`. Those are routine controls, not new
 low-temperature evidence. Their inclusion was inspected in source and confirmed by a fresh
 `CARGO_INCREMENTAL=0 cargo test --release --all-targets -- --list` ([list](validation/coverage-list.log));
-this list compiled all targets but did not execute those tests. The previously accepted extraction
-routine run passed 409 tests with 16 ignored and zero warnings; it was not redundantly rerun here.
+this list compiled all targets but did not execute those tests. The extraction routine run passed
+409 tests with 16 ignored and zero warnings; the later local Linux numerical-repair run is
+recorded separately above.
 
-Other retained ignored scientific/benchmark drivers remain available below. They were **not
-rerun** here because their numerical kernels were unchanged. These commands carry their existing
+Other retained ignored scientific/benchmark drivers remain available below. The complex
+specific-heat driver has subsequent repair evidence in the linked investigation; the other
+drivers were **not rerun** for that repair. These commands carry their existing
 assertions and known limitations; listing them does not claim every broader numerical window
 passes. Timing outputs remain informational.
 

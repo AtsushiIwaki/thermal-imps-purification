@@ -3,10 +3,10 @@ use super::{
     close_env, dominant_fixed_point_left, dominant_fixed_point_right, identity_env, transfer_step,
     transfer_step_right, ComplexPurifiedMps, ComplexSite, Env, FixedPoint,
 };
+use crate::contraction_pairwise::pairwise;
 use crate::itebd_error::ItebdError;
 use crate::tensor::{new_index, Idx, Tensor};
-use crate::contraction_pairwise::pairwise;
-use nalgebra::{DMatrix, DVector, SymmetricEigen};
+use nalgebra::{DMatrix, DVector};
 use num_complex::Complex64;
 
 const CANONICALIZE_STAGE: &str = "complex_canonicalize";
@@ -136,8 +136,25 @@ fn positive_factors(
         });
     }
 
-    let eigen = SymmetricEigen::new(density.clone());
     let dimension = density.nrows();
+    // Use the pinned tensor backend: weakly coupled, differently scaled blocks can give
+    // inaccurate eigenvectors in the previous dense solver even for positive Hermitian input.
+    let tensor = Tensor::from_dense(
+        vec![new_index(dimension), new_index(dimension)],
+        density.as_slice().to_vec(),
+    )
+    .map_err(tensor_error)?;
+    let eigen = tensor
+        .hermitian_eigendecomposition(tolerance)
+        .map_err(tensor_error)?;
+    let eigenvectors = DMatrix::from_vec(
+        dimension,
+        dimension,
+        eigen
+            .eigenvectors
+            .to_vec::<Complex64>()
+            .map_err(tensor_error)?,
+    );
     let mut square_root = DMatrix::<Complex64>::zeros(dimension, dimension);
     let mut inverse_square_root = DMatrix::<Complex64>::zeros(dimension, dimension);
     for (index, eigenvalue) in eigen.eigenvalues.iter().copied().enumerate() {
@@ -153,8 +170,8 @@ fn positive_factors(
             inverse_square_root[(index, index)] = Complex64::new(root.recip(), 0.0);
         }
     }
-    let factor = &eigen.eigenvectors * square_root;
-    let inverse = inverse_square_root * eigen.eigenvectors.adjoint();
+    let factor = &eigenvectors * square_root;
+    let inverse = inverse_square_root * eigenvectors.adjoint();
     Ok((factor, inverse))
 }
 
@@ -166,6 +183,47 @@ fn normalized_singular_values(values: &DVector<f64>) -> Result<(Vec<f64>, f64), 
         });
     }
     Ok((values.iter().map(|value| value / norm).collect(), norm))
+}
+
+fn gauge_svd(
+    matrix: &DMatrix<Complex64>,
+) -> Result<(DMatrix<Complex64>, DVector<f64>, DMatrix<Complex64>), ItebdError> {
+    use tensor4all_core::{factorize_full_rank, Canonical, FactorizeAlg};
+    let dimension = matrix.nrows();
+    let row = new_index(dimension);
+    let column = new_index(dimension);
+    let tensor = Tensor::from_dense(vec![row.clone(), column], matrix.as_slice().to_vec())
+        .map_err(tensor_error)?;
+    // Canonicalization is an exact gauge rewrite. Do not apply the global SVD cutoff,
+    // discard tiny singular values, or change the number of zero-support slots.
+    let factors = factorize_full_rank(&tensor, &[row], FactorizeAlg::SVD, Canonical::Left)
+        .map_err(tensor_error)?;
+    let values = factors
+        .singular_values
+        .ok_or_else(|| tensor_error("canonical gauge SVD did not return singular values"))?;
+    let u = DMatrix::from_vec(
+        dimension,
+        dimension,
+        factors.left.to_vec::<Complex64>().map_err(tensor_error)?,
+    );
+    let mut v_adjoint = DMatrix::from_vec(
+        dimension,
+        dimension,
+        factors.right.to_vec::<Complex64>().map_err(tensor_error)?,
+    );
+    // The factors are U and S*V^H. Retain all U columns: even a zero-Schmidt outgoing
+    // slot participates in site_gram_scalar. A zero V^H row is safe, because that row
+    // becomes an incoming Gamma leg weighted by its zero Schmidt value.
+    for (row, &singular) in values.iter().enumerate() {
+        for column in 0..dimension {
+            v_adjoint[(row, column)] = if singular > 0.0 {
+                v_adjoint[(row, column)] / singular
+            } else {
+                Complex64::new(0.0, 0.0)
+            };
+        }
+    }
+    Ok((u, DVector::from_vec(values), v_adjoint))
 }
 
 fn bond_gauge(
@@ -190,14 +248,8 @@ fn bond_gauge(
             .copied()
             .map(|value| Complex64::new(value, 0.0)),
     ));
-    let singular = (&y * &x).svd(true, true);
-    let u = singular
-        .u
-        .ok_or_else(|| tensor_error("canonical gauge SVD did not return U"))?;
-    let v_adjoint = singular
-        .v_t
-        .ok_or_else(|| tensor_error("canonical gauge SVD did not return V adjoint"))?;
-    let (new_lambda, schmidt_norm) = normalized_singular_values(&singular.singular_values)?;
+    let (u, singular_values, v_adjoint) = gauge_svd(&(&y * &x))?;
+    let (new_lambda, schmidt_norm) = normalized_singular_values(&singular_values)?;
     let left_gauge = y_inverse * u;
     let right_gauge = v_adjoint * x_inverse * lambda_matrix;
     Ok((new_lambda, right_gauge, left_gauge, schmidt_norm))
@@ -445,8 +497,158 @@ mod tests {
     use super::{positive_factors, to_dmatrix, CANONICALIZE_STAGE};
     use crate::itebd_error::ItebdError;
     use crate::tensor::{new_index, Tensor};
-    use nalgebra::DMatrix;
+    use nalgebra::{DMatrix, DVector};
     use num_complex::Complex64;
+
+    #[test]
+    fn zero_schmidt_support_does_not_introduce_a_normalization_change() {
+        // The inactive outgoing B column has unit Gram norm but zero physical weight.
+        // Dropping its U vector would spuriously change the canonical log normalization.
+        use super::{canonicalize_complex, reference_cell_norm, ComplexPurifiedMps, ComplexSite};
+        let ba = new_index(2);
+        let ab = new_index(1);
+        let a_phys = new_index(2);
+        let b_phys = new_index(2);
+        let a_anc = new_index(2);
+        let b_anc = new_index(2);
+        let mut a_data = vec![Complex64::new(0.0, 0.0); 8];
+        a_data[0] = Complex64::new(1.0, 0.0);
+        let mut b_data = vec![Complex64::new(0.0, 0.0); 8];
+        b_data[0] = Complex64::new(1.0, 0.0);
+        b_data[5] = Complex64::new(1.0, 0.0);
+        let mut state = ComplexPurifiedMps {
+            a: ComplexSite {
+                gamma: Tensor::from_dense(
+                    vec![ba.clone(), a_phys.clone(), a_anc.clone(), ab.clone()],
+                    a_data,
+                )
+                .unwrap(),
+                left: ba.clone(),
+                phys: a_phys,
+                anc: a_anc,
+                right: ab.clone(),
+            },
+            b: ComplexSite {
+                gamma: Tensor::from_dense(
+                    vec![ab.clone(), b_phys.clone(), b_anc.clone(), ba.clone()],
+                    b_data,
+                )
+                .unwrap(),
+                left: ab.clone(),
+                phys: b_phys,
+                anc: b_anc,
+                right: ba.clone(),
+            },
+            lambda_ab: vec![1.0],
+            lambda_ba: vec![1.0, 0.0],
+            lambda_bond_ab: ab,
+            lambda_bond_ba: ba,
+        };
+        assert_eq!(reference_cell_norm(&state, 1e-12).unwrap(), 1.0);
+        let log_norm = canonicalize_complex(&mut state, 1e-12).unwrap();
+        assert!(
+            log_norm.abs() < 1e-12,
+            "spurious zero-support normalization: {log_norm}"
+        );
+        assert!((reference_cell_norm(&state, 1e-12).unwrap() - 1.0).abs() < 1e-12);
+        assert_eq!(state.lambda_ab.len(), 1);
+        assert_eq!(state.lambda_ba.len(), 2);
+        let a = state.a.gamma.to_vec::<Complex64>().unwrap();
+        let b = state.b.gamma.to_vec::<Complex64>().unwrap();
+        let mut periodic_norm = 0.0;
+        let mut both_phys_zero = 0.0;
+        for physical_a in 0..2 {
+            for physical_b in 0..2 {
+                for ancilla_a in 0..2 {
+                    for ancilla_b in 0..2 {
+                        let amplitude: Complex64 = (0..2)
+                            .map(|bond| {
+                                state.lambda_ba[bond]
+                                    * a[bond + 2 * (physical_a + 2 * ancilla_a)]
+                                    * state.lambda_ab[0]
+                                    * b[physical_b + 2 * ancilla_b + 4 * bond]
+                            })
+                            .sum();
+                        periodic_norm += amplitude.norm_sqr();
+                        if physical_a == 0 && physical_b == 0 {
+                            both_phys_zero += amplitude.norm_sqr();
+                        }
+                    }
+                }
+            }
+        }
+        assert!((periodic_norm - 1.0).abs() < 1e-12);
+        assert!((both_phys_zero - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn positive_factors_preserve_nonreal_hermitian_density() {
+        let q = DMatrix::from_fn(3, 3, |row, column| {
+            Complex64::from_polar(
+                1.0 / 3.0_f64.sqrt(),
+                2.0 * std::f64::consts::PI * (row * column) as f64 / 3.0,
+            )
+        });
+        let spectrum = DVector::from_vec(vec![1.0.into(), 0.03.into(), 0.002.into()]);
+        let density = &q * DMatrix::from_diagonal(&spectrum) * q.adjoint();
+        assert!(density.iter().any(|value| value.im.abs() > 1e-3));
+        let (factor, inverse) = positive_factors("nonreal test density", &density, 1e-12).unwrap();
+        assert!((&factor * factor.adjoint() - &density).norm() < 1e-14);
+        assert!((&inverse * density * inverse.adjoint() - DMatrix::identity(3, 3)).norm() < 1e-12);
+    }
+
+    #[test]
+    fn gauge_svd_retains_tiny_values_and_zero_support_slots() {
+        let matrix = DMatrix::from_diagonal(&DVector::from_vec(vec![
+            Complex64::new(1.0, 0.0),
+            Complex64::new(0.0, 1e-16),
+            Complex64::new(0.0, 0.0),
+        ]));
+        let (u, s, vh) = super::gauge_svd(&matrix).unwrap();
+        assert_eq!(s.len(), 3);
+        assert!((s[1] - 1e-16).abs() < 1e-30);
+        assert_eq!(s[2], 0.0);
+        let diagonal = DMatrix::from_diagonal(&s.map(|s| Complex64::new(s, 0.0)));
+        assert!((&matrix - u * diagonal * vh).norm() < 1e-30);
+    }
+
+    #[test]
+    fn gauge_svd_reconstructs_captured_twisted_xx_matrix() {
+        let values: Vec<[f64; 2]> =
+            serde_json::from_str(include_str!("../../tests/fixtures/canonical-svd-xx.json"))
+                .unwrap();
+        let matrix = DMatrix::from_iterator(
+            10,
+            10,
+            values.into_iter().map(|[re, im]| Complex64::new(re, im)),
+        );
+        let (u, s, vh) = super::gauge_svd(&matrix).unwrap();
+        let diagonal = DMatrix::from_diagonal(&s.map(|s| Complex64::new(s, 0.0)));
+        let residual = (&matrix - &u * diagonal * &vh).norm();
+        assert!(residual < 1e-14, "SVD reconstruction residual={residual:e}");
+        assert!((u.adjoint() * &u - DMatrix::identity(10, 10)).norm() < 1e-12);
+        assert!((&vh * vh.adjoint() - DMatrix::identity(10, 10)).norm() < 1e-12);
+    }
+
+    #[test]
+    fn positive_factors_reconstruct_weakly_coupled_density() {
+        for imaginary in [0.0, 1e-18] {
+            let mut density = DMatrix::<Complex64>::zeros(3, 3);
+            density[(0, 0)] = 1.0.into();
+            density[(1, 1)] = 1e-6.into();
+            density[(2, 2)] = 1e-3.into();
+            density[(1, 2)] = Complex64::new(1e-18, imaginary);
+            density[(2, 1)] = density[(1, 2)].conj();
+            let (factor, inverse) = positive_factors("test density", &density, 1e-12).unwrap();
+            let residual = (&factor * factor.adjoint() - &density).norm();
+            assert!(
+                residual < 1e-14,
+                "imaginary={imaginary} factor residual={residual:e}"
+            );
+            let identity = &inverse * &density * inverse.adjoint();
+            assert!((identity - DMatrix::identity(3, 3)).norm() < 1e-12);
+        }
+    }
 
     #[test]
     fn fixed_point_conversion_rejects_zero_data() {

@@ -15,11 +15,13 @@ the linked usage and API guides.
 
 ## Unresolved constraints
 
-- The first hosted CI run passed on macOS and failed on Ubuntu during HDF5 checkpoint creation.
-  The GNU/Linux process-launch repair passes focused local regressions, but a repaired hosted
-  run is outstanding. Local full-suite verification also exposes a separate phase-twisted XX
-  specific-heat failure, reproduced unchanged on the original commit. See the
-  [investigation](docs/investigations/2026-09-08-linux-hdf5-spawn.md) for evidence and scope.
+- The published GNU/Linux HDF5 launch repair passes the beta-zero checkpoint test in
+  [hosted CI](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/34230916826).
+  That run passes on macOS but fails on Ubuntu at the separate phase-twisted XX heat test.
+  The local canonical eigendecomposition/SVD repair passes the full Linux routine suite
+  (422 tests) and the fixed specific-heat driver (28 valid rows with qualified refinement
+  windows); it has not been published or tested in hosted CI. See the
+  [numerical investigation](docs/investigations/2026-09-08-complex-heat-reality.md).
 - Release tags and registry publication remain undecided.
 - AKLT validation covers a measured finite temperature window with active bond caps; it does not
   establish low-temperature or bond-dimension convergence. The validation and limitations pages
@@ -37,10 +39,9 @@ the linked usage and API guides.
 
 ## Next action
 
-Publish the reviewed GNU/Linux HDF5 process-launch repair, then observe a new hosted
-macOS/Linux workflow. Investigate the independently reproduced phase-twisted XX specific-heat
-failure as a separate numerical task, preserving its existing assertions. Full Linux CI success
-remains outstanding.
+Publish the reviewed canonical matrix-decomposition repair and observe a new hosted
+macOS/Linux workflow. Full hosted Linux success and macOS verification of the numerical
+repair remain outstanding.
 
 ## Relevant links
 
