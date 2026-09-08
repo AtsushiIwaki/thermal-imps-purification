@@ -42,3 +42,10 @@ with first- or second-order iTEBD. The relevant primary method references are:
   Simulation of Finite-Temperature and Dissipative Systems,” *Physical Review Letters* **93**,
   207204 (2004),
   [doi:10.1103/PhysRevLett.93.207204](https://doi.org/10.1103/PhysRevLett.93.207204).
+- M. Zwolak and G. Vidal, “Mixed-state dynamics in one-dimensional quantum lattice
+  systems: A time-dependent superoperator renormalization algorithm,” *Physical Review
+  Letters* **93**, 207205 (2004),
+  [doi:10.1103/PhysRevLett.93.207205](https://doi.org/10.1103/PhysRevLett.93.207205).
+- A. E. Feiguin and S. R. White, “Finite-temperature density matrix renormalization
+  using an enlarged Hilbert space,” *Physical Review B* **72**, 220401 (2005),
+  [doi:10.1103/PhysRevB.72.220401](https://doi.org/10.1103/PhysRevB.72.220401).
