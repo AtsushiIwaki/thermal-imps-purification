@@ -89,14 +89,109 @@ where
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(try_from = "StoredRecord")]
 pub struct Record {
     pub beta: f64,
     pub u: f64,
     pub c: f64,
-    pub f: f64,
+    /// None only at beta=0; positive-temperature records contain Some(f).
+    pub f: Option<f64>,
+    /// Dimensionless free energy, including its finite beta=0 limit -ln(d).
+    pub beta_f: f64,
     pub magnetization: f64,
     pub max_bond: usize,
     pub exact: Option<ExactRefs>,
+}
+
+#[derive(Deserialize)]
+struct StoredRecord {
+    beta: f64,
+    u: f64,
+    c: f64,
+    #[serde(deserialize_with = "crate::config::deserialize_required_free_energy")]
+    f: Option<f64>,
+    #[serde(default, deserialize_with = "deserialize_beta_f")]
+    beta_f: Option<f64>,
+    magnetization: f64,
+    max_bond: usize,
+    exact: Option<ExactRefs>,
+}
+
+fn deserialize_beta_f<'de, D>(deserializer: D) -> Result<Option<f64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    f64::deserialize(deserializer).map(Some)
+}
+
+impl TryFrom<StoredRecord> for Record {
+    type Error = String;
+
+    fn try_from(value: StoredRecord) -> Result<Self, Self::Error> {
+        if !value.beta.is_finite() || value.beta < 0.0 {
+            return Err("record beta must be finite and nonnegative".into());
+        }
+        if (value.beta == 0.0) != value.f.is_none() {
+            return Err("record f must be null exactly at beta=0".into());
+        }
+        if let Some(exact) = &value.exact {
+            if (value.beta == 0.0) != exact.f.is_none() {
+                return Err("record exact.f must be null exactly at beta=0".into());
+            }
+        }
+        let beta_f = value
+            .beta_f
+            .or_else(|| value.f.map(|f| value.beta * f))
+            .ok_or("record beta_f is required at beta=0")?;
+        if !beta_f.is_finite() {
+            return Err("record beta_f must be finite".into());
+        }
+        if let Some(f) = value.f {
+            let expected = value.beta * f;
+            if !expected.is_finite()
+                || (beta_f - expected).abs() > 8.0 * f64::EPSILON * expected.abs().max(1.0)
+            {
+                return Err("record beta_f must agree with beta*f".into());
+            }
+        }
+        Ok(Self {
+            beta: value.beta,
+            u: value.u,
+            c: value.c,
+            f: value.f,
+            beta_f,
+            magnetization: value.magnetization,
+            max_bond: value.max_bond,
+            exact: value.exact,
+        })
+    }
+}
+
+/// Analytic traces of the maximally mixed physical state; no evolution or normalization.
+pub(crate) fn initial_record(
+    cfg: &RunConfig,
+    ham: &ItebdHamiltonian,
+    observable: &DMatrix<Complex64>,
+) -> Record {
+    let d = ham.dim() as f64;
+    let u = match ham {
+        ItebdHamiltonian::Real(ham) => ham.site_energy.trace() / (d * d),
+        ItebdHamiltonian::Complex(ham) => ham.site_energy().trace().re / (d * d),
+    };
+    Record {
+        beta: 0.0,
+        u,
+        c: 0.0,
+        f: None,
+        beta_f: -d.ln(),
+        magnetization: observable.trace().re / d,
+        max_bond: 1,
+        exact: if cfg.output.include_exact {
+            cfg.model.exact(0.0)
+        } else {
+            None
+        },
+    }
 }
 
 /// Run the imaginary-time sweep described by `cfg`, recording observables at the
@@ -136,6 +231,9 @@ fn run_sweep_impl(
         last_step: None,
     };
     let mut result = empty_result(cfg, hamiltonian.dim());
+    result
+        .records
+        .push(initial_record(cfg, &hamiltonian, &observable));
     drive_sweep(
         cfg,
         &hamiltonian,
@@ -229,7 +327,8 @@ pub(crate) fn drive_sweep<E: From<ItebdError>>(
                 beta,
                 u,
                 c,
-                f,
+                f: Some(f),
+                beta_f: beta * f,
                 magnetization: m,
                 max_bond: info.max_bond,
                 exact,
@@ -309,29 +408,29 @@ mod tests {
             ex.u
         );
         assert!(
-            (last.f - ex.f).abs() < 1e-3,
+            (last.f.unwrap() - ex.f.unwrap()).abs() < 1e-3,
             "f {} vs exact {}",
-            last.f,
-            ex.f
+            last.f.unwrap(),
+            ex.f.unwrap()
         );
     }
 
     #[test]
-    fn explicit_first_order_xy_sweep_records_one_exact_reference() {
+    fn explicit_first_order_xy_sweep_records_initial_and_evolved_exact_references() {
         let toml = "[model]\ntype = \"xy\"\ngamma = 0.5\nh = 0.5\n\
                     [evolution]\ndtau = 0.01\ntrotter_order = 1\nbeta_max = 0.1\nrecord_every_beta = 0.1\n\
                     [truncation]\nepsilon = 1e-12\nmax_bond = 48\n\
                     [output]\npath = \"ignored.json\"\ninclude_exact = true\n";
         let res = run_sweep(&RunConfig::from_toml_str(toml).unwrap()).unwrap();
 
-        assert_eq!(res.records.len(), 1);
+        assert_eq!(res.records.len(), 2);
         assert!(res.records[0].exact.is_some());
         assert_eq!(res.metadata.evolution.trotter_order, TrotterOrder::First);
 
         let second_order = run_sweep(&xy_cfg(0.1, true)).unwrap();
         assert_ne!(
-            res.records[0].u.to_bits(),
-            second_order.records[0].u.to_bits()
+            res.records[1].u.to_bits(),
+            second_order.records[1].u.to_bits()
         );
     }
 
@@ -351,7 +450,8 @@ mod tests {
         assert_eq!(omitted_result.records.len(), explicit_result.records.len());
         for (omitted, explicit) in omitted_result.records.iter().zip(&explicit_result.records) {
             assert_eq!(omitted.u.to_bits(), explicit.u.to_bits());
-            assert_eq!(omitted.f.to_bits(), explicit.f.to_bits());
+            assert_eq!(omitted.f.map(f64::to_bits), explicit.f.map(f64::to_bits));
+            assert_eq!(omitted.beta_f.to_bits(), explicit.beta_f.to_bits());
             assert_eq!(omitted.max_bond, explicit.max_bond);
         }
     }

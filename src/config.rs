@@ -138,8 +138,20 @@ pub struct OutputCfg {
 pub struct ExactRefs {
     pub u: f64,
     pub c: f64,
-    pub f: f64,
+    /// None at beta zero, where free energy diverges.
+    #[serde(deserialize_with = "deserialize_required_free_energy")]
+    pub f: Option<f64>,
     pub magnetization: f64,
+}
+
+// Unlike a plain Option field, require the JSON key even when its value is null.
+pub(crate) fn deserialize_required_free_energy<'de, D>(
+    deserializer: D,
+) -> Result<Option<f64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    Option::<f64>::deserialize(deserializer)
 }
 
 // --- Input layer: flat TOML shapes converted to the resolved config above. ---
@@ -493,17 +505,25 @@ impl ModelSpec {
 
     /// Closed-form references at inverse temperature `beta`, when available.
     pub fn exact(&self, beta: f64) -> Option<ExactRefs> {
+        if beta == 0.0 && self.has_exact() {
+            return Some(ExactRefs {
+                u: 0.0,
+                c: 0.0,
+                f: None,
+                magnetization: 0.0,
+            });
+        }
         match self {
             ModelSpec::Tfim { j, g } => Some(ExactRefs {
                 u: exact::exact_energy_density(*j, *g, beta, EXACT_NK),
                 c: exact::exact_specific_heat(*j, *g, beta, EXACT_NK),
-                f: exact::free_energy_density(*j, *g, beta, EXACT_NK),
+                f: Some(exact::free_energy_density(*j, *g, beta, EXACT_NK)),
                 magnetization: exact::exact_magnetization_x(*j, *g, beta, EXACT_NK),
             }),
             ModelSpec::Xy { gamma, h } => Some(ExactRefs {
                 u: exact::xy_energy_density(*gamma, *h, beta, EXACT_NK),
                 c: exact::xy_specific_heat(*gamma, *h, beta, EXACT_NK),
-                f: exact::xy_free_energy_density(*gamma, *h, beta, EXACT_NK),
+                f: Some(exact::xy_free_energy_density(*gamma, *h, beta, EXACT_NK)),
                 magnetization: exact::xy_magnetization_z(*gamma, *h, beta, EXACT_NK),
             }),
             _ => None,

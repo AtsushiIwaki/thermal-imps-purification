@@ -4,6 +4,9 @@ mod checkpoint_support;
 #[path = "support/solve_matrix.rs"]
 mod support;
 
+use serde_json::json;
+use std::collections::BTreeMap;
+use std::path::Path;
 use thermal_imps_purification::itebd::free_energy_from_log_norm;
 use thermal_imps_purification::itebd_auto::energy_density_auto;
 use thermal_imps_purification::itebd_checkpoint::{
@@ -13,9 +16,6 @@ use thermal_imps_purification::itebd_checkpoint::{
 use thermal_imps_purification::itebd_rdm::RdmParity;
 use thermal_imps_purification::itebd_state_view::ItebdStateRef;
 use thermal_imps_purification::runner::{read_result, Record};
-use serde_json::json;
-use std::collections::BTreeMap;
-use std::path::Path;
 
 #[derive(Default)]
 struct Maxima(BTreeMap<&'static str, (f64, f64)>);
@@ -36,10 +36,14 @@ impl Maxima {
     fn records(&mut self, a: &Record, b: &Record, label: &str) {
         assert_eq!(a.beta.to_bits(), b.beta.to_bits(), "{label} beta");
         assert_eq!(a.max_bond, b.max_bond, "{label} max bond");
+        assert_eq!(a.f.is_some(), b.f.is_some());
+        if let (Some(a), Some(b)) = (a.f, b.f) {
+            self.close("f", a, b, label);
+        }
         for (field, a, b) in [
             ("u", a.u, b.u),
             ("c", a.c, b.c),
-            ("f", a.f, b.f),
+            ("beta_f", a.beta_f, b.beta_f),
             ("local", a.magnetization, b.magnetization),
         ] {
             self.close(field, a, b, label);
@@ -120,7 +124,7 @@ fn exercise(format: &str, restart_format: &str, order: usize, canon: usize) {
     );
     assert_eq!(
         whole.records.iter().map(steps).collect::<Vec<_>>(),
-        (stride..=10).step_by(stride).collect::<Vec<_>>()
+        (0..=10).step_by(stride).collect::<Vec<_>>()
     );
     let suffix: Vec<_> = whole.records.iter().filter(|r| steps(r) > 5).collect();
     assert_eq!(suffix.len(), restart.records.len());

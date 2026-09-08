@@ -4,6 +4,9 @@ mod checkpoint_support;
 #[path = "support/solve_matrix.rs"]
 mod matrix_support;
 
+use num_complex::Complex64;
+use serde_json::{json, Value};
+use std::path::Path;
 use thermal_imps_purification::config::RunConfig;
 use thermal_imps_purification::itebd_auto::{ItebdHamiltonian, ItebdState};
 use thermal_imps_purification::itebd_checkpoint::{
@@ -14,9 +17,6 @@ use thermal_imps_purification::itebd_complex::ComplexLocalHamiltonian;
 use thermal_imps_purification::itebd_rdm::RdmParity;
 use thermal_imps_purification::runner::{read_result, Record};
 use thermal_imps_purification::solve_run::{run_checkpointed_sweep, SolveRunError};
-use num_complex::Complex64;
-use serde_json::{json, Value};
-use std::path::Path;
 
 static PROCESS_IO: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
@@ -51,7 +51,11 @@ fn assert_records_close(actual: &Record, expected: &Record) {
     assert_close(actual.beta, expected.beta);
     assert_close(actual.u, expected.u);
     assert_close(actual.c, expected.c);
-    assert_close(actual.f, expected.f);
+    assert_eq!(actual.f.is_some(), expected.f.is_some());
+    if let (Some(a), Some(b)) = (actual.f, expected.f) {
+        assert_close(a, b);
+    }
+    assert_close(actual.beta_f, expected.beta_f);
     assert_close(actual.magnetization, expected.magnetization);
     assert_eq!(actual.max_bond, expected.max_bond);
 }

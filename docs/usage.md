@@ -90,11 +90,21 @@ dimension, and Git revision when available. Each record has:
 
 - `beta`: inverse temperature, with `k_B = 1`
 - `u`, `c`, and `f`: energy, specific heat, and free energy per site
+- `beta_f`: dimensionless free energy per site, equal to `beta * f` at positive beta
 - `magnetization`: the configured local observable; the name remains for compatibility
 - `max_bond`: largest bond dimension reached
 - `exact`: exact reference fields when requested, otherwise `null`
 
 For matrix models, the observable name and matrix remain in `metadata.model`.
+
+Fresh runs include an initial `beta = 0` record before the scheduled positive-beta
+observations. At infinite temperature, `u = Tr(site_energy) / d²`, the local observable
+is `Tr(observable) / d`, `c = 0`, and `max_bond = 1`, where `d` is the local dimension.
+The free energy diverges, so `f` (including `exact.f` when present) is `null`;
+`beta_f = -ln(d)` remains finite. A run whose rounded evolution schedule has zero
+steps still outputs this initial record. The existing requirement `beta_max > 0` remains.
+The JSON reader and plotting script also accept historical positive-beta records without
+`beta_f`, reconstructing it as `beta * f`.
 
 ## Automatic checkpoints and restart
 
@@ -121,7 +131,8 @@ order, truncation, canonicalization cadence, and any saved observation interval.
 checkpoint cannot become `aklt_projector` by changing its label.
 
 A resumed invocation writes a separate trajectory and an observation segment after the selected
-step, leaving source files unchanged. Every destination must be unused. JSON and HDF5 are not
+step, leaving source files unchanged. It does not repeat the observation at the selected
+step, including when restarting from the beta-zero snapshot. Every destination must be unused. JSON and HDF5 are not
 one transaction; after interruption, inspect complete HDF5 snapshots before joining segments.
 See [numerical conventions](numerical-conventions.md) and [limitations](limitations.md).
 

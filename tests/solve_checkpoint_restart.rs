@@ -1,9 +1,9 @@
+use std::path::Path;
+use std::process::{Command, Output};
 use thermal_imps_purification::itebd_checkpoint::{
     list_itebd_checkpoints, load_itebd_checkpoint, ItebdCheckpointLoadOptions,
 };
 use thermal_imps_purification::runner::read_result;
-use std::path::Path;
-use std::process::{Command, Output};
 
 // HDF5 native descriptors can be inherited by concurrently spawned CLI processes.
 // Serialize this integration harness's direct HDF5 access with its subprocess launches.
@@ -94,8 +94,9 @@ fn observation_failure_preserves_checkpoint_and_partial_json() {
     assert!(!failed.status.success());
     assert!(String::from_utf8_lossy(&failed.stderr).contains("specific-heat tail did not converge"));
     let prior = read_result(&dir.path().join("failure.json")).unwrap();
-    assert_eq!(prior.records.len(), 1);
-    assert_eq!(prior.records[0].beta, 0.2);
+    assert_eq!(prior.records.len(), 2);
+    assert_eq!(prior.records[0].beta, 0.0);
+    assert_eq!(prior.records[1].beta, 0.2);
     assert!(!prior.segment.unwrap().finished);
     assert_eq!(
         list_itebd_checkpoints(&dir.path().join("failure.h5"))
@@ -221,7 +222,10 @@ fn rounded_zero_step_and_restart_target_bounds_are_explicit() {
         vec![0]
     );
     let json = read_result(&dir.path().join("zero.json")).unwrap();
-    assert!(json.records.is_empty() && json.segment.unwrap().finished);
+    assert_eq!(json.records.len(), 1);
+    assert_eq!(json.records[0].beta, 0.0);
+    assert!(json.records[0].f.is_none());
+    assert!(json.segment.unwrap().finished);
     let source = config(dir.path(), "source", 0.36, "");
     success(&run(&source));
     assert_eq!(
@@ -310,7 +314,9 @@ fn output_aliases_and_config_collision_preserve_inputs() {
 fn library_checkpoint_without_observation_metadata_preserves_complex_storage() {
     let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
     use thermal_imps_purification::itebd_auto::{ItebdHamiltonian, ItebdState};
-    use thermal_imps_purification::itebd_checkpoint::{ItebdCheckpointProgress, ItebdTrajectoryWriter};
+    use thermal_imps_purification::itebd_checkpoint::{
+        ItebdCheckpointProgress, ItebdTrajectoryWriter,
+    };
     use thermal_imps_purification::itebd_complex::ComplexLocalHamiltonian;
     let dir = tempfile::tempdir().unwrap();
     success(&run(&config(dir.path(), "source", 0.4, "")));

@@ -53,7 +53,11 @@ pub fn records_close(a: &Record, b: &Record) {
     close(a.beta, b.beta, 1e-10);
     close(a.u, b.u, 1e-10);
     close(a.c, b.c, 1e-10);
-    close(a.f, b.f, 1e-10);
+    assert_eq!(a.f.is_some(), b.f.is_some());
+    if let (Some(a), Some(b)) = (a.f, b.f) {
+        close(a, b, 1e-10);
+    }
+    close(a.beta_f, b.beta_f, 1e-10);
     close(a.magnetization, b.magnetization, 1e-10);
     assert_eq!(a.max_bond, b.max_bond);
 }

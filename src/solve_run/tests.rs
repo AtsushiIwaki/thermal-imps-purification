@@ -103,7 +103,7 @@ fn quiescent_process_interruption_restarts_from_last_complete_snapshot() {
             (actual.beta, expected.beta),
             (actual.u, expected.u),
             (actual.c, expected.c),
-            (actual.f, expected.f),
+            (actual.f.unwrap(), expected.f.unwrap()),
             (actual.magnetization, expected.magnetization),
         ] {
             assert!(
@@ -246,7 +246,9 @@ fn actual_json_replacement_failure_maps_through_solve_and_preserves_checkpoint()
             .completed_steps,
         0
     );
-    assert!(published.records.is_empty());
+    assert_eq!(published.records.len(), 1);
+    assert_eq!(published.records[0].beta, 0.0);
+    assert_eq!(published.records[0].f, None);
     assert!(json.is_dir());
     assert_eq!(
         list_itebd_checkpoints(checkpoint)

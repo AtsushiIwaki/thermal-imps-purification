@@ -1,11 +1,11 @@
 #[path = "support/solve_matrix.rs"]
 mod support;
 
-use thermal_imps_purification::config::RunConfig;
-use thermal_imps_purification::runner::{read_result, SweepResult};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use thermal_imps_purification::config::RunConfig;
+use thermal_imps_purification::runner::{read_result, SweepResult};
 
 // HDF5 native descriptors can be inherited by concurrently launched solve processes.
 static PROCESS_IO: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -36,11 +36,13 @@ fn assert_finite_result(path: &Path, expected_model: &Value) -> SweepResult {
     assert_eq!(encoded["site_energy"]["imag"][0][1], 0.7);
     assert!(!output.records.is_empty());
     assert!(output.records.iter().all(|record| {
+        assert_eq!(record.f.is_none(), record.beta == 0.0);
+        assert!(record.f.is_none_or(f64::is_finite));
         [
             record.beta,
             record.u,
             record.c,
-            record.f,
+            record.beta_f,
             record.magnetization,
         ]
         .iter()

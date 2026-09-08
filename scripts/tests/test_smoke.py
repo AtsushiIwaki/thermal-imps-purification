@@ -26,6 +26,27 @@ def complete_record():
 
 
 class ValidateResultTests(unittest.TestCase):
+    def test_accepts_null_free_energy_only_at_beta_zero_with_finite_beta_f(self):
+        row = complete_record()
+        row.update(beta=0.0, u=0.0, c=0.0, f=None, beta_f=-0.6931471805599453,
+                   magnetization=0.0, max_bond=1)
+        smoke.validate_result({"records": [row, complete_record()]})
+
+    def test_rejects_invalid_initial_or_positive_free_energy(self):
+        for overrides in [
+            {"f": None},
+            {"beta": 0.0, "f": -1.0, "beta_f": -0.693},
+            {"beta": 0.0, "f": None},
+            {"beta": 0.0, "f": None, "beta_f": float("nan")},
+            {"beta_f": None},
+            {"beta_f": 10.0},
+        ]:
+            with self.subTest(overrides=overrides):
+                row = complete_record()
+                row.update(overrides)
+                with self.assertRaises((AssertionError, KeyError)):
+                    smoke.validate_result({"records": [row]})
+
     def test_accepts_a_complete_finite_record(self):
         smoke.validate_result({"records": [complete_record()]})
 

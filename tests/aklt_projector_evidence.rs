@@ -1,6 +1,9 @@
 #[path = "support/aklt_projector_solve.rs"]
 mod support;
 
+use nalgebra::DMatrix;
+use serde_json::json;
+use std::path::Path;
 use thermal_imps_purification::canonicalize::canonicalize;
 use thermal_imps_purification::itebd::{
     free_energy_from_log_norm, imaginary_time_step, imaginary_time_step_second_order,
@@ -12,9 +15,6 @@ use thermal_imps_purification::purified_mps::infinite_temperature;
 use thermal_imps_purification::runner::{read_result, Record};
 use thermal_imps_purification::tensor::Truncation;
 use thermal_imps_purification::variance::specific_heat;
-use nalgebra::DMatrix;
-use serde_json::json;
-use std::path::Path;
 
 // HDF5 native descriptors can be inherited by concurrently launched solve processes.
 // Every CLI or HDF5 operation in this target must share this lock.
@@ -162,7 +162,7 @@ fn compare_direct_cli(order: u8, direct: &Sample, cli: &Record) {
     for (field, actual, expected) in [
         ("u", cli.u, direct.u),
         ("c", cli.c, direct.c),
-        ("f", cli.f, direct.f),
+        ("f", cli.f.unwrap(), direct.f),
         ("sz", cli.magnetization, direct.sz),
     ] {
         let (absolute, scaled) = absolute_scaled(actual, expected);
@@ -222,8 +222,8 @@ fn projector_direct_matches_json_cli_for_both_orders() {
         support::write_input(&value, &input, "json");
         run_cli_success(&input);
         let result = read_result(Path::new(value["output"]["path"].as_str().unwrap())).unwrap();
-        assert_eq!(result.records.len(), 1);
-        let cli = &result.records[0];
+        assert_eq!(result.records.len(), 2);
+        let cli = &result.records[1];
         support::close(cli.beta, direct.beta, 1e-10);
         compare_direct_cli(order, &direct, cli);
         println!(

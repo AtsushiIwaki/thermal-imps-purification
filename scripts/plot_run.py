@@ -4,10 +4,13 @@ import math
 import os
 import sys
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
+def dimensionless_free_energy(row, local_dim, *, exact=False):
+    """Read new beta_f or derive it from legacy f, including the beta-zero limit."""
+    if exact:
+        return -math.log(local_dim) if row["beta"] == 0.0 else row["beta"] * row["exact"]["f"]
+    if "beta_f" in row:
+        return row["beta_f"]
+    return row["beta"] * row["f"]
 
 
 def main():
@@ -16,15 +19,20 @@ def main():
         sys.exit(2)
     in_path, out_path = sys.argv[1], sys.argv[2]
 
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     with open(in_path, encoding="utf-8") as fh:
         data = json.load(fh)
 
     recs = data["records"]
     model = data["metadata"]["model"]["type"]
+    local_dim = data["metadata"]["local_dim"]
     beta = [r["beta"] for r in recs]
     u = [r["u"] for r in recs]
     c = [r["c"] for r in recs]
-    bf = [r["beta"] * r["f"] for r in recs]
+    bf = [dimensionless_free_energy(r, local_dim) for r in recs]
     has_exact = bool(recs) and recs[0]["exact"] is not None
 
     fig, axes = plt.subplots(1, 3, figsize=(13, 4))
@@ -38,7 +46,7 @@ def main():
     if has_exact:
         axes[0].plot(beta, [r["exact"]["u"] for r in recs], "k--", lw=1, label="exact")
         axes[1].plot(beta, [r["exact"]["c"] for r in recs], "k--", lw=1, label="exact")
-        axes[2].plot(beta, [r["beta"] * r["exact"]["f"] for r in recs], "k--", lw=1, label="exact")
+        axes[2].plot(beta, [dimensionless_free_energy(r, local_dim, exact=True) for r in recs], "k--", lw=1, label="exact")
 
     if model in ("aklt", "aklt_projector"):
         ground = 0.0 if model == "aklt_projector" else -2.0 / 3.0

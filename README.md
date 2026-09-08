@@ -104,9 +104,10 @@ The AKLT normalization relation is documented in the
 or checkpoints by renaming the model tag.
 
 Result JSON contains run metadata and records with `beta`, energy density `u`, specific heat
-`c`, free-energy density `f`, the configured local observable in the compatibility field
+`c`, free-energy density `f`, dimensionless free-energy density `beta_f`, the configured local observable in the compatibility field
 `magnetization`, the largest bond dimension reached in that step as `max_bond`, and optional
-`exact` values.
+`exact` values. Fresh runs begin with an infinite-temperature (`beta = 0`) record:
+`f` is `null` because it diverges, while `beta_f = -ln(local_dim)` is finite.
 
 See [CLI usage](docs/usage.md) for model schemas, matrix input, smoke runs, outputs, checkpoints,
 restarts, and figure reproduction. See the [library API guide](docs/library-api.md) for direct

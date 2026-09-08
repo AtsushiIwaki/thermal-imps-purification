@@ -1,14 +1,14 @@
 #[path = "support/solve_matrix.rs"]
 mod support;
+use serde_json::json;
 use thermal_imps_purification::config::TrotterOrder;
 use thermal_imps_purification::exact::{
     exact_energy_density, exact_magnetization_x, exact_specific_heat, free_energy_density,
 };
 use thermal_imps_purification::runner::{read_result, Record};
-use serde_json::json;
 
 fn values(r: &Record) -> [f64; 4] {
-    [r.u, r.c, r.f, r.magnetization]
+    [r.u, r.c, r.f.unwrap(), r.magnetization]
 }
 fn oracle_values(r: support::OracleRecord) -> [f64; 4] {
     [r.u, r.c, r.f, r.local]
@@ -38,12 +38,12 @@ fn cli(mut cfg: serde_json::Value, format: &str) -> Record {
     support::write_input(&cfg, &input, format);
     support::run_cli(&input);
     let result = read_result(&output).unwrap();
-    assert_eq!(result.records.len(), 1);
+    assert_eq!(result.records.len(), 2);
     assert_eq!(
         serde_json::to_value(&result.metadata.model).unwrap(),
         cfg["model"]
     );
-    result.records.into_iter().next().unwrap()
+    result.records.into_iter().last().unwrap()
 }
 
 #[test]

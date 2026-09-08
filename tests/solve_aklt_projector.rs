@@ -1,12 +1,12 @@
 #[path = "support/aklt_projector_solve.rs"]
 mod support;
 
+use serde_json::json;
+use std::path::Path;
 use thermal_imps_purification::config::{ModelSpec, RunConfig, TrotterOrder};
 use thermal_imps_purification::itebd_auto::ItebdHamiltonian;
 use thermal_imps_purification::model::{sz1, AkltProjector, BilinearBiquadratic};
 use thermal_imps_purification::runner::read_result;
-use serde_json::json;
-use std::path::Path;
 
 // HDF5 native descriptors can be inherited by concurrently launched solve processes.
 static PROCESS_IO: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -162,11 +162,13 @@ fn projector_cli_json_and_toml_emit_finite_tagged_results() {
         assert_eq!(result.metadata.local_dim, 3);
         assert!(!result.records.is_empty());
         for record in &result.records {
+            assert_eq!(record.f.is_none(), record.beta == 0.0);
+            assert!(record.f.is_none_or(f64::is_finite));
             for observation in [
                 record.beta,
                 record.u,
                 record.c,
-                record.f,
+                record.beta_f,
                 record.magnetization,
             ] {
                 assert!(observation.is_finite(), "non-finite {format} observation");

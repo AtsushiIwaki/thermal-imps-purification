@@ -10,7 +10,8 @@ use crate::itebd_checkpoint::{
 };
 use crate::itebd_error::ItebdError;
 use crate::runner::{
-    drive_sweep, empty_result, CheckpointPosition, RestartSource, SegmentMetadata, SweepResult,
+    drive_sweep, empty_result, initial_record, CheckpointPosition, RestartSource, SegmentMetadata,
+    SweepResult,
 };
 use output::JsonPublisher;
 use std::path::{Path, PathBuf};
@@ -38,7 +39,7 @@ pub enum SolveRunError {
 /// Save initial, periodic and final states into a new trajectory, optionally continuing a
 /// compatible checkpoint. Fresh trajectories may use either scalar backend.
 /// `config_path` protects the CLI input from output aliasing.
-/// The returned observations cover only this invocation's steps after the selected start.
+/// Fresh runs include beta=0. Restarts cover only steps after the selected start.
 pub fn run_checkpointed_sweep(
     cfg: &RunConfig,
     config_path: Option<&Path>,
@@ -128,6 +129,9 @@ fn run_with_checkpoint_observer(
         )
     };
     let mut result = empty_result(cfg, ham.dim());
+    if cfg.restart.is_none() {
+        result.records.push(initial_record(cfg, &ham, &observable));
+    }
     result.segment = Some(SegmentMetadata {
         version: 1,
         source,

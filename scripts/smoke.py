@@ -14,10 +14,23 @@ ROOT = Path(__file__).resolve().parents[1]
 def validate_result(result):
     assert result["records"], "missing observations"
     for row in result["records"]:
-        for field in ("beta", "u", "c", "f", "magnetization"):
+        for field in ("beta", "u", "c", "magnetization"):
             value = row[field]
             assert isinstance(value, (int, float)) and not isinstance(value, bool)
             assert math.isfinite(value), field
+        assert row["beta"] >= 0.0, "beta"
+        if row["beta"] == 0.0:
+            assert row["f"] is None, "f must be null at beta=0"
+            beta_f = row["beta_f"]
+        else:
+            f = row["f"]
+            assert isinstance(f, (int, float)) and not isinstance(f, bool), "f"
+            assert math.isfinite(f), "f"
+            beta_f = row.get("beta_f", row["beta"] * f)
+        assert isinstance(beta_f, (int, float)) and not isinstance(beta_f, bool), "beta_f"
+        assert math.isfinite(beta_f), "beta_f"
+        if row["beta"] > 0.0:
+            assert math.isclose(beta_f, row["beta"] * row["f"], rel_tol=2e-15, abs_tol=2e-15), "beta_f"
         assert row["max_bond"] >= 1
 
 
@@ -60,7 +73,7 @@ def run_smoke(solve_binary, output_directory):
         subprocess.run([str(solve_binary), str(config_path)], cwd=ROOT, check=True)
         result = json.loads(result_path.read_text(encoding="utf-8"))
         validate_result(result)
-        print(f"{name}: {len(result['records'])} finite record(s) in {result_path}")
+        print(f"{name}: {len(result['records'])} valid record(s) in {result_path}")
 
 
 def main(argv=None):

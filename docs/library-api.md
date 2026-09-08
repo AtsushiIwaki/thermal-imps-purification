@@ -168,3 +168,16 @@ For automatic file I/O, `solve_run::run_checkpointed_sweep(&cfg, config_path)` d
 checkpoint path. `runner::run_sweep` remains computation-only and rejects checkpoint/restart
 options. External struct-literal users must initialize the optional fields added to public
 `RunConfig` and `SweepResult`; `None` preserves legacy behavior.
+
+Fresh sweeps return a beta-zero observation as the first `runner::Record`, followed by
+the existing observation schedule. Restarted sweeps return only observations after the
+selected checkpoint step. `Record::f` and `config::ExactRefs::f` are `Option<f64>`:
+`None` represents the divergent free energy at beta zero and `Some(f)` the value at
+positive beta. `Record::beta_f` is finite, with initial value `-ln(local_dim)`.
+External struct literals must supply `beta_f` and wrap positive-beta free energies in
+`Some`; consumers should handle the initial `None` explicitly.
+
+`runner::read_result` accepts older positive-beta JSON records lacking `beta_f` and derives
+it from `beta * f`. New beta-zero records require `f: null` and a finite `beta_f`.
+Missing `f`, a null positive-beta `f`, explicit null `beta_f`, and a positive-beta
+`beta_f` inconsistent with `beta * f` are rejected during deserialization.

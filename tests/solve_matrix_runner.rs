@@ -1,6 +1,7 @@
 #[path = "support/solve_matrix.rs"]
 mod support;
 
+use serde_json::json;
 use thermal_imps_purification::config::{ModelSpec, RunConfig, TrotterOrder};
 use thermal_imps_purification::itebd_auto::{ItebdHamiltonian, ItebdState};
 use thermal_imps_purification::itebd_checkpoint::{
@@ -8,7 +9,6 @@ use thermal_imps_purification::itebd_checkpoint::{
 };
 use thermal_imps_purification::runner::{read_result, run_sweep, Record};
 use thermal_imps_purification::solve_run::{run_checkpointed_sweep, SolveRunError};
-use serde_json::json;
 
 fn assert_close(actual: f64, expected: f64) {
     assert!(
@@ -21,7 +21,11 @@ fn assert_records_close(actual: &Record, expected: &Record) {
     assert_close(actual.beta, expected.beta);
     assert_close(actual.u, expected.u);
     assert_close(actual.c, expected.c);
-    assert_close(actual.f, expected.f);
+    assert_eq!(actual.f.is_some(), expected.f.is_some());
+    if let (Some(a), Some(b)) = (actual.f, expected.f) {
+        assert_close(a, b);
+    }
+    assert_close(actual.beta_f, expected.beta_f);
     assert_close(actual.magnetization, expected.magnetization);
     assert_eq!(actual.max_bond, expected.max_bond);
 }
@@ -29,7 +33,7 @@ fn assert_records_close(actual: &Record, expected: &Record) {
 fn assert_record_matches_oracle(actual: &Record, expected: support::OracleRecord) {
     assert_close(actual.u, expected.u);
     assert_close(actual.c, expected.c);
-    assert_close(actual.f, expected.f);
+    assert_close(actual.f.unwrap(), expected.f);
     assert_close(actual.magnetization, expected.local);
     assert_eq!(actual.max_bond, expected.max_bond);
 }
@@ -107,8 +111,8 @@ fn both_orders_match_an_independent_direct_complex_oracle() {
         });
         let cfg = RunConfig::from_json_str(&value.to_string()).unwrap();
         let result = run_sweep(&cfg).unwrap();
-        assert_eq!(result.records.len(), 1);
-        assert_record_matches_oracle(&result.records[0], support::phase_oracle(order));
+        assert_eq!(result.records.len(), 2);
+        assert_record_matches_oracle(&result.records[1], support::phase_oracle(order));
     }
 }
 
@@ -132,12 +136,12 @@ fn exact_real_matrix_matches_preset_and_direct_real_api_bitwise() {
         let preset_cfg = RunConfig::from_json_str(&preset_value.to_string()).unwrap();
         let preset_result = run_sweep(&preset_cfg).unwrap();
 
-        let matrix = &matrix_result.records[0];
-        let preset = &preset_result.records[0];
+        let matrix = &matrix_result.records[1];
+        let preset = &preset_result.records[1];
         for (actual, expected) in [
             (matrix.u, preset.u),
             (matrix.c, preset.c),
-            (matrix.f, preset.f),
+            (matrix.f.unwrap(), preset.f.unwrap()),
             (matrix.magnetization, preset.magnetization),
         ] {
             assert_eq!(actual.to_bits(), expected.to_bits());
@@ -148,7 +152,7 @@ fn exact_real_matrix_matches_preset_and_direct_real_api_bitwise() {
         for (actual, expected) in [
             (matrix.u, oracle.u),
             (matrix.c, oracle.c),
-            (matrix.f, oracle.f),
+            (matrix.f.unwrap(), oracle.f),
             (matrix.magnetization, oracle.local),
         ] {
             assert_eq!(actual.to_bits(), expected.to_bits());
@@ -179,8 +183,8 @@ fn real_state_accepts_a_complex_hermitian_observable() {
     let expected =
         run_sweep(&RunConfig::from_json_str(&preset_value.to_string()).unwrap()).unwrap();
     assert_eq!(
-        actual.records[0].magnetization.to_bits(),
-        expected.records[0].magnetization.to_bits()
+        actual.records[1].magnetization.to_bits(),
+        expected.records[1].magnetization.to_bits()
     );
     let ModelSpec::Matrix(model) = &actual.metadata.model else {
         panic!("configured matrix metadata was not retained")

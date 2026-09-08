@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::hint::black_box;
+use std::time::{Duration, Instant};
 use thermal_imps_purification::canonicalize::canonicalize;
 use thermal_imps_purification::config::{ModelSpec, TrotterOrder};
 use thermal_imps_purification::itebd::{
@@ -7,9 +10,6 @@ use thermal_imps_purification::observable::{energy_density, magnetization};
 use thermal_imps_purification::purified_mps::infinite_temperature;
 use thermal_imps_purification::tensor::Truncation;
 use thermal_imps_purification::variance::specific_heat;
-use std::collections::HashMap;
-use std::hint::black_box;
-use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Copy)]
 struct EvolutionSample {
@@ -477,7 +477,7 @@ fn second_order_tfim_matches_exact_observables_and_improves_energy_and_free_ener
         "TFIM (J=1, g=0.7)",
         model,
         exact.u,
-        exact.f,
+        exact.f.unwrap(),
         exact.c,
         exact.magnetization,
     );
@@ -491,7 +491,7 @@ fn second_order_xy_matches_exact_observables_and_improves_energy_and_free_energy
         "XY (gamma=0.5, h=0.7)",
         model,
         exact.u,
-        exact.f,
+        exact.f.unwrap(),
         exact.c,
         exact.magnetization,
     );
@@ -578,7 +578,7 @@ fn benchmark_first_vs_second_order_accuracy() {
                         let sample = evolve(&model, order, beta, dtau, trunc.clone());
                         let sample_errors = [
                             (sample.energy - exact.u).abs(),
-                            (sample.free_energy - exact.f).abs(),
+                            (sample.free_energy - exact.f.unwrap()).abs(),
                             (sample.specific_heat - exact.c).abs(),
                             (sample.magnetization - exact.magnetization).abs(),
                         ];
@@ -755,7 +755,7 @@ fn benchmark_first_vs_second_order_timing() {
 
     for (model_name, model) in models {
         let exact = model.exact(beta).expect("benchmark model has exact data");
-        let exact_values = [exact.u, exact.f, exact.c, exact.magnetization];
+        let exact_values = [exact.u, exact.f.unwrap(), exact.c, exact.magnetization];
         let evaluate_candidates = |regime: &'static str, grid: &[f64]| {
             let mut candidates: [Vec<EqualAccuracyCandidate>; 2] = [
                 Vec::with_capacity(grid.len()),

@@ -1,17 +1,19 @@
 #[path = "support/solve_matrix.rs"]
 mod support;
 
-use thermal_imps_purification::config::{
-    MatrixInput, MatrixModelInput, ModelSpec, ObservableInput, RunConfig, TrotterOrder,
-};
-use thermal_imps_purification::itebd_auto::ItebdHamiltonian;
-use thermal_imps_purification::itebd_error::ItebdError;
-use thermal_imps_purification::runner::{read_result, run_sweep, write_result, Metadata, SweepResult};
 use nalgebra::DMatrix;
 use num_complex::Complex64;
 use serde_json::{json, Value};
 use std::alloc::{GlobalAlloc, Layout, System};
 use std::cell::Cell;
+use thermal_imps_purification::config::{
+    MatrixInput, MatrixModelInput, ModelSpec, ObservableInput, RunConfig, TrotterOrder,
+};
+use thermal_imps_purification::itebd_auto::ItebdHamiltonian;
+use thermal_imps_purification::itebd_error::ItebdError;
+use thermal_imps_purification::runner::{
+    read_result, run_sweep, write_result, Metadata, SweepResult,
+};
 
 struct TrackingAllocator;
 
@@ -509,11 +511,13 @@ fn matrix_configs_reject_exact_references_and_legacy_results_stay_first_order() 
 fn automatic_runner_accepts_complex_hamiltonians() {
     let cfg = RunConfig::from_json_str(&support::phase_config().to_string()).unwrap();
     let result = run_sweep(&cfg).unwrap();
-    assert_eq!(result.records.len(), 1);
-    let record = &result.records[0];
-    assert!([record.u, record.c, record.f, record.magnetization]
-        .iter()
-        .all(|value| value.is_finite()));
+    assert_eq!(result.records.len(), 2);
+    let record = &result.records[1];
+    assert!(
+        [record.u, record.c, record.f.unwrap(), record.magnetization]
+            .iter()
+            .all(|value| value.is_finite())
+    );
     assert!(record.exact.is_none());
 }
 

@@ -2,6 +2,8 @@
 #[allow(dead_code)]
 mod support;
 
+use std::path::{Path, PathBuf};
+use std::process::{Command, Output};
 use thermal_imps_purification::config::TrotterOrder;
 use thermal_imps_purification::itebd::free_energy_from_log_norm;
 use thermal_imps_purification::itebd_auto::{energy_density_auto, ItebdState};
@@ -10,8 +12,6 @@ use thermal_imps_purification::itebd_checkpoint::{
 };
 use thermal_imps_purification::itebd_rdm::RdmParity;
 use thermal_imps_purification::runner::{read_result, Record, SweepResult};
-use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
 
 const TOLERANCE: f64 = 1.0e-10;
 
@@ -292,10 +292,14 @@ fn compare_records(actual: &Record, expected: &Record, context: &str) -> f64 {
     );
     assert_eq!(actual.max_bond, expected.max_bond, "{context} max bond");
     let mut maximum = 0.0_f64;
+    assert_eq!(actual.f.is_some(), expected.f.is_some());
+    if let (Some(a), Some(b)) = (actual.f, expected.f) {
+        maximum = maximum.max(assert_close(a, b, &format!("{context} free energy")));
+    }
     for (field, actual, expected) in [
         ("energy", actual.u, expected.u),
         ("specific heat", actual.c, expected.c),
-        ("free energy", actual.f, expected.f),
+        ("beta f", actual.beta_f, expected.beta_f),
         (
             "magnetization",
             actual.magnetization,
