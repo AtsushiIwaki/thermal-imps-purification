@@ -13,15 +13,15 @@ MIT is applied to project-authored material; copied upstream material retains it
 The README is a short finite-temperature quickstart; advanced CLI and library details live in
 the linked usage and API guides.
 
+The canonical eigendecomposition/SVD repair is published on `main` at `af67529`, following
+the GNU/Linux HDF5 launch repair. The [2026-09-08 hosted CI run](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/34237297719)
+passed build and verification on both Ubuntu and macOS at that commit. The
+[numerical investigation](docs/investigations/2026-09-08-complex-heat-reality.md) retains the
+local Linux routine and fixed specific-heat evidence; its pending-publication and platform
+statements describe the earlier verification checkpoint and are superseded by this status.
+
 ## Unresolved constraints
 
-- The published GNU/Linux HDF5 launch repair passes the beta-zero checkpoint test in
-  [hosted CI](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/34230916826).
-  That run passes on macOS but fails on Ubuntu at the separate phase-twisted XX heat test.
-  The local canonical eigendecomposition/SVD repair passes the full Linux routine suite
-  (422 tests) and the fixed specific-heat driver (28 valid rows with qualified refinement
-  windows); it has not been published or tested in hosted CI. See the
-  [numerical investigation](docs/investigations/2026-09-08-complex-heat-reality.md).
 - Release tags and registry publication remain undecided.
 - AKLT validation covers a measured finite temperature window with active bond caps; it does not
   establish low-temperature or bond-dimension convergence. The validation and limitations pages
@@ -39,9 +39,9 @@ the linked usage and API guides.
 
 ## Next action
 
-Publish the reviewed canonical matrix-decomposition repair and observe a new hosted
-macOS/Linux workflow. Full hosted Linux success and macOS verification of the numerical
-repair remain outstanding.
+Select the next bounded task from the documented numerical limitations or the release
+and registry-publication decisions. Publication and hosted macOS/Linux verification of
+the canonical matrix-decomposition repair are complete; no next implementation task is selected.
 
 ## Relevant links
 
