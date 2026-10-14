@@ -6,7 +6,8 @@ use crate::config::{ModelSpec, ResolvedModel, RunConfig};
 use crate::itebd_auto::{ItebdHamiltonian, ItebdState};
 use crate::itebd_checkpoint::{
     list_itebd_checkpoints, load_itebd_checkpoint, ItebdCheckpointError,
-    ItebdCheckpointLoadOptions, ItebdCheckpointProgress, ItebdRunMetadata, ItebdTrajectoryWriter,
+    ItebdCheckpointLoadOptions, ItebdCheckpointProgress, ItebdRunMetadata, ItebdTimeGrid,
+    ItebdTrajectoryWriter,
 };
 use crate::itebd_error::ItebdError;
 use crate::runner::{
@@ -93,6 +94,12 @@ fn run_with_checkpoint_observer(
             }
         };
         let loaded = load_itebd_checkpoint(path, snapshot, &ItebdCheckpointLoadOptions::default())?;
+        if matches!(loaded.time_grid, ItebdTimeGrid::Segmented(_)) {
+            return Err(SolveRunError::Configuration(format!(
+                "scheduled checkpoint requires an explicit scheduled continuation driver: {}",
+                path.display()
+            )));
+        }
         validation::compatible(
             cfg,
             &configured_hamiltonian,

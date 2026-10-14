@@ -1,6 +1,8 @@
 #[path = "support/itebd_checkpoint_rdm.rs"]
 mod support;
 
+use num_complex::Complex64;
+use std::str::FromStr;
 use thermal_imps_purification::itebd_auto::{ItebdHamiltonian, ItebdState};
 use thermal_imps_purification::itebd_checkpoint::*;
 use thermal_imps_purification::itebd_complex::{ComplexPurifiedMps, ComplexSite};
@@ -8,8 +10,6 @@ use thermal_imps_purification::itebd_state_view::ItebdStateRef;
 use thermal_imps_purification::model::Tfim;
 use thermal_imps_purification::purified_mps::{infinite_temperature, PurifiedMps, Site};
 use thermal_imps_purification::tensor::Tensor;
-use num_complex::Complex64;
-use std::str::FromStr;
 
 #[test]
 fn beta_zero_round_trip_retains_exact_payload_and_roles() {
@@ -527,7 +527,7 @@ fn root_discriminators_and_authoritative_hamiltonian_are_strictly_validated() {
     }
 
     for (case, attribute, value, expected_field) in [
-        ("version", "schema_version", 2_u32, "schema_version"),
+        ("version", "schema_version", 99_u32, "schema_version"),
         ("unit-cell", "unit_cell_size", 3_u32, "unit_cell_size"),
     ] {
         let dir = tempfile::tempdir().unwrap();
@@ -1232,15 +1232,23 @@ fn json_checkpoint_step_log_norm_preserves_exact_bits() {
         completed_steps: 1,
         accumulated_log_norm: value,
         last_step: Some(thermal_imps_purification::itebd::StepInfo {
-            max_bond: 1, min_singular_value: 1.0, log_norm: value,
+            max_bond: 1,
+            min_singular_value: 1.0,
+            log_norm: value,
         }),
     };
     let mut writer = ItebdTrajectoryWriter::create(&path, metadata, &h).unwrap();
     writer.append((&state).into(), &progress).unwrap();
     writer.finish().unwrap();
     let loaded = load_itebd_checkpoint(&path, 0, &ItebdCheckpointLoadOptions::default()).unwrap();
-    assert_eq!(loaded.progress.last_step.unwrap().log_norm.to_bits(), 4595195715801308216);
-    assert_eq!(loaded.diagnostics.last_step.unwrap().log_norm.to_bits(), 4595195715801308216);
+    assert_eq!(
+        loaded.progress.last_step.unwrap().log_norm.to_bits(),
+        4595195715801308216
+    );
+    assert_eq!(
+        loaded.diagnostics.last_step.unwrap().log_norm.to_bits(),
+        4595195715801308216
+    );
 }
 
 #[test]
@@ -1255,5 +1263,376 @@ fn json_checkpoint_metadata_preserves_exact_float_bits() {
     writer.append((&state).into(), &zero_progress()).unwrap();
     writer.finish().unwrap();
     let loaded = load_itebd_checkpoint(&path, 0, &ItebdCheckpointLoadOptions::default()).unwrap();
-    assert_eq!(loaded.metadata.record_every_beta.unwrap().to_bits(), 4595195715801308216);
+    assert_eq!(
+        loaded.metadata.record_every_beta.unwrap().to_bits(),
+        4595195715801308216
+    );
+}
+
+// Malformed native headers exercise schema validation independently of the writer.
+fn install_scheduled_header(path: &std::path::Path, grid: &str) {
+    use hdf5_metno::types::VarLenUnicode;
+    let file = hdf5_metno::File::open_rw(path).unwrap();
+    file.attr("schema_version")
+        .unwrap()
+        .write_scalar(&2_u32)
+        .unwrap();
+    file.group("run")
+        .unwrap()
+        .new_dataset::<VarLenUnicode>()
+        .shape(())
+        .create("time_grid_json")
+        .unwrap()
+        .write_scalar(&VarLenUnicode::from_str(grid).unwrap())
+        .unwrap();
+}
+
+#[test]
+fn scheduled_checkpoint_validates_prefix_beta() {
+    let dir = tempfile::tempdir().unwrap();
+    for complex in [false, true] {
+        let path = dir.path().join(format!("scheduled-{complex}.h5"));
+        let state = if complex {
+            ItebdState::Complex(support::promote_real_state(&infinite_temperature(2)))
+        } else {
+            ItebdState::Real(infinite_temperature(2))
+        };
+        let h = if complex {
+            support::phase_tfim()
+        } else {
+            ItebdHamiltonian::Real(Tfim { j: 1.0, g: 0.7 }.local())
+        };
+        let segments = vec![
+            ItebdStepSegment {
+                steps: 2,
+                dtau: 0.01,
+            },
+            ItebdStepSegment {
+                steps: 3,
+                dtau: 0.004,
+            },
+        ];
+        let mut metadata = support::real_tfim_metadata();
+        metadata.dtau = 0.01;
+        let mut writer =
+            ItebdTrajectoryWriter::create_scheduled(&path, metadata, &h, segments.clone()).unwrap();
+        for (steps, beta) in [(4, 0.056_f64), (5, 0.064_f64)] {
+            writer
+                .append(
+                    (&state).into(),
+                    &ItebdCheckpointProgress {
+                        beta,
+                        completed_steps: steps,
+                        accumulated_log_norm: -0.375,
+                        last_step: None,
+                    },
+                )
+                .unwrap();
+        }
+        writer.finish().unwrap();
+        assert_eq!(
+            hdf5_metno::File::open(&path)
+                .unwrap()
+                .attr("schema_version")
+                .unwrap()
+                .read_scalar::<u32>()
+                .unwrap(),
+            2
+        );
+        for (index, beta) in [(0, 0.056_f64), (1, 0.064_f64)] {
+            let loaded =
+                load_itebd_checkpoint(&path, index, &ItebdCheckpointLoadOptions::default())
+                    .unwrap();
+            assert!((loaded.progress.beta - beta).abs() < 1e-15);
+            assert_eq!(loaded.time_grid, ItebdTimeGrid::Segmented(segments.clone()));
+            assert_eq!(
+                loaded.progress.accumulated_log_norm.to_bits(),
+                (-0.375_f64).to_bits()
+            );
+            match (&state, &loaded.state) {
+                (ItebdState::Real(a), ItebdState::Real(b)) => assert_real_state_exact(a, b),
+                (ItebdState::Complex(a), ItebdState::Complex(b)) => {
+                    assert_complex_state_exact(a, b)
+                }
+                _ => panic!("backend changed"),
+            }
+        }
+        assert_eq!(list_itebd_checkpoints(&path).unwrap().len(), 2);
+    }
+}
+
+#[test]
+fn scheduled_checkpoint_rejects_malformed_grid() {
+    let dir = tempfile::tempdir().unwrap();
+    for (n, grid) in [
+        r#"{"kind":"segmented","segments":[]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":0,"dtau":0.01}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1,"dtau":0.01,"extra":1}]}"#,
+        r#"{"kind":"fixed","segments":[{"steps":1,"dtau":0.01}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1,"dtau":0.01}],"extra":1}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1.5,"dtau":0.01}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1,"dtau":-0.01}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1,"dtau":0}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1,"dtau":0.06}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":1,"dtau":1e999}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":18446744073709551615,"dtau":0.01},{"steps":1,"dtau":0.01}]}"#,
+        r#"{"kind":"segmented","segments":[{"steps":18446744073709551616,"dtau":0.01}]}"#,
+    ].into_iter().enumerate() {
+        let path = dir.path().join(format!("bad-grid-{n}.h5"));
+        write_real_zero_checkpoint(&path);
+        install_scheduled_header(&path, grid);
+        assert_schema_field(&path, "run/time_grid_json");
+    }
+}
+
+#[test]
+fn scheduled_creation_rejects_invalid_segments_before_filesystem_changes() {
+    let dir = tempfile::tempdir().unwrap();
+    let h = ItebdHamiltonian::Real(Tfim { j: 1.0, g: 0.7 }.local());
+    let segment = ItebdStepSegment {
+        steps: 1,
+        dtau: 0.01,
+    };
+    let invalid = vec![
+        vec![],
+        vec![segment.clone(); 21],
+        vec![ItebdStepSegment {
+            steps: 0,
+            ..segment.clone()
+        }],
+        vec![ItebdStepSegment {
+            dtau: f64::NAN,
+            ..segment.clone()
+        }],
+        vec![ItebdStepSegment {
+            dtau: f64::INFINITY,
+            ..segment.clone()
+        }],
+        vec![ItebdStepSegment {
+            dtau: f64::NEG_INFINITY,
+            ..segment.clone()
+        }],
+        vec![ItebdStepSegment {
+            dtau: 0.0,
+            ..segment.clone()
+        }],
+        vec![ItebdStepSegment {
+            dtau: -0.01,
+            ..segment.clone()
+        }],
+        vec![ItebdStepSegment {
+            dtau: 0.051,
+            ..segment.clone()
+        }],
+        vec![
+            ItebdStepSegment {
+                steps: u64::MAX,
+                ..segment.clone()
+            },
+            segment.clone(),
+        ],
+    ];
+    for (n, segments) in invalid.into_iter().enumerate() {
+        let path = dir.path().join(format!("absent-{n}/invalid.h5"));
+        let error = match ItebdTrajectoryWriter::create_scheduled(
+            &path,
+            support::real_tfim_metadata(),
+            &h,
+            segments,
+        ) {
+            Ok(_) => panic!("accepted invalid grid {n}"),
+            Err(error) => error,
+        };
+        assert!(
+            matches!(error, ItebdCheckpointError::Schema { path: ref p, ref field, .. }
+            if p == &path && field == "run/time_grid_json"),
+            "{error:?}"
+        );
+        assert!(!path.parent().unwrap().exists());
+    }
+    let path = dir.path().join("beta-overflow.h5");
+    let mut metadata = support::real_tfim_metadata();
+    metadata.dtau = f64::MAX;
+    let error = match ItebdTrajectoryWriter::create_scheduled(
+        &path,
+        metadata,
+        &h,
+        vec![ItebdStepSegment {
+            steps: 1,
+            dtau: f64::MAX,
+        }],
+    ) {
+        Ok(_) => panic!("accepted beta overflow"),
+        Err(error) => error,
+    };
+    assert!(
+        matches!(error, ItebdCheckpointError::Schema { path: ref p, ref field, .. }
+        if p == &path && field == "run/time_grid_json"),
+        "{error:?}"
+    );
+    assert!(!path.exists());
+}
+
+#[test]
+fn scheduled_progress_rejects_wrong_prefix_and_steps_past_grid() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("progress.h5");
+    let h = ItebdHamiltonian::Real(Tfim { j: 1.0, g: 0.7 }.local());
+    let state = infinite_temperature(2);
+    let segments = vec![
+        ItebdStepSegment {
+            steps: 2,
+            dtau: 0.01,
+        },
+        ItebdStepSegment {
+            steps: 3,
+            dtau: 0.004,
+        },
+    ];
+    let mut writer =
+        ItebdTrajectoryWriter::create_scheduled(&path, support::real_tfim_metadata(), &h, segments)
+            .unwrap();
+    for (steps, beta, expected_field) in [(4, 0.08, "beta"), (6, 0.072, "completed_steps")] {
+        let error = writer
+            .append(
+                (&state).into(),
+                &ItebdCheckpointProgress {
+                    beta,
+                    completed_steps: steps,
+                    accumulated_log_norm: -0.1,
+                    last_step: None,
+                },
+            )
+            .unwrap_err();
+        assert!(
+            matches!(error, ItebdCheckpointError::Snapshot { path: ref p, index: 0, ref field, .. }
+            if p == &path && field == expected_field),
+            "{error:?}"
+        );
+    }
+    writer
+        .append(
+            (&state).into(),
+            &ItebdCheckpointProgress {
+                beta: 0.056,
+                completed_steps: 4,
+                accumulated_log_norm: -0.1,
+                last_step: None,
+            },
+        )
+        .unwrap();
+    writer.finish().unwrap();
+    {
+        let file = hdf5_metno::File::open_rw(&path).unwrap();
+        file.dataset("states/000000/beta")
+            .unwrap()
+            .write_scalar(&0.08_f64)
+            .unwrap();
+    }
+    assert_snapshot_field(&path, 0, "beta");
+    {
+        let file = hdf5_metno::File::open_rw(&path).unwrap();
+        file.dataset("states/000000/completed_steps")
+            .unwrap()
+            .write_scalar(&6_u64)
+            .unwrap();
+    }
+    assert_snapshot_field(&path, 0, "completed_steps");
+}
+
+#[test]
+fn scheduled_grid_schema_is_bounded_and_version_specific() {
+    let dir = tempfile::tempdir().unwrap();
+    let missing = dir.path().join("missing.h5");
+    write_real_zero_checkpoint(&missing);
+    hdf5_metno::File::open_rw(&missing)
+        .unwrap()
+        .attr("schema_version")
+        .unwrap()
+        .write_scalar(&2_u32)
+        .unwrap();
+    assert_schema_field(&missing, "run/time_grid_json");
+    let oversized = dir.path().join("oversized.h5");
+    write_real_zero_checkpoint(&oversized);
+    install_scheduled_header(
+        &oversized,
+        &serde_json::json!({"kind":"segmented",
+        "segments":vec![serde_json::json!({"steps":1,"dtau":0.01});21]})
+        .to_string(),
+    );
+    assert_schema_field(&oversized, "run/time_grid_json");
+    let fixed = dir.path().join("fixed.h5");
+    write_real_zero_checkpoint(&fixed);
+    install_scheduled_header(
+        &fixed,
+        r#"{"kind":"segmented","segments":[{"steps":1,"dtau":0.01}]}"#,
+    );
+    hdf5_metno::File::open_rw(&fixed)
+        .unwrap()
+        .attr("schema_version")
+        .unwrap()
+        .write_scalar(&1_u32)
+        .unwrap();
+    assert_schema_field(&fixed, "run/time_grid_json");
+}
+
+#[test]
+fn scheduled_native_io_failures_are_contextual_and_creation_is_exclusive() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("exclusive.h5");
+    let h = ItebdHamiltonian::Real(Tfim { j: 1.0, g: 0.7 }.local());
+    let segments = vec![ItebdStepSegment {
+        steps: 1,
+        dtau: 0.01,
+    }];
+    let writer = ItebdTrajectoryWriter::create_scheduled(
+        &path,
+        support::real_tfim_metadata(),
+        &h,
+        segments.clone(),
+    )
+    .unwrap();
+    writer.finish().unwrap();
+    let before = std::fs::read(&path).unwrap();
+    let error = match ItebdTrajectoryWriter::create_scheduled(
+        &path,
+        support::real_tfim_metadata(),
+        &h,
+        segments.clone(),
+    ) {
+        Ok(_) => panic!("overwrote existing file"),
+        Err(error) => error,
+    };
+    assert!(
+        matches!(error, ItebdCheckpointError::Io { path: ref p, ref reason }
+        if p == &path && reason.contains("exists")),
+        "{error:?}"
+    );
+    assert_eq!(before, std::fs::read(&path).unwrap());
+    let blocked = path.join("child.h5");
+    let error = match ItebdTrajectoryWriter::create_scheduled(
+        &blocked,
+        support::real_tfim_metadata(),
+        &h,
+        segments,
+    ) {
+        Ok(_) => panic!("accepted non-directory parent"),
+        Err(error) => error,
+    };
+    assert!(
+        matches!(error, ItebdCheckpointError::Io { path: ref p, ref reason }
+        if p == &blocked && reason.contains("exists")),
+        "{error:?}"
+    );
+    let missing = dir.path().join("missing.h5");
+    let error = match load_itebd_checkpoint(&missing, 0, &ItebdCheckpointLoadOptions::default()) {
+        Ok(_) => panic!("read missing file"),
+        Err(error) => error,
+    };
+    assert!(
+        matches!(error, ItebdCheckpointError::Io { path: ref p, ref reason }
+        if p == &missing && reason.contains("No such file")),
+        "{error:?}"
+    );
 }

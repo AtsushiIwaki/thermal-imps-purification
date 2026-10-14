@@ -423,3 +423,50 @@ fn malformed_complete_source_does_not_fall_back_to_older_snapshot() {
     assert!(String::from_utf8_lossy(&failed.stderr).contains("accumulated_log_norm"));
     assert!(!dir.path().join("reject.json").exists());
 }
+
+#[test]
+fn fixed_solve_rejects_scheduled_restart() {
+    use hdf5_metno::types::VarLenUnicode;
+    use std::str::FromStr;
+    let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
+    let dir = tempfile::tempdir().unwrap();
+    let first = config(dir.path(), "source", 0.4, "");
+    success(&run(&first));
+    let source = dir.path().join("source.h5");
+    {
+        let file = hdf5_metno::File::open_rw(&source).unwrap();
+        file.attr("schema_version")
+            .unwrap()
+            .write_scalar(&2_u32)
+            .unwrap();
+        file.group("run")
+            .unwrap()
+            .new_dataset::<VarLenUnicode>()
+            .shape(())
+            .create("time_grid_json")
+            .unwrap()
+            .write_scalar(
+                &VarLenUnicode::from_str(
+                    r#"{"kind":"segmented","segments":[{"steps":8,"dtau":0.05}]}"#,
+                )
+                .unwrap(),
+            )
+            .unwrap();
+    }
+    let resume = config(
+        dir.path(),
+        "scheduled-rejected",
+        0.8,
+        &format!("[restart]\npath='{}'\nsnapshot=0", source.display()),
+    );
+    let output = run(&resume);
+    assert!(!output.status.success());
+    assert!(
+        String::from_utf8_lossy(&output.stderr)
+            .contains("scheduled checkpoint requires an explicit scheduled continuation driver"),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(!dir.path().join("scheduled-rejected.h5").exists());
+    assert!(!dir.path().join("scheduled-rejected.json").exists());
+}

@@ -1,4 +1,4 @@
-use super::{ItebdCheckpointError, ItebdRunMetadata};
+use super::{ItebdCheckpointError, ItebdRunMetadata, ItebdStepSegment, ItebdTimeGrid};
 use crate::config::{TrotterOrder, TruncationCfg};
 use crate::itebd_auto::ItebdHamiltonian;
 use crate::itebd_complex::ComplexLocalHamiltonian;
@@ -14,15 +14,173 @@ use std::str::FromStr;
 
 pub(super) const FILE_TYPE: &str = "TwoSiteItebdPurificationRun";
 pub(super) const SCHEMA_VERSION: u32 = 1;
+const SCHEDULED_SCHEMA_VERSION: u32 = 2;
+const MAX_SEGMENTS: usize = 20;
 pub(super) const UNIT_CELL_SIZE: u32 = 2;
 pub(super) const BASIS_ORDER: &str = "first-site-fastest";
 
+#[cfg(test)]
+#[derive(Clone, Copy)]
+pub(super) enum RootWriteFailurePoint {
+    Header,
+    TimeGrid,
+}
+
 pub(super) struct ValidatedRoot {
     pub metadata: ItebdRunMetadata,
+    pub time_grid: ItebdTimeGrid,
     pub scalar_type: ItebdScalarType,
     pub physical_dim: usize,
     pub ancilla_dim: usize,
     pub hamiltonian: ItebdHamiltonian,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct SegmentedGridRecord {
+    kind: SegmentedKind,
+    #[serde(deserialize_with = "read_bounded_segments")]
+    segments: Vec<ItebdStepSegment>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+enum SegmentedKind {
+    Segmented,
+}
+
+fn read_bounded_segments<'de, D>(deserializer: D) -> Result<Vec<ItebdStepSegment>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct BoundedSegments;
+    impl<'de> serde::de::Visitor<'de> for BoundedSegments {
+        type Value = Vec<ItebdStepSegment>;
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            write!(formatter, "at most {MAX_SEGMENTS} step segments")
+        }
+        fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            // Do not trust the encoded sequence length or allocate an unbounded vector.
+            let mut segments = Vec::new();
+            while segments.len() < MAX_SEGMENTS {
+                match seq.next_element()? {
+                    Some(segment) => segments.push(segment),
+                    None => return Ok(segments),
+                }
+            }
+            if seq.next_element::<serde::de::IgnoredAny>()?.is_some() {
+                return Err(serde::de::Error::custom(
+                    "segments must contain at most 20 entries",
+                ));
+            }
+            Ok(segments)
+        }
+    }
+    deserializer.deserialize_seq(BoundedSegments)
+}
+
+pub(super) fn validate_time_grid(
+    path: &Path,
+    grid: &ItebdTimeGrid,
+    metadata: &ItebdRunMetadata,
+) -> Result<(), ItebdCheckpointError> {
+    let ItebdTimeGrid::Segmented(segments) = grid else {
+        return Ok(());
+    };
+    let field = "run/time_grid_json";
+    if segments.is_empty() || segments.len() > MAX_SEGMENTS {
+        return Err(schema_error(
+            path,
+            field,
+            "segments must contain 1 to 20 entries",
+        ));
+    }
+    let mut total = 0_u64;
+    let mut sum = 0.0;
+    for (index, segment) in segments.iter().enumerate() {
+        if segment.steps == 0 {
+            return Err(schema_error(
+                path,
+                field,
+                format!("segments[{index}].steps must be positive"),
+            ));
+        }
+        if !segment.dtau.is_finite() || segment.dtau <= 0.0 || segment.dtau > metadata.dtau {
+            return Err(schema_error(
+                path,
+                field,
+                format!(
+                    "segments[{index}].dtau must be finite, positive and at most metadata.dtau {}",
+                    metadata.dtau
+                ),
+            ));
+        }
+        total = total.checked_add(segment.steps).ok_or_else(|| {
+            schema_error(
+                path,
+                field,
+                format!("segments[{index}].steps total overflows u64"),
+            )
+        })?;
+        sum += segment.steps as f64 * segment.dtau;
+        if !(2.0 * sum).is_finite() {
+            return Err(schema_error(
+                path,
+                field,
+                format!("segments[{index}].dtau total beta is non-finite"),
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Compute the actual beta at a complete-step prefix, including a partial segment.
+pub(super) fn expected_beta(
+    path: &Path,
+    grid: &ItebdTimeGrid,
+    metadata: &ItebdRunMetadata,
+    completed_steps: u64,
+) -> Result<f64, ItebdCheckpointError> {
+    validate_time_grid(path, grid, metadata)?;
+    match grid {
+        ItebdTimeGrid::Fixed => Ok(2.0 * completed_steps as f64 * metadata.dtau),
+        ItebdTimeGrid::Segmented(segments) => {
+            let mut remaining = completed_steps;
+            let mut sum = 0.0;
+            let mut correction = 0.0;
+            for segment in segments {
+                let steps = remaining.min(segment.steps);
+                // Compensated sum of segment contributions avoids accumulating per-step error.
+                let contribution = steps as f64 * segment.dtau - correction;
+                let next = sum + contribution;
+                correction = (next - sum) - contribution;
+                sum = next;
+                remaining -= steps;
+                if remaining == 0 {
+                    break;
+                }
+            }
+            if remaining != 0 {
+                return Err(schema_error(
+                    path,
+                    "completed_steps",
+                    "exceeds run/time_grid_json schedule",
+                ));
+            }
+            let beta = 2.0 * sum;
+            if !beta.is_finite() {
+                return Err(schema_error(
+                    path,
+                    "run/time_grid_json",
+                    "prefix beta is non-finite",
+                ));
+            }
+            Ok(beta)
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -126,9 +284,24 @@ pub(super) fn write_root(
     hamiltonian: &ItebdHamiltonian,
     scalar_type: ItebdScalarType,
     physical_dim: usize,
+    time_grid: &ItebdTimeGrid,
+    #[cfg(test)] failure_point: Option<RootWriteFailurePoint>,
 ) -> Result<(), ItebdCheckpointError> {
+    let version = match time_grid {
+        ItebdTimeGrid::Fixed => SCHEMA_VERSION,
+        ItebdTimeGrid::Segmented(_) => SCHEDULED_SCHEMA_VERSION,
+    };
     write_string_attribute(file, path, "type", FILE_TYPE)?;
-    write_scalar_attribute(file, path, "schema_version", &SCHEMA_VERSION)?;
+    #[cfg(test)]
+    if matches!(failure_point, Some(RootWriteFailurePoint::Header)) {
+        return Err(attribute_write_error(
+            file,
+            path,
+            "schema_version",
+            "injected failure",
+        ));
+    }
+    write_scalar_attribute(file, path, "schema_version", &version)?;
     write_scalar_attribute(file, path, "unit_cell_size", &UNIT_CELL_SIZE)?;
     write_string_attribute(
         file,
@@ -155,6 +328,23 @@ pub(super) fn write_root(
             )
         })?;
     write_string_dataset(&run, path, "metadata_json", &metadata_json)?;
+    if let ItebdTimeGrid::Segmented(segments) = time_grid {
+        let json = serde_json::to_string(&SegmentedGridRecord {
+            kind: SegmentedKind::Segmented,
+            segments: segments.clone(),
+        })
+        .map_err(|error| schema_error(path, "run/time_grid_json", error.to_string()))?;
+        #[cfg(test)]
+        if matches!(failure_point, Some(RootWriteFailurePoint::TimeGrid)) {
+            return Err(dataset_write_error(
+                &run,
+                path,
+                "time_grid_json",
+                "injected failure",
+            ));
+        }
+        write_string_dataset(&run, path, "time_grid_json", &json)?;
+    }
     let hamiltonian_group = run
         .create_group("hamiltonian")
         .map_err(|error| io_error(path, error))?;
@@ -207,11 +397,11 @@ pub(super) fn read_root(
         ));
     }
     let version = read_scalar_attribute::<u32>(file, path, "schema_version", "u32")?;
-    if version != SCHEMA_VERSION {
+    if version != SCHEMA_VERSION && version != SCHEDULED_SCHEMA_VERSION {
         return Err(schema_error(
             path,
             "schema_version",
-            format!("unsupported schema version {version}; expected {SCHEMA_VERSION}"),
+            format!("unsupported schema version {version}; expected 1 or 2"),
         ));
     }
     let unit_cell_size = read_scalar_attribute::<u32>(file, path, "unit_cell_size", "u32")?;
@@ -267,6 +457,32 @@ pub(super) fn read_root(
             )
         })?;
     validate_metadata(path, &metadata)?;
+    let time_grid = if version == SCHEMA_VERSION {
+        if run.link_exists("time_grid_json") {
+            return Err(schema_error(
+                path,
+                "run/time_grid_json",
+                "schema 1 must not contain a time grid",
+            ));
+        }
+        ItebdTimeGrid::Fixed
+    } else {
+        let json = schema_field(
+            read_string_dataset(&run, path, "time_grid_json"),
+            path,
+            "run/time_grid_json",
+        )?;
+        let record: SegmentedGridRecord = serde_json::from_str(&json).map_err(|error| {
+            schema_error(
+                path,
+                "run/time_grid_json",
+                format!("invalid schema-version-2 grid: {error}"),
+            )
+        })?;
+        let grid = ItebdTimeGrid::Segmented(record.segments);
+        validate_time_grid(path, &grid, &metadata)?;
+        grid
+    };
     let tolerance = acceptance_tolerance.unwrap_or(metadata.hermiticity_tolerance);
     validate_tolerance(path, "hermiticity_tolerance", tolerance)?;
 
@@ -346,6 +562,7 @@ pub(super) fn read_root(
         .map_err(|error| schema_error(path, "states", error.to_string()))?;
     Ok(ValidatedRoot {
         metadata,
+        time_grid,
         scalar_type,
         physical_dim,
         ancilla_dim,
@@ -939,6 +1156,90 @@ mod tests {
         assert!(
             reason.contains(failure),
             "missing underlying HDF5 failure in {reason:?}"
+        );
+    }
+
+    #[test]
+    fn scheduled_header_failures_retain_field_path_and_cause() {
+        use crate::config::{TrotterOrder, TruncationCfg};
+        use crate::itebd_auto::ItebdHamiltonian;
+        use crate::itebd_checkpoint::{ItebdRunMetadata, ItebdStepSegment, ItebdTimeGrid};
+        use crate::model::Tfim;
+        let dir = tempfile::tempdir().unwrap();
+        let metadata = ItebdRunMetadata {
+            dtau: 0.01,
+            trotter_order: TrotterOrder::Second,
+            truncation: TruncationCfg {
+                epsilon: 1e-13,
+                max_bond: Some(4),
+            },
+            canonicalize_every: 1,
+            record_every_beta: None,
+            model_label: None,
+            git_revision: None,
+            hermiticity_tolerance: 1e-12,
+        };
+        let h = ItebdHamiltonian::Real(Tfim { j: 1.0, g: 0.7 }.local());
+        let grid = ItebdTimeGrid::Segmented(vec![ItebdStepSegment {
+            steps: 2,
+            dtau: 0.01,
+        }]);
+        for (n, failure, object, field) in [
+            (
+                0,
+                Some(super::RootWriteFailurePoint::Header),
+                "/",
+                "attribute \"schema_version\"",
+            ),
+            (
+                1,
+                Some(super::RootWriteFailurePoint::TimeGrid),
+                "/run",
+                "dataset \"time_grid_json\"",
+            ),
+        ] {
+            let path = dir.path().join(format!("header-failure-{n}.h5"));
+            let file = hdf5_metno::File::create_excl(&path).unwrap();
+            let error = super::write_root(
+                &file,
+                &path,
+                &metadata,
+                &h,
+                crate::itebd_state_view::ItebdScalarType::Real,
+                2,
+                &grid,
+                failure,
+            )
+            .unwrap_err();
+            assert_collision_context(&io_reason(error, &path), object, field, "injected failure");
+            drop(file);
+            assert!(crate::itebd_checkpoint::list_itebd_checkpoints(&path).is_err());
+        }
+        // A real native header failure supplements injection: exclusive root attributes collide.
+        let path = dir.path().join("header-collision.h5");
+        let file = hdf5_metno::File::create_excl(&path).unwrap();
+        file.new_attr::<u32>()
+            .shape(())
+            .create("schema_version")
+            .unwrap()
+            .write_scalar(&1_u32)
+            .unwrap();
+        let error = super::write_root(
+            &file,
+            &path,
+            &metadata,
+            &h,
+            crate::itebd_state_view::ItebdScalarType::Real,
+            2,
+            &grid,
+            None,
+        )
+        .unwrap_err();
+        assert_collision_context(
+            &io_reason(error, &path),
+            "/",
+            "attribute \"schema_version\"",
+            "attribute already exists",
         );
     }
 

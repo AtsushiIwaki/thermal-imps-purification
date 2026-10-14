@@ -23,6 +23,21 @@ pub struct ItebdRunMetadata {
     pub hermiticity_tolerance: f64,
 }
 
+/// A contiguous group of complete imaginary-time steps with the same step size.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ItebdStepSegment {
+    pub steps: u64,
+    pub dtau: f64,
+}
+
+/// Source evolution grid. For a segmented grid metadata.dtau is an upper bound.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ItebdTimeGrid {
+    Fixed,
+    Segmented(Vec<ItebdStepSegment>),
+}
+
 #[derive(Debug, Clone)]
 pub struct ItebdCheckpointProgress {
     pub beta: f64,
@@ -82,6 +97,7 @@ pub struct LoadedItebdCheckpoint {
     pub state: ItebdState,
     pub hamiltonian: ItebdHamiltonian,
     pub metadata: ItebdRunMetadata,
+    pub time_grid: ItebdTimeGrid,
     pub progress: ItebdCheckpointProgress,
     pub diagnostics: ItebdSnapshotDiagnostics,
 }

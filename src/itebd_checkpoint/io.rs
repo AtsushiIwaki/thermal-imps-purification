@@ -1,13 +1,13 @@
 use super::schema::{
-    io_error, read_f64_vector, read_root, read_scalar_attribute, read_scalar_dataset,
-    read_string_dataset, read_u8_vector, schema_error, validate_create_inputs, write_f64_vector,
-    write_root, write_scalar_attribute, write_scalar_dataset, write_string_dataset,
-    write_u8_vector, ValidatedRoot,
+    expected_beta, io_error, read_f64_vector, read_root, read_scalar_attribute,
+    read_scalar_dataset, read_string_dataset, read_u8_vector, schema_error, validate_create_inputs,
+    validate_time_grid, write_f64_vector, write_root, write_scalar_attribute, write_scalar_dataset,
+    write_string_dataset, write_u8_vector, ValidatedRoot,
 };
 use super::{
     ItebdCheckpointEntry, ItebdCheckpointError, ItebdCheckpointLoadOptions,
     ItebdCheckpointProgress, ItebdRunMetadata, ItebdSnapshotDiagnostics, ItebdStepDiagnostics,
-    LoadedItebdCheckpoint,
+    ItebdStepSegment, ItebdTimeGrid, LoadedItebdCheckpoint,
 };
 use crate::itebd::StepInfo;
 use crate::itebd_auto::{ItebdHamiltonian, ItebdState};
@@ -24,6 +24,7 @@ pub struct ItebdTrajectoryWriter {
     path: PathBuf,
     tensor_path: String,
     metadata: ItebdRunMetadata,
+    time_grid: ItebdTimeGrid,
     scalar_type: ItebdScalarType,
     physical_dim: usize,
     ancilla_dim: usize,
@@ -50,9 +51,35 @@ impl ItebdTrajectoryWriter {
         metadata: ItebdRunMetadata,
         hamiltonian: &ItebdHamiltonian,
     ) -> Result<Self, ItebdCheckpointError> {
-        let path = path.as_ref().to_path_buf();
+        Self::create_with_grid(path.as_ref(), metadata, hamiltonian, ItebdTimeGrid::Fixed)
+    }
+
+    /// Create a schema-2 trajectory retaining the exact variable-step schedule.
+    /// metadata.dtau is the maximum allowed step size.
+    pub fn create_scheduled(
+        path: impl AsRef<Path>,
+        metadata: ItebdRunMetadata,
+        hamiltonian: &ItebdHamiltonian,
+        segments: Vec<ItebdStepSegment>,
+    ) -> Result<Self, ItebdCheckpointError> {
+        Self::create_with_grid(
+            path.as_ref(),
+            metadata,
+            hamiltonian,
+            ItebdTimeGrid::Segmented(segments),
+        )
+    }
+
+    fn create_with_grid(
+        path: &Path,
+        metadata: ItebdRunMetadata,
+        hamiltonian: &ItebdHamiltonian,
+        time_grid: ItebdTimeGrid,
+    ) -> Result<Self, ItebdCheckpointError> {
+        let path = path.to_path_buf();
         let tensor_path = tensor_path(&path)?.to_string();
         let (scalar_type, physical_dim) = validate_create_inputs(&path, &metadata, hamiltonian)?;
+        validate_time_grid(&path, &time_grid, &metadata)?;
         if let Some(parent) = path
             .parent()
             .filter(|parent| !parent.as_os_str().is_empty())
@@ -67,12 +94,16 @@ impl ItebdTrajectoryWriter {
             hamiltonian,
             scalar_type,
             physical_dim,
+            &time_grid,
+            #[cfg(test)]
+            None,
         )?;
         file.flush().map_err(|error| io_error(&path, error))?;
         Ok(Self {
             path,
             tensor_path,
             metadata,
+            time_grid,
             scalar_type,
             physical_dim,
             ancilla_dim: physical_dim,
@@ -130,6 +161,7 @@ impl ItebdTrajectoryWriter {
             &self.path,
             index,
             &self.metadata,
+            &self.time_grid,
             progress,
             &summary,
             self.previous_progress,
@@ -515,6 +547,7 @@ pub fn load_itebd_checkpoint(
         state: record.state,
         hamiltonian: root.hamiltonian,
         metadata: root.metadata,
+        time_grid: root.time_grid,
         progress: record.progress,
         diagnostics: record.diagnostics,
     })
@@ -662,7 +695,15 @@ fn read_snapshot(
         accumulated_log_norm,
         last_step: diagnostics.last_step.as_ref().map(step_from_diagnostics),
     };
-    validate_progress(path, index, &root.metadata, &progress, &summary, None)?;
+    validate_progress(
+        path,
+        index,
+        &root.metadata,
+        &root.time_grid,
+        &progress,
+        &summary,
+        None,
+    )?;
 
     Ok(SnapshotRecord {
         state,
@@ -1338,11 +1379,18 @@ fn validate_progress(
     path: &Path,
     index: u64,
     metadata: &ItebdRunMetadata,
+    time_grid: &ItebdTimeGrid,
     progress: &ItebdCheckpointProgress,
     summary: &ItebdStateSummary,
     previous: Option<(u64, f64)>,
 ) -> Result<(), ItebdCheckpointError> {
-    let expected_beta = 2.0 * progress.completed_steps as f64 * metadata.dtau;
+    let expected_beta = expected_beta(path, time_grid, metadata, progress.completed_steps)
+        .map_err(|error| match error {
+            ItebdCheckpointError::Schema { field, reason, .. } => {
+                snapshot_error(path, index, field, reason)
+            }
+            other => other,
+        })?;
     let scale = 1.0_f64.max(progress.beta.abs()).max(expected_beta.abs());
     let valid_beta = progress.beta.is_finite()
         && progress.beta >= 0.0
@@ -1354,7 +1402,7 @@ fn validate_progress(
             index,
             "beta",
             format!(
-                "must match 2 * completed_steps * dtau = {expected_beta} within relative tolerance 1e-12"
+                "must match time-grid prefix beta = {expected_beta} within relative tolerance 1e-12"
             ),
         ));
     }
