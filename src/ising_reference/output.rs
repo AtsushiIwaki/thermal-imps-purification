@@ -22,6 +22,8 @@ struct Summary {
     completed_steps: u64,
     completed_steps_kind: String,
     available_samples: usize,
+    // Require the field while preserving explicit null for interrupted workers.
+    #[serde(deserialize_with = "Option::<f64>::deserialize")]
     elapsed_seconds: Option<f64>,
     checkpoint_available: bool,
 }
@@ -698,6 +700,23 @@ mod tests {
                 0.,
             ))
         }
+    }
+    #[test]
+    fn summary_elapsed_is_required_but_explicit_null_is_valid() {
+        let mut value = json!({"schema_version":1,"request":{"schema_version":1,"model":{"name":"ising_mixed","g":1.05,"h":0.5},"variant":"fine","source_revision":"a".repeat(40),"worker_sha256":"b".repeat(64)},"status":"partial","reason":"interrupted","completed_steps":0,"completed_steps_kind":"retained_lower_bound","available_samples":0,"elapsed_seconds":null,"checkpoint_available":false});
+        assert!(serde_json::from_value::<Summary>(value.clone())
+            .unwrap()
+            .elapsed_seconds
+            .is_none());
+        value.as_object_mut().unwrap().remove("elapsed_seconds");
+        let error = serde_json::from_value::<Summary>(value)
+            .err()
+            .expect("missing elapsed_seconds must fail")
+            .to_string();
+        assert!(
+            error.contains("missing field") && error.contains("elapsed_seconds"),
+            "{error}"
+        );
     }
     #[test]
     fn output_failure_preserves_target_rows() {

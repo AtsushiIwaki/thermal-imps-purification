@@ -282,9 +282,16 @@ fn reference_verify_rejects_mismatched_conditions_or_checkpoint() {
     fs::remove_file(bundle.join("extra")).unwrap();
     #[cfg(unix)]
     {
-        std::os::unix::fs::symlink("conditions.json", bundle.join("extra")).unwrap();
-        assert!(verify_directory(&bundle).is_err());
-        fs::remove_file(bundle.join("extra")).unwrap();
+        let samples = fs::read(bundle.join("samples.csv")).unwrap();
+        fs::remove_file(bundle.join("samples.csv")).unwrap();
+        std::os::unix::fs::symlink("conditions.json", bundle.join("samples.csv")).unwrap();
+        let error = format!("{:#}", verify_directory(&bundle).unwrap_err());
+        assert!(
+            error.contains("samples.csv") && error.contains("regular") && error.contains("symlink"),
+            "{error}"
+        );
+        fs::remove_file(bundle.join("samples.csv")).unwrap();
+        fs::write(bundle.join("samples.csv"), samples).unwrap();
     }
     let summary: Value =
         serde_json::from_slice(&fs::read(bundle.join("summary.json")).unwrap()).unwrap();

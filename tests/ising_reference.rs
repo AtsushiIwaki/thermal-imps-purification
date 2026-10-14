@@ -80,7 +80,8 @@ fn reference_mixed_matrix_and_rdm_energy_identity() {
             -0.525, -0.5,
         ],
     );
-    assert!((&h.two_site_h - expected).norm() < 1e-15);
+    assert!((&h.two_site_h - &expected).norm() < 1e-15);
+    assert!((&h.site_energy - &expected).norm() < 1e-15);
     let mut state = ItebdState::infinite_temperature(settings.hamiltonian()).unwrap();
     let step = thermal_imps_purification::itebd_auto::imaginary_time_step_second_order_auto(
         &mut state,

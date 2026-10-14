@@ -172,7 +172,7 @@ pub fn resolve_request(request: &ReferenceRequest) -> Result<ReferenceSettings> 
     let zi = i.kronecker(&z);
     let iz = z.kronecker(&i);
     let h2 = -&zz - (&xi + ix) * 0.525 - (&zi + iz) * 0.25;
-    let site = -zz - xi * 1.05 - zi * 0.5;
+    let site = h2.clone();
     let hamiltonian =
         ItebdHamiltonian::try_from_complex(h2.map(Complex64::from), site.map(Complex64::from))
             .context("validate mixed-field reference Hamiltonian")?;
