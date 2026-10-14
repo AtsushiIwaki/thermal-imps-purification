@@ -25,7 +25,11 @@ thermodynamics, exclusive compact bundles, native verification, and explicit dea
 finalization. Scheduled checkpoints use schema2; fixed schema1 remains supported and `solve`
 rejects scheduled restart. See the [worker contract](docs/usage.md#fixed-mixed-field-ising-reference-worker).
 The reviewed implementation and final corrections (`57ae151`) are now integrated into
-the stable local `main`; no public push or new hosted CI run was performed. Required
+the stable `main` and were published on 2026-10-15 JST at `e5a9874`. The
+[publication CI run](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38650343861)
+built successfully on Ubuntu and macOS; Ubuntu verification failed with exit 101,
+while macOS verification passed. The failed Ubuntu test and root cause are not
+yet known because detailed logs require authenticated access. Required
 workflow evidence was copied and hash-verified under `.superpowers/sdd/` before the
 temporary worktree was moved to normal Trash and its merged branch retired.
 The controlling study subsequently completed the three approved cold reference runs
@@ -62,7 +66,11 @@ scheduled. The controlling Infinite_MST study completed final report QA and revi
 retirement of `/private/tmp/imst-current-build` to normal recoverable Trash;
 rebuild information and receipts remain in that study’s result records. Production reused the reviewed
 worker from `57ae151`; later documentation changes do not alter that source binding.
-No public push or new hosted CI run was performed.
+Publication is complete. Diagnose the Ubuntu hosted verification failure after
+authenticated log access is available. The publication-status follow-up changes
+only this document and skips duplicate CI; the linked run at `e5a9874` remains
+the hosted verification evidence. Do not infer a numerical defect from the
+unexplained CI failure or launch new production runs.
 
 ## Relevant links
 
