@@ -28,7 +28,15 @@ The reviewed implementation and final corrections (`57ae151`) are now integrated
 the stable local `main`; no public push or new hosted CI run was performed. Required
 workflow evidence was copied and hash-verified under `.superpowers/sdd/` before the
 temporary worktree was moved to normal Trash and its merged branch retired.
-This implementation does not establish a new physical refinement qualification.
+The controlling study subsequently completed the three approved cold reference runs
+at source HEAD `da92cfb`: fine (delta_tau<=0.005, Dmax=128), time-step (0.01,128)
+and bond-cap (0.005,64), cutoff 1e-13. All 60 target samples and all three native
+checkpoint checks completed. Bundles are retained under
+`results/mixed-field-ising-g105-h05-reference/`. Ordinary entropy/free energy
+failed the 1e-5 time-step sensitivity diagnostic at every target, and fine entropy
+is slightly negative at T=0.1–0.3. Fine values are adopted by explicit user choice;
+this is not a physical refinement qualification. The main study records exact
+outcomes in `Infinite_MST/notes/2026-10-14-mixed-field-ising-cg-fr-heating.md`.
 
 ## Unresolved constraints
 
@@ -49,10 +57,12 @@ This implementation does not establish a new physical refinement qualification.
 
 ## Next action
 
-Independent review and stable local integration are complete. The controlling study still
-owns stable source/worker hash binding, numerical-launch approval, bounded production
-comparisons, and reviewed disposal of the retained task-owned build outputs.
-No production mixed-field reference run or public push is part of this implementation task.
+The approved reference production scope is complete; no additional refinement is
+scheduled. The controlling Infinite_MST study completed final report QA and reviewed
+retirement of `/private/tmp/imst-current-build` to normal recoverable Trash;
+rebuild information and receipts remain in that study’s result records. Production reused the reviewed
+worker from `57ae151`; later documentation changes do not alter that source binding.
+No public push or new hosted CI run was performed.
 
 ## Relevant links
 
