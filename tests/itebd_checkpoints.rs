@@ -1045,20 +1045,27 @@ fn assert_metadata(expected: &ItebdRunMetadata, actual: &ItebdRunMetadata) {
     );
 }
 
+fn assert_f64_slice_exact(expected: &[f64], actual: &[f64]) {
+    assert_eq!(actual.len(), expected.len());
+    for (actual, expected) in actual.iter().zip(expected) {
+        assert_eq!(actual.to_bits(), expected.to_bits());
+    }
+}
+
 fn assert_real_state_exact(expected: &PurifiedMps, actual: &PurifiedMps) {
     assert_real_site_exact(&expected.a, &actual.a);
     assert_real_site_exact(&expected.b, &actual.b);
-    assert_eq!(actual.lambda_ab, expected.lambda_ab);
+    assert_f64_slice_exact(&expected.lambda_ab, &actual.lambda_ab);
     assert_eq!(actual.lambda_bond_ab, expected.lambda_bond_ab);
-    assert_eq!(actual.lambda_ba, expected.lambda_ba);
+    assert_f64_slice_exact(&expected.lambda_ba, &actual.lambda_ba);
     assert_eq!(actual.lambda_bond_ba, expected.lambda_bond_ba);
 }
 
 fn assert_real_site_exact(expected: &Site, actual: &Site) {
     assert_eq!(actual.gamma.indices, expected.gamma.indices);
-    assert_eq!(
-        actual.gamma.to_vec::<f64>().unwrap(),
-        expected.gamma.to_vec::<f64>().unwrap()
+    assert_f64_slice_exact(
+        &expected.gamma.to_vec::<f64>().unwrap(),
+        &actual.gamma.to_vec::<f64>().unwrap(),
     );
     assert_eq!(actual.left, expected.left);
     assert_eq!(actual.phys, expected.phys);
@@ -1069,9 +1076,9 @@ fn assert_real_site_exact(expected: &Site, actual: &Site) {
 fn assert_complex_state_exact(expected: &ComplexPurifiedMps, actual: &ComplexPurifiedMps) {
     assert_complex_site_exact(&expected.a, &actual.a);
     assert_complex_site_exact(&expected.b, &actual.b);
-    assert_eq!(actual.lambda_ab, expected.lambda_ab);
+    assert_f64_slice_exact(&expected.lambda_ab, &actual.lambda_ab);
     assert_eq!(actual.lambda_bond_ab, expected.lambda_bond_ab);
-    assert_eq!(actual.lambda_ba, expected.lambda_ba);
+    assert_f64_slice_exact(&expected.lambda_ba, &actual.lambda_ba);
     assert_eq!(actual.lambda_bond_ba, expected.lambda_bond_ba);
 }
 
@@ -1292,10 +1299,19 @@ fn scheduled_checkpoint_validates_prefix_beta() {
     let dir = tempfile::tempdir().unwrap();
     for complex in [false, true] {
         let path = dir.path().join(format!("scheduled-{complex}.h5"));
+        let mut real = infinite_temperature(2);
+        let mut values = real.a.gamma.to_vec::<f64>().unwrap();
+        let zero = values.iter().position(|value| *value == 0.0).unwrap();
+        values[zero] = -0.0;
+        real.a.gamma = Tensor::from_dense(real.a.gamma.indices.clone(), values).unwrap();
+        assert_eq!(
+            real.a.gamma.to_vec::<f64>().unwrap()[zero].to_bits(),
+            (-0.0_f64).to_bits()
+        );
         let state = if complex {
-            ItebdState::Complex(support::promote_real_state(&infinite_temperature(2)))
+            ItebdState::Complex(support::promote_real_state(&real))
         } else {
-            ItebdState::Real(infinite_temperature(2))
+            ItebdState::Real(real)
         };
         let h = if complex {
             support::phase_tfim()
