@@ -162,3 +162,81 @@ python3 scripts/plot_run.py results/aklt_projector.json figures/aklt_projector_o
 TFIM and XY overlay exact curves. AKLT guides are limiting values, not complete exact
 finite-temperature curves. Consult [validation](validation.md) and [limitations](limitations.md)
 before extending the checked-in evidence.
+
+## Fixed mixed-field Ising reference worker
+
+`ising_reference` exposes four argument forms:
+
+```text
+ising_reference --preflight REQUEST_JSON
+ising_reference REQUEST_JSON OUTPUT_DIRECTORY
+ising_reference --verify OUTPUT_DIRECTORY
+ising_reference --finalize-interrupted OUTPUT_DIRECTORY REASON
+```
+
+A schema-1 request contains only `schema_version: 1`,
+`model: {"name":"ising_mixed","g":1.05,"h":0.5}`, `variant` (`fine`, `time-step`, or
+`bond-cap`), `source_revision` (40 hexadecimal characters), and `worker_sha256`
+(64 hexadecimal characters). Unknown fields and unsupported models/settings fail. The caller
+must independently bind the actual source, worker executable and request bytes; these strings
+are syntax-checked claims, not an executable attestation. Build with
+`cargo build --release --offline --locked --bin ising_reference` using the README's native
+static-HDF5 environment. Preflight emits all resolved settings/matrices/grid and creates no output.
+
+Each run starts at beta zero with real two-site purification of
+`H = -sum ZZ - 1.05 sum X - 0.5 sum Z` (Pauli operators, `J=k_B=1`). Targets are
+`T=j/10`, `beta=10/j`, for decreasing integer `j=20,...,1`, with no interpolation.
+The coarse grid uses 507 steps; both finer grids split each coarse step in two (1,014 steps).
+Fine uses maximum `dtau=.005`, cap128; time-step uses `.01`, cap128; bond-cap uses `.005`, cap64.
+All use cutoff `1e-13`, second-order Strang, and canonicalization after every complete step.
+Canonicalizer tolerance/max-iterations/support-floor are `1e-13`/4,000/`1e-12`.
+RDM tolerance/max-iterations are `1e-12`/10,000; trace/Hermiticity/positivity tolerance is `1e-10`;
+output/intermediate element caps are 1,048,576/16,777,216. No wall cap or automatic retry is added.
+
+The output directory must not exist. Its only members are `conditions.json`, `samples.csv`,
+`summary.json` and, when a valid endpoint exists, one `state.h5`. Conditions are exactly the
+resolved preflight object. Summary schema1 repeats `request` and records `status` (`complete`
+or `partial`), actual `reason`, `completed_steps`, `completed_steps_kind`, `available_samples`,
+`elapsed_seconds`, and
+`checkpoint_available`. Every target boundary atomically replaces the 20-row scalar table;
+staging files are temporary siblings outside the bundle. Only one terminal checkpoint is written,
+never per-step tensors or checkpoints. A complete summary is published after consistency checks.
+An I/O failure can leave diagnostic evidence and no summary; normal verification rejects that
+incomplete publication. Atomic replacement and HDF5 flush do not guarantee power-loss durability.
+
+The CSV has these ordered columns:
+
+```text
+temperature_tick,temperature,beta_target,beta_actual,completed_steps,available,reason,energy,mx,mz,zz,free_energy,entropy,accumulated_log_norm,parity_delta_energy,parity_delta_mx,parity_delta_mz,parity_delta_zz,direct_energy_difference,maximum_rdm_fixed_point_residual,maximum_rdm_trace_residual,maximum_rdm_hermiticity_residual,maximum_rdm_iterations,minimum_rdm_eigenvalue,bond_dimension_ab,bond_dimension_ba
+```
+
+Missing measurement/diagnostic values are empty fields (load as JSON null); availability is
+`true`/`false` and unavailable rows retain a quoted CSV reason. Reasons may contain commas,
+quotes or newlines, so use a CSV parser. Progress and accumulated log norm remain finite known
+ledger values even when measurement values are missing. Untouched slots have beta/steps/norm zero.
+`energy` averages A/B two-site physical-RDM expectations and agrees with
+`-zz-1.05*mx-.5*mz`; `direct_energy_difference` is that energy minus `energy_density_auto`.
+Parity differences are A minus B. The norm ledger includes both evolution and canonicalization:
+`f=-(ln(2)+accumulated_log_norm/2)/beta`, `s=(E-f)/T`, per physical site. This entropy is neither
+purification entanglement nor block Markov entropy. Map these fields to ordinary `f_ref`/`s_ref`.
+
+Only after observing worker termination may a supervisor call `--finalize-interrupted`.
+This preserves the scalar table and never evolves or replaces state. An absent endpoint remains
+absent; an existing endpoint must pass native integrity and applicable terminal remeasurement.
+Corrupt/incomplete checkpoints or inconsistent existing summaries leave finalization unsuccessful
+and evidence unchanged. A finalized interruption is always `partial`, with the supervisor's reason
+and `elapsed_seconds: null` (unknown); without a checkpoint, completed steps are the largest
+retained scalar-ledger count, explicitly labeled `completed_steps_kind: "retained_lower_bound"`.
+Ordinary returned progress and native endpoints use `completed_steps_kind: "exact"`.
+Native panics remain process
+failures, not successful partial evolutions. Ordinary evolution errors also omit the possibly
+mutated endpoint. RDM errors may leave gaps alongside a valid terminal endpoint.
+
+Verification emits one schema1 JSON object with `status`, `sample_count`, `available_samples`,
+`checkpoint_available`, `checkpoint_verified`, `terminal_consistency_passed` (null when no available
+sample matches the endpoint), `completed_steps`, `completed_steps_kind`, and `request`.
+Errors exit nonzero with file/field context.
+The caller retains independent file hashes and rejects later mutation. A verified table/endpoint
+does not certify physical convergence, accuracy at earlier beta, or a refinement comparison.
+Scheduled native checkpoints use schema2 with exact segments; fixed-step checkpoints retain
+schema1. The fixed-step `solve` restart interface explicitly rejects scheduled checkpoints.

@@ -181,3 +181,26 @@ External struct literals must supply `beta_f` and wrap positive-beta free energi
 it from `beta * f`. New beta-zero records require `f: null` and a finite `beta_f`.
 Missing `f`, a null positive-beta `f`, explicit null `beta_f`, and a positive-beta
 `beta_f` inconsistent with `beta * f` are rejected during deserialization.
+
+## Scheduled checkpoints and fixed Ising reference
+
+`ItebdTrajectoryWriter::create_scheduled(path, metadata, hamiltonian, segments)` writes schema2
+with `Vec<ItebdStepSegment { steps, dtau }>` and metadata `dtau` as the maximum allowed step.
+`LoadedItebdCheckpoint::time_grid` distinguishes `ItebdTimeGrid::Fixed` (historical schema1)
+from `Segmented`. Progress validates against the actual prefix sum, including a partial segment;
+never reconstruct beta from average or maximum dtau. The fixed-step solve CLI cannot restart it.
+
+`ising_reference::{resolve_request, preflight, run_reference, measure_reference}` supplies the
+strict fixed mixed-field request, immutable resolved controls, scalar target callback, terminal
+outcome and ordinary physical thermodynamics. The output module exposes:
+
+- `run_to_directory(&ReferenceRequest, &Path) -> anyhow::Result<serde_json::Value>`
+- `verify_directory(&Path) -> anyhow::Result<serde_json::Value>` (read-only)
+- `finalize_interrupted_directory(&Path, &str) -> anyhow::Result<serde_json::Value>`
+
+The finalizer is only for a supervisor-observed dead process and cannot restart/evolve/replace
+an endpoint. A callback or publication error propagates; native panics are not caught. On an
+ordinary evolution error, `ReferenceOutcome::terminal_state` is absent because a failed native
+call may have mutated tensors. `ReferenceSample::values` is optional and serde-flattened; CSV
+publication explicitly emits every column for gaps. See the [worker contract](usage.md#fixed-mixed-field-ising-reference-worker)
+for complete controls, schema, normalization, integrity checks, and limitations.

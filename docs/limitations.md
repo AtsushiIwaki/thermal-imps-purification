@@ -39,3 +39,16 @@ HDF5 completion marker plus flush is not a filesystem transaction or power-loss 
 Concurrent writers to the same destination are unsupported. Scientific use for a new model or
 regime requires independent references or limiting cases, step-size refinement, cutoff and bond
 cap sensitivity, canonical checks, and model-specific invariants.
+
+The fixed mixed-field Ising reference adapter adds scheduled-grid and compact publication
+integrity checks, not a new numerical qualification. Its production real backend can panic in a
+native operation; the process fails and an external supervisor may explicitly finalize already
+published target scalars. It never catches a panic as a successful evolution. A returned evolution
+error also makes the endpoint unavailable, since structural validation cannot prove that a failed
+mutating call preserved the last committed beta. Finalization never repairs a native checkpoint;
+corrupt or incomplete checkpoint evidence remains unsuccessful integrity debt. Only an applicable
+terminal sample is remeasured during verification; earlier scalar rows receive schema, grid,
+finite-value, thermodynamic and diagnostic checks, not historical trajectory replay. Source and
+worker identity strings require the caller's independent hash binding. Concurrent publication or
+finalization while the worker is alive is unsupported. No new refinement or convergence claim is
+established by software fixtures labeled with scheduled progress.

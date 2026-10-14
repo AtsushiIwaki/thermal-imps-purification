@@ -20,6 +20,12 @@ passed build and verification on both Ubuntu and macOS at that commit. The
 local Linux routine and fixed specific-heat evidence; its pending-publication and platform
 statements describe the earlier verification checkpoint and are superseded by this status.
 
+The fixed mixed-field Ising adapter now provides exact target schedules, ordinary norm-ledger
+thermodynamics, exclusive compact bundles, native verification, and explicit dead-process
+finalization. Scheduled checkpoints use schema2; fixed schema1 remains supported and `solve`
+rejects scheduled restart. See the [worker contract](docs/usage.md#fixed-mixed-field-ising-reference-worker).
+This implementation does not establish a new physical refinement qualification.
+
 ## Unresolved constraints
 
 - Release tags and registry publication remain undecided.
@@ -39,9 +45,9 @@ statements describe the earlier verification checkpoint and are superseded by th
 
 ## Next action
 
-Select the next bounded task from the documented numerical limitations or the release
-and registry-publication decisions. Publication and hosted macOS/Linux verification of
-the canonical matrix-decomposition repair are complete; no next implementation task is selected.
+The controlling study owns independent review, stable source integration, source/worker hash
+binding, bounded production comparisons, and disposal of the task-owned build/worktree.
+No production mixed-field reference run or public push is part of this implementation task.
 
 ## Relevant links
 

@@ -1,4 +1,5 @@
 //! Fixed mixed-field Ising purification reference and ordinary thermodynamics.
+pub mod output;
 use crate::itebd_auto::{ItebdHamiltonian, ItebdState};
 use crate::itebd_checkpoint::{ItebdCheckpointProgress, ItebdStepSegment};
 use crate::tensor::Truncation;
