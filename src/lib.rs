@@ -29,3 +29,4 @@ pub mod config;
 pub mod runner;
 pub mod solve_run;
 pub mod specific_heat;
+pub mod ising_reference;
