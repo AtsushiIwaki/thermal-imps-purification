@@ -7,6 +7,10 @@ use thermal_imps_purification::{
     itebd_auto::ItebdState,
     itebd_checkpoint::*,
 };
+// HDF5 native descriptors can be inherited by concurrently spawned CLI processes.
+// Serialize direct HDF5 access with subprocess launches, as in solve_checkpoint_restart.
+static PROCESS_IO: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 const HEADER: &str = "temperature_tick,temperature,beta_target,beta_actual,completed_steps,available,reason,energy,mx,mz,zz,free_energy,entropy,accumulated_log_norm,parity_delta_energy,parity_delta_mx,parity_delta_mz,parity_delta_zz,direct_energy_difference,maximum_rdm_fixed_point_residual,maximum_rdm_trace_residual,maximum_rdm_hermiticity_residual,maximum_rdm_iterations,minimum_rdm_eigenvalue,bond_dimension_ab,bond_dimension_ba";
 fn request() -> ReferenceRequest {
     serde_json::from_value(json!({"schema_version":1,"model":{"name":"ising_mixed","g":1.05,"h":0.5},"variant":"fine","source_revision":"a".repeat(40),"worker_sha256":"b".repeat(64)})).unwrap()
@@ -90,6 +94,7 @@ fn fixture(path: &Path, checkpoint: bool, available: usize) {
 }
 #[test]
 fn reference_cli_preflight_creates_no_outputs() {
+    let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let input = dir.path().join("request.json");
     put(&input, &serde_json::to_value(request()).unwrap());
@@ -130,6 +135,7 @@ fn reference_cli_preflight_creates_no_outputs() {
 }
 #[test]
 fn reference_bundle_has_only_targets_and_one_checkpoint() {
+    let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let bundle = dir.path().join("bundle");
     fixture(&bundle, true, 20);
@@ -203,6 +209,7 @@ fn reference_bundle_has_only_targets_and_one_checkpoint() {
 }
 #[test]
 fn reference_existing_destination_is_not_overwritten() {
+    let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("existing");
     fs::write(&path, b"keep").unwrap();
@@ -220,6 +227,7 @@ fn reference_existing_destination_is_not_overwritten() {
 }
 #[test]
 fn reference_partial_rows_survive_failed_process() {
+    let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let bundle = dir.path().join("bundle");
     fixture(&bundle, false, 1);
@@ -256,6 +264,7 @@ fn reference_partial_rows_survive_failed_process() {
 }
 #[test]
 fn reference_verify_rejects_mismatched_conditions_or_checkpoint() {
+    let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let bundle = dir.path().join("bundle");
     fixture(&bundle, true, 20);
@@ -358,6 +367,7 @@ fn reference_verify_rejects_mismatched_conditions_or_checkpoint() {
 }
 #[test]
 fn interrupted_finalization_rejects_existing_inconsistent_summary() {
+    let _process_io = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
     let dir = tempfile::tempdir().unwrap();
     let bundle = dir.path().join("bundle");
     fixture(&bundle, false, 1);
