@@ -24,6 +24,10 @@ The fixed mixed-field Ising adapter now provides exact target schedules, ordinar
 thermodynamics, exclusive compact bundles, native verification, and explicit dead-process
 finalization. Scheduled checkpoints use schema2; fixed schema1 remains supported and `solve`
 rejects scheduled restart. See the [worker contract](docs/usage.md#fixed-mixed-field-ising-reference-worker).
+The reviewed implementation and final corrections (`57ae151`) are now integrated into
+the stable local `main`; no public push or new hosted CI run was performed. Required
+workflow evidence was copied and hash-verified under `.superpowers/sdd/` before the
+temporary worktree was moved to normal Trash and its merged branch retired.
 This implementation does not establish a new physical refinement qualification.
 
 ## Unresolved constraints
@@ -45,8 +49,9 @@ This implementation does not establish a new physical refinement qualification.
 
 ## Next action
 
-The controlling study owns independent review, stable source integration, source/worker hash
-binding, bounded production comparisons, and disposal of the task-owned build/worktree.
+Independent review and stable local integration are complete. The controlling study still
+owns stable source/worker hash binding, numerical-launch approval, bounded production
+comparisons, and reviewed disposal of the retained task-owned build outputs.
 No production mixed-field reference run or public push is part of this implementation task.
 
 ## Relevant links
