@@ -13,37 +13,32 @@ MIT is applied to project-authored material; copied upstream material retains it
 The README is a short finite-temperature quickstart; advanced CLI and library details live in
 the linked usage and API guides.
 
-The canonical eigendecomposition/SVD repair is published on `main` at `af67529`, following
-the GNU/Linux HDF5 launch repair. The [2026-09-08 hosted CI run](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/34237297719)
-passed build and verification on both Ubuntu and macOS at that commit. The
-[numerical investigation](docs/investigations/2026-09-08-complex-heat-reality.md) retains the
-local Linux routine and fixed specific-heat evidence; its pending-publication and platform
-statements describe the earlier verification checkpoint and are superseded by this status.
+The new coefficient-one AKLT projector reference worker is implemented on
+`codex/aklt-reference` in the isolated checkout, based on
+`bf4d627b19f5ed785608c050efbad1be8efca400`; reviewed code is `f0e5be0`.
+It shares the scheduled trajectory engine with the unchanged Ising public contract.
+The strict AKLT worker supports fine/time-step cap128 variants, cooperative trajectory
+budgets, cumulative cap-hit evidence, retained scalar prefixes and one native terminal
+checkpoint. See the [worker contract](docs/usage.md#fixed-aklt-projector-reference-worker).
+No new AKLT production trajectory has launched. Local integration remains pending;
+no push, PR or hosted CI is authorized for this task.
 
-The fixed mixed-field Ising adapter now provides exact target schedules, ordinary norm-ledger
-thermodynamics, exclusive compact bundles, native verification, and explicit dead-process
-finalization. Scheduled checkpoints use schema2; fixed schema1 remains supported and `solve`
-rejects scheduled restart. See the [worker contract](docs/usage.md#fixed-mixed-field-ising-reference-worker).
-The reviewed implementation and final corrections (`57ae151`) are now integrated into
-the stable `main` and were published on 2026-10-15 JST at `e5a9874`. The
-[initial publication CI run](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38650343861)
-failed two Ubuntu CLI tests while writing HDF5 fixtures. The test-only follow-up
-`e063778` serializes direct HDF5 access with CLI subprocess launches in all six
-reference CLI tests, matching the existing restart-test discipline. The
-[follow-up hosted CI run](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38651815754)
-passed build and verification on both Ubuntu and macOS. Numerical code, dependency
-pins, test assertions and test selection are unchanged. Required
-workflow evidence was copied and hash-verified under `.superpowers/sdd/` before the
-temporary worktree was moved to normal Trash and its merged branch retired.
-The controlling study subsequently completed the three approved cold reference runs
-at source HEAD `da92cfb`: fine (delta_tau<=0.005, Dmax=128), time-step (0.01,128)
-and bond-cap (0.005,64), cutoff 1e-13. All 60 target samples and all three native
-checkpoint checks completed. Bundles are retained under
-`results/mixed-field-ising-g105-h05-reference/`. Ordinary entropy/free energy
-failed the 1e-5 time-step sensitivity diagnostic at every target, and fine entropy
-is slightly negative at T=0.1–0.3. Fine values are adopted by explicit user choice;
-this is not a physical refinement qualification. The main study records exact
-outcomes in `Infinite_MST/notes/2026-10-14-mixed-field-ising-cg-fr-heating.md`.
+One independent whole-branch review across this repository and Infinite_MST found one
+Important Python/Rust schedule-rounding mismatch in the main Python bridge. It was fixed
+there with native-wire regression evidence; no reference source change was needed.
+Final local routine verification passes462 tests in38 binaries,0 failures,16 optional
+ignored tests and0 warnings; doc tests select0 and pass. The debug no-run build took273.31s,
+routine wall192.70s, doc-test wall0.53s. The standalone release worker build passed in290.05s.
+The controlling Infinite_MST implementation record owns preparation cost, integration,
+launch and recoverable cleanup; builds are under /private/tmp/imst-current-build/purification.
+
+The published canonical repair and mixed-field Ising worker remain the baseline.
+The [successful hosted follow-up](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38651815754)
+verified the prior code at `e063778`, not this AKLT change. The completed mixed-field
+study retains three cold reference bundles under results/mixed-field-ising-g105-h05-reference/.
+Its fine values were adopted by explicit user choice despite time-step differences and
+slightly negative low-temperature entropy; that is not refinement qualification.
+The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Unresolved constraints
 
@@ -64,15 +59,12 @@ outcomes in `Infinite_MST/notes/2026-10-14-mixed-field-ising-cg-fr-heating.md`.
 
 ## Next action
 
-The approved reference production scope is complete; no additional refinement is
-scheduled. The controlling Infinite_MST study completed final report QA and reviewed
-retirement of `/private/tmp/imst-current-build` to normal recoverable Trash;
-rebuild information and receipts remain in that study’s result records. Production reused the reviewed
-worker from `57ae151`; later documentation changes do not alter that source binding.
-Publication and the hosted CI follow-up are complete. The final status-only
-follow-up changes this document and skips duplicate CI; the successful linked run
-at `e063778` verifies the unchanged code and test tree. No new production runs or
-additional refinement were needed for the test-process synchronization repair.
+The controlling study qualified all three chi24 initial states with identical raw/admitted
+hashes,0 updates and1 AD evaluation each. Obtain the required local integration choice, then
+finish the stable-source supervisor preflight before the two approved AKLT trajectories from the stable
+Dropbox results root. No extra bond-cap, retry or refinement study is authorized. Preserve
+both task checkouts/builds until integration and remaining use, then perform only explicitly
+reviewed recoverable cleanup. The earlier Ising publication/cleanup remains complete.
 
 ## Relevant links
 
