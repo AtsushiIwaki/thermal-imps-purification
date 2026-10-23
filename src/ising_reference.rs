@@ -31,13 +31,7 @@ pub struct ReferenceRequest {
     pub source_revision: String,
     pub worker_sha256: String,
 }
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ReferenceTarget {
-    pub temperature_tick: u32,
-    pub temperature: f64,
-    pub beta: f64,
-    pub completed_steps: u64,
-}
+pub use crate::reference_trajectory::ReferenceTarget;
 /// Construct only with resolve_request; production numerical controls cannot be changed.
 pub struct ReferenceSettings {
     request: ReferenceRequest,
@@ -132,34 +126,7 @@ pub fn resolve_request(request: &ReferenceRequest) -> Result<ReferenceSettings> 
     } else {
         2
     };
-    let mut segments = Vec::with_capacity(20);
-    let mut targets = Vec::with_capacity(20);
-    let mut completed_steps = 0;
-    for j in (1_u32..=20).rev() {
-        let denominator = u64::from(j) * u64::from(j + 1);
-        let coarse_steps = if j == 20 {
-            25
-        } else {
-            500_u64.div_ceil(denominator)
-        };
-        let delta_beta = if j == 20 {
-            0.5
-        } else {
-            10.0 / denominator as f64
-        };
-        let steps = coarse_steps * split;
-        segments.push(ItebdStepSegment {
-            steps,
-            dtau: delta_beta / (2.0 * steps as f64),
-        });
-        completed_steps += steps;
-        targets.push(ReferenceTarget {
-            temperature_tick: j,
-            temperature: j as f64 / 10.0,
-            beta: 10.0 / j as f64,
-            completed_steps,
-        });
-    }
+    let (segments, targets) = crate::reference_trajectory::nested_schedule(split)?;
     let (x, z, i) = (
         crate::model::pauli_x(),
         crate::model::pauli_z(),
@@ -336,204 +303,61 @@ impl ReferenceSampleValues {
         Ok(())
     }
 }
+impl crate::reference_trajectory::Measurement for ReferenceSampleValues {
+    fn validate(&self) -> Result<()> {
+        ReferenceSampleValues::validate(self)
+    }
+}
+use crate::reference_trajectory::{
+    expectation, run_scheduled, Engine, NativeEngine, RunPolicy, TrajectorySettings,
+};
 pub fn run_reference(
     settings: &ReferenceSettings,
     callback: &mut dyn FnMut(&ReferenceSample) -> Result<()>,
 ) -> Result<ReferenceOutcome> {
-    run_engine(settings, callback, &mut NativeEngine)
+    run_engine(settings, callback, &mut NativeEngine(measure_reference))
 }
-trait Engine {
-    fn setup(&mut self, h: &ItebdHamiltonian) -> Result<ItebdState> {
-        Ok(ItebdState::infinite_temperature(h)?)
-    }
-    fn step(
-        &mut self,
-        s: &mut ItebdState,
-        h: &ItebdHamiltonian,
-        dt: f64,
-        t: &Truncation,
-    ) -> Result<(crate::itebd::StepInfo, f64)>;
-    fn measure(
-        &mut self,
-        s: &ItebdState,
-        h: &ItebdHamiltonian,
-        beta: f64,
-        norm: f64,
-    ) -> Result<ReferenceSampleValues> {
-        measure_reference(s, h, beta, norm)
-    }
-}
-struct NativeEngine;
-impl Engine for NativeEngine {
-    fn step(
-        &mut self,
-        state: &mut ItebdState,
-        ham: &ItebdHamiltonian,
-        dt: f64,
-        truncation: &Truncation,
-    ) -> Result<(crate::itebd::StepInfo, f64)> {
-        let step =
-            crate::itebd_auto::imaginary_time_step_second_order_auto(state, ham, dt, truncation)
-                .context("Strang evolution step")?;
-        let canonical = crate::itebd_auto::canonicalize_auto(state, ham)
-            .context("canonicalization after complete Strang step")?;
-        Ok((step, canonical))
+fn from_scheduled(
+    s: crate::reference_trajectory::ScheduledSample<ReferenceSampleValues>,
+) -> ReferenceSample {
+    ReferenceSample {
+        temperature_tick: s.temperature_tick,
+        temperature: s.temperature,
+        beta_target: s.beta_target,
+        beta_actual: s.beta_actual,
+        completed_steps: s.completed_steps,
+        available: s.available,
+        reason: s.reason,
+        accumulated_log_norm: s.accumulated_log_norm,
+        values: s.values,
     }
 }
 fn run_engine(
     settings: &ReferenceSettings,
     callback: &mut dyn FnMut(&ReferenceSample) -> Result<()>,
-    engine: &mut dyn Engine,
+    engine: &mut dyn Engine<ReferenceSampleValues>,
 ) -> Result<ReferenceOutcome> {
-    let start = std::time::Instant::now();
-    let mut state = engine
-        .setup(&settings.hamiltonian)
-        .context("reference initial state setup")?;
-    crate::itebd_state_view::ItebdStateRef::from(&state)
-        .validate()
-        .context("reference initial state validation")?;
-    let mut progress = ItebdCheckpointProgress {
-        beta: 0.,
-        completed_steps: 0,
-        accumulated_log_norm: 0.,
-        last_step: None,
-    };
-    let mut samples = Vec::with_capacity(settings.targets.len());
-    let mut stop: Option<String> = None;
-    let mut reasons = Vec::new();
-    for (segment, target) in settings.segments.iter().zip(&settings.targets) {
-        if stop.is_none() {
-            for _ in 0..segment.steps {
-                let attempt = (|| -> Result<_> {
-                    let (step, canonical) = engine.step(
-                        &mut state,
-                        &settings.hamiltonian,
-                        segment.dtau,
-                        &settings.truncation,
-                    )?;
-                    let norm = progress.accumulated_log_norm + step.log_norm + canonical;
-                    ensure!(
-                        step.log_norm.is_finite() && canonical.is_finite() && norm.is_finite(),
-                        "nonfinite evolution normalization"
-                    );
-                    ensure!(
-                        step.min_singular_value.is_finite() && step.max_bond > 0,
-                        "invalid evolution step diagnostics"
-                    );
-                    Ok((step, norm))
-                })();
-                match attempt {
-                    Ok((step, norm)) => {
-                        progress.beta += 2. * segment.dtau;
-                        progress.completed_steps += 1;
-                        progress.accumulated_log_norm = norm;
-                        progress.last_step = Some(step);
-                    }
-                    Err(error) => {
-                        let reason = format!(
-                            "evolution failed at step {}: {error:#}",
-                            progress.completed_steps + 1
-                        );
-                        reasons.push(reason.clone());
-                        stop = Some(reason);
-                        break;
-                    }
-                }
-            }
-        }
-        let measured = if let Some(reason) = &stop {
-            Err(anyhow::anyhow!(reason.clone()))
-        } else {
-            (|| {
-                ensure!(
-                    progress.completed_steps == target.completed_steps
-                        && (progress.beta - target.beta).abs() <= 1e-12 * target.beta.max(1.),
-                    "target beta/step roundoff agreement failed"
-                );
-                let values = engine.measure(
-                    &state,
-                    &settings.hamiltonian,
-                    progress.beta,
-                    progress.accumulated_log_norm,
-                )?;
-                values.validate()?;
-                Ok(values)
-            })()
-        };
-        let (values, reason) = match measured {
-            Ok(v) => (Some(v), None),
-            Err(e) => {
-                let reason = format!("target {} unavailable: {e:#}", target.temperature_tick);
-                if stop.is_none() {
-                    reasons.push(reason.clone());
-                }
-                (None, Some(reason))
-            }
-        };
-        let sample = ReferenceSample {
-            temperature_tick: target.temperature_tick,
-            temperature: target.temperature,
-            beta_target: target.beta,
-            beta_actual: progress.beta,
-            completed_steps: progress.completed_steps,
-            available: values.is_some(),
-            reason,
-            accumulated_log_norm: progress.accumulated_log_norm,
-            values,
-        };
-        callback(&sample).with_context(|| {
-            format!(
-                "reference output callback at target {}",
-                target.temperature_tick
-            )
-        })?;
-        samples.push(sample);
-    }
-    // A failed step may have mutated the state beyond this ledger. Do not label it with
-    // the previous beta, even if its tensors still pass structural validation.
-    let terminal_state = if stop.is_some() {
-        None
-    } else {
-        match crate::itebd_state_view::ItebdStateRef::from(&state).validate() {
-            Ok(_) => Some(state),
-            Err(e) => {
-                reasons.push(format!("terminal state validation: {e}"));
-                None
-            }
-        }
-    };
-    Ok(ReferenceOutcome {
-        samples,
-        terminal_state,
-        progress,
-        status: if reasons.is_empty() {
-            "complete"
-        } else {
-            "partial"
-        }
-        .into(),
-        reason: if reasons.is_empty() {
-            "completed all requested targets".into()
-        } else {
-            reasons.join("; ")
+    let started = std::time::Instant::now();
+    let out = run_scheduled(
+        TrajectorySettings {
+            hamiltonian: &settings.hamiltonian,
+            truncation: &settings.truncation,
+            segments: &settings.segments,
+            targets: &settings.targets,
+            policy: RunPolicy::IsingV1,
         },
-        elapsed_seconds: start.elapsed().as_secs_f64(),
+        &mut |s| callback(&from_scheduled(s.clone())),
+        engine,
+        &mut || started.elapsed().as_secs_f64(),
+    )?;
+    Ok(ReferenceOutcome {
+        samples: out.samples.into_iter().map(from_scheduled).collect(),
+        terminal_state: out.terminal_state,
+        progress: out.progress,
+        status: out.status,
+        reason: out.reason,
+        elapsed_seconds: out.elapsed_seconds,
     })
-}
-fn expectation(rho: &DMatrix<Complex64>, operator: &DMatrix<Complex64>) -> Result<f64> {
-    ensure!(
-        rho.is_square() && rho.shape() == operator.shape(),
-        "RDM expectation shape mismatch"
-    );
-    // Tr(rho O), with bra/ket orientation supplied by the matrix product.
-    let value = (rho * operator).trace();
-    ensure!(
-        value.re.is_finite()
-            && value.im.is_finite()
-            && value.im.abs() <= 1e-10 * value.re.abs().max(1.),
-        "RDM expectation is not finite and real: {value}"
-    );
-    Ok(value.re)
 }
 
 #[cfg(test)]
@@ -607,14 +431,14 @@ mod tests {
         fail_step: Option<usize>,
         gap: Option<usize>,
     }
-    impl Engine for Seam {
+    impl Engine<ReferenceSampleValues> for Seam {
         fn step(
             &mut self,
             state: &mut ItebdState,
             _: &ItebdHamiltonian,
             _: f64,
             _: &Truncation,
-        ) -> Result<(crate::itebd::StepInfo, f64)> {
+        ) -> Result<crate::itebd::StepInfo> {
             self.steps += 1;
             if self.fail_step == Some(self.steps) {
                 if let ItebdState::Real(s) = state {
@@ -634,14 +458,14 @@ mod tests {
                     .unwrap();
                 bail!("native step failure after mutation")
             }
-            Ok((
-                crate::itebd::StepInfo {
-                    max_bond: 1,
-                    min_singular_value: 1.,
-                    log_norm: 0.2,
-                },
-                0.3,
-            ))
+            Ok(crate::itebd::StepInfo {
+                max_bond: 1,
+                min_singular_value: 1.,
+                log_norm: 0.2,
+            })
+        }
+        fn canonicalize(&mut self, _: &mut ItebdState, _: &ItebdHamiltonian) -> Result<f64> {
+            Ok(0.3)
         }
         fn measure(
             &mut self,
@@ -732,7 +556,7 @@ mod tests {
         assert!(error.downcast_ref::<std::io::Error>().is_some());
         assert!(format!("{error:#}").contains("disk callback cause"));
         struct BadSetup;
-        impl Engine for BadSetup {
+        impl Engine<ReferenceSampleValues> for BadSetup {
             fn setup(&mut self, _: &ItebdHamiltonian) -> Result<ItebdState> {
                 Err(std::io::Error::other("native setup cause").into())
             }
@@ -742,7 +566,19 @@ mod tests {
                 _: &ItebdHamiltonian,
                 _: f64,
                 _: &Truncation,
-            ) -> Result<(crate::itebd::StepInfo, f64)> {
+            ) -> Result<crate::itebd::StepInfo> {
+                unreachable!()
+            }
+            fn canonicalize(&mut self, _: &mut ItebdState, _: &ItebdHamiltonian) -> Result<f64> {
+                unreachable!()
+            }
+            fn measure(
+                &mut self,
+                _: &ItebdState,
+                _: &ItebdHamiltonian,
+                _: f64,
+                _: f64,
+            ) -> Result<ReferenceSampleValues> {
                 unreachable!()
             }
         }
@@ -751,46 +587,5 @@ mod tests {
             .expect("setup must fail");
         assert!(error.downcast_ref::<std::io::Error>().is_some());
         assert!(format!("{error:#}").contains("native setup cause"));
-    }
-    #[test]
-    fn reference_rdm_trace_real_complex_basis_oracle() {
-        // Independent component sum uses rho_ij O_ji, including complex conjugate off-diagonals.
-        for phase in [0., 0.2] {
-            let rho = DMatrix::from_row_slice(
-                2,
-                2,
-                &[
-                    Complex64::new(0.7, 0.),
-                    Complex64::new(0.1, phase),
-                    Complex64::new(0.1, -phase),
-                    Complex64::new(0.3, 0.),
-                ],
-            );
-            let op = DMatrix::from_row_slice(
-                2,
-                2,
-                &[
-                    Complex64::new(2., 0.),
-                    Complex64::new(0.4, if phase == 0. { 0. } else { -0.3 }),
-                    Complex64::new(0.4, if phase == 0. { 0. } else { 0.3 }),
-                    Complex64::new(-1., 0.),
-                ],
-            );
-            let mut oracle = Complex64::new(0., 0.);
-            for a in 0..2 {
-                for b in 0..2 {
-                    oracle += rho[(a, b)] * op[(b, a)];
-                }
-            }
-            assert!((expectation(&rho, &op).unwrap() - oracle.re).abs() < 1e-14);
-            let joint = rho.kronecker(&DMatrix::from_diagonal(&nalgebra::DVector::from_vec(vec![
-                Complex64::new(1., 0.),
-                Complex64::new(0., 0.),
-            ])));
-            let first = id2()
-                .map(|x| Complex64::new(x, 0.))
-                .kronecker(&pauli_z().map(|x| Complex64::new(x, 0.)));
-            assert!((expectation(&joint, &first).unwrap() - 1.).abs() < 1e-14);
-        }
     }
 }

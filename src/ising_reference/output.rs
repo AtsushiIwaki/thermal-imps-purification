@@ -683,22 +683,31 @@ pub fn finalize_interrupted_directory(directory: &Path, reason: &str) -> Result<
 mod tests {
     use super::*;
     struct Identity;
-    impl Engine for Identity {
+    impl Engine<ReferenceSampleValues> for Identity {
         fn step(
             &mut self,
             _: &mut ItebdState,
             _: &ItebdHamiltonian,
             _: f64,
             _: &Truncation,
-        ) -> Result<(crate::itebd::StepInfo, f64)> {
-            Ok((
-                crate::itebd::StepInfo {
-                    max_bond: 1,
-                    min_singular_value: 1.,
-                    log_norm: 0.,
-                },
-                0.,
-            ))
+        ) -> Result<crate::itebd::StepInfo> {
+            Ok(crate::itebd::StepInfo {
+                max_bond: 1,
+                min_singular_value: 1.,
+                log_norm: 0.,
+            })
+        }
+        fn canonicalize(&mut self, _: &mut ItebdState, _: &ItebdHamiltonian) -> Result<f64> {
+            Ok(0.)
+        }
+        fn measure(
+            &mut self,
+            s: &ItebdState,
+            h: &ItebdHamiltonian,
+            b: f64,
+            n: f64,
+        ) -> Result<ReferenceSampleValues> {
+            measure_reference(s, h, b, n)
         }
     }
     #[test]
@@ -746,19 +755,31 @@ mod tests {
         struct Stops {
             steps: usize,
         }
-        impl Engine for Stops {
+        impl Engine<ReferenceSampleValues> for Stops {
             fn step(
                 &mut self,
                 s: &mut ItebdState,
                 h: &ItebdHamiltonian,
                 dt: f64,
                 t: &Truncation,
-            ) -> Result<(crate::itebd::StepInfo, f64)> {
+            ) -> Result<crate::itebd::StepInfo> {
                 self.steps += 1;
                 if self.steps == 51 {
                     bail!("native error: \"quoted\",\nfailed step");
                 }
                 Identity.step(s, h, dt, t)
+            }
+            fn canonicalize(&mut self, s: &mut ItebdState, h: &ItebdHamiltonian) -> Result<f64> {
+                Identity.canonicalize(s, h)
+            }
+            fn measure(
+                &mut self,
+                s: &ItebdState,
+                h: &ItebdHamiltonian,
+                b: f64,
+                n: f64,
+            ) -> Result<ReferenceSampleValues> {
+                Identity.measure(s, h, b, n)
             }
         }
         let req=serde_json::from_value::<ReferenceRequest>(json!({"schema_version":1,"model":{"name":"ising_mixed","g":1.05,"h":0.5},"variant":"fine","source_revision":"a".repeat(40),"worker_sha256":"b".repeat(64)})).unwrap();
