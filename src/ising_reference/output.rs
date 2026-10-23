@@ -2,14 +2,10 @@
 use super::*;
 use crate::config::{TrotterOrder, TruncationCfg};
 use crate::itebd_checkpoint::*;
+use crate::reference_output::{atomic_write, exact_state, parse_csv, quote_csv};
 use anyhow::bail;
 use serde_json::{json, Value};
-use std::{
-    fs,
-    io::Write,
-    path::Path,
-    sync::atomic::{AtomicU64, Ordering},
-};
+use std::{fs, path::Path};
 
 const COLUMNS: &str = "temperature_tick,temperature,beta_target,beta_actual,completed_steps,available,reason,energy,mx,mz,zz,free_energy,entropy,accumulated_log_norm,parity_delta_energy,parity_delta_mx,parity_delta_mz,parity_delta_zz,direct_energy_difference,maximum_rdm_fixed_point_residual,maximum_rdm_trace_residual,maximum_rdm_hermiticity_residual,maximum_rdm_iterations,minimum_rdm_eigenvalue,bond_dimension_ab,bond_dimension_ba";
 #[derive(Serialize, Deserialize)]
@@ -152,70 +148,7 @@ fn metadata(settings: &ReferenceSettings) -> ItebdRunMetadata {
         hermiticity_tolerance: 1e-12,
     }
 }
-fn exact_state(original: &ItebdState, restored: &ItebdState) -> Result<()> {
-    use crate::itebd_state_view::ItebdStateRef;
-    ensure!(
-        matches!(
-            (original, restored),
-            (ItebdState::Real(_), ItebdState::Real(_))
-        ),
-        "terminal checkpoint backend differs"
-    );
-    let a = ItebdStateRef::from(original);
-    let b = ItebdStateRef::from(restored);
-    let bits = |v: &[f64]| v.iter().map(|x| x.to_bits()).collect::<Vec<_>>();
-    for (x, y) in [(a.a(), b.a()), (a.b(), b.b())] {
-        ensure!(
-            x.gamma.indices == y.gamma.indices
-                && bits(&x.gamma.to_vec::<f64>()?) == bits(&y.gamma.to_vec::<f64>()?),
-            "terminal tensor exact-bit round-trip differs"
-        );
-    }
-    ensure!(
-        bits(a.lambda_ab()) == bits(b.lambda_ab()) && bits(a.lambda_ba()) == bits(b.lambda_ba()),
-        "terminal Schmidt exact-bit round-trip differs"
-    );
-    Ok(())
-}
-fn atomic_write(path: &Path, bytes: &[u8]) -> Result<()> {
-    // Staging is a sibling of the reserved directory, never a completed bundle member.
-    static SERIAL: AtomicU64 = AtomicU64::new(0);
-    let parent = path.parent().context("publication path has no parent")?;
-    let staging_parent = parent
-        .parent()
-        .filter(|p| !p.as_os_str().is_empty())
-        .unwrap_or(Path::new("."));
-    let staging = staging_parent.join(format!(
-        ".ising-reference-{}-{}.pending",
-        std::process::id(),
-        SERIAL.fetch_add(1, Ordering::Relaxed)
-    ));
-    let result = (|| -> Result<()> {
-        let mut file = fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&staging)?;
-        file.write_all(bytes)?;
-        file.sync_all()?;
-        drop(file);
-        fs::rename(&staging, path)?;
-        Ok(())
-    })();
-    result.with_context(|| {
-        format!(
-            "publish {} (pending evidence {})",
-            path.display(),
-            staging.display()
-        )
-    })
-}
-fn quote_csv(value: &str) -> String {
-    if value.contains([',', '"', '\n', '\r']) {
-        format!("\"{}\"", value.replace('"', "\"\""))
-    } else {
-        value.into()
-    }
-}
+
 fn write_samples(directory: &Path, rows: &[ReferenceSample]) -> Result<()> {
     let mut csv = format!("{COLUMNS}\n");
     for row in rows {
@@ -234,55 +167,7 @@ fn write_samples(directory: &Path, rows: &[ReferenceSample]) -> Result<()> {
     atomic_write(&directory.join("samples.csv"), csv.as_bytes())
 }
 // Strict RFC-style quoted fields, including embedded newlines; no line-based splitting.
-fn parse_csv(text: &str) -> Result<Vec<Vec<String>>> {
-    let mut rows = Vec::new();
-    let mut row = Vec::new();
-    let mut field = String::new();
-    let mut chars = text.chars().peekable();
-    let mut quoted = false;
-    let mut closed = false;
-    while let Some(c) = chars.next() {
-        if quoted {
-            if c == '"' {
-                if chars.peek() == Some(&'"') {
-                    chars.next();
-                    field.push('"');
-                } else {
-                    quoted = false;
-                    closed = true;
-                }
-            } else {
-                field.push(c);
-            }
-        } else {
-            match c {
-                '"' if field.is_empty() && !closed => quoted = true,
-                ',' => {
-                    row.push(std::mem::take(&mut field));
-                    closed = false;
-                }
-                '\n' | '\r' => {
-                    if c == '\r' {
-                        ensure!(chars.next() == Some('\n'), "CSV bare carriage return");
-                    }
-                    row.push(std::mem::take(&mut field));
-                    rows.push(std::mem::take(&mut row));
-                    closed = false;
-                }
-                _ => {
-                    ensure!(!closed && c != '"', "CSV malformed quotation");
-                    field.push(c);
-                }
-            }
-        }
-    }
-    ensure!(!quoted, "CSV unterminated quotation");
-    if !row.is_empty() || !field.is_empty() || closed {
-        row.push(field);
-        rows.push(row);
-    }
-    Ok(rows)
-}
+
 fn read_samples(directory: &Path) -> Result<Vec<ReferenceSample>> {
     let path = directory.join("samples.csv");
     (|| -> Result<_> {

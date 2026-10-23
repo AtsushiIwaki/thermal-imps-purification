@@ -204,3 +204,20 @@ ordinary evolution error, `ReferenceOutcome::terminal_state` is absent because a
 call may have mutated tensors. `ReferenceSample::values` is optional and serde-flattened; CSV
 publication explicitly emits every column for gaps. See the [worker contract](usage.md#fixed-mixed-field-ising-reference-worker)
 for complete controls, schema, normalization, integrity checks, and limitations.
+
+
+## Fixed AKLT projector reference
+
+`aklt_reference::{resolve_request, preflight, run_reference, measure_reference}` uses
+`AkltReferenceRequest`, `AkltReferenceSettings`, `AkltSample` and `AkltOutcome`.
+The target callback receives the fixed scalar row and cumulative `CapEvidence`.
+`AkltSampleValues` contains spin-one mx/mz, ordinary energy/free-energy/entropy,
+RDM diagnostics and `cap_reached_now`; it has no zz field. `AkltOutcome` records
+actual progress, nullable terminal state, cap coverage and cooperative budget overrun.
+The shared scheduled runner is private; existing Ising public types remain supported.
+
+`aklt_reference::output` exposes `run_to_directory(&AkltReferenceRequest, &Path)`,
+`verify_directory(&Path)` and `finalize_interrupted_directory(&Path, &str)`, each
+returning `anyhow::Result<serde_json::Value>`. The finalizer never evolves and requires
+an externally observed dead process. See the [AKLT worker contract](usage.md#fixed-aklt-projector-reference-worker)
+for exact fields, deadlines, normalization and the limits of cap evidence.

@@ -240,3 +240,53 @@ The caller retains independent file hashes and rejects later mutation. A verifie
 does not certify physical convergence, accuracy at earlier beta, or a refinement comparison.
 Scheduled native checkpoints use schema2 with exact segments; fixed-step checkpoints retain
 schema1. The fixed-step `solve` restart interface explicitly rejects scheduled checkpoints.
+
+## Fixed AKLT projector reference worker
+
+`aklt_reference` has the same four argument forms as `ising_reference`, with its own
+strict schema-1 request: `contract: "aklt-projector-reference-v1"`,
+`model: {"name":"aklt_projector"}`, `variant: "fine"` or `"time-step"`,
+`max_seconds: 3600.0`, and the same source-revision/worker-hash fields. There is no
+bond-cap variant or restart. Build `--bin aklt_reference` with the native environment
+above. Both variants start independently at beta zero. Fine uses maximum dtau0.005;
+time-step uses0.01. Both use cap128 and cutoff1e-13; all other grid, canonicalization,
+RDM and element limits match the fixed Ising worker. Source/worker identity must still
+be independently bound by the caller.
+
+The Hamiltonian is the coefficient-one spin-2 projector, with d=3 and ground energy0.
+Energy averages the two physical-RDM parities. `mx` and `mz` use spin-one operators,
+not Pauli matrices. Norms from both evolution and canonicalization contribute to
+`f=-(ln(3)+accumulated_log_norm/2)/beta` and `s=beta*(E-f)`. No exact finite-temperature
+reference or bond-convergence certificate is claimed.
+
+The monotonic3600-second trajectory allowance starts before setup/publication. It is
+checked between complete native operations and around measurements/callbacks; a long
+operation can overrun. A valid measurement completed during overrun is retained, then
+no next evolution begins. Native failures keep their actual reason. A failed mutating
+operation invalidates the endpoint; read-only measurement failure may retain it.
+Terminal publication and native verification finish after the trajectory stops.
+
+The compact bundle contains the same three scalar files and optional single native
+state as the Ising contract, with exactly20 target rows. Its ordered CSV columns are:
+
+```text
+temperature_tick,temperature,beta_target,beta_actual,completed_steps,available,reason,energy,mx,mz,free_energy,entropy,accumulated_log_norm,parity_delta_energy,parity_delta_mx,parity_delta_mz,direct_energy_difference,maximum_rdm_fixed_point_residual,maximum_rdm_trace_residual,maximum_rdm_hermiticity_residual,maximum_rdm_iterations,minimum_rdm_eigenvalue,bond_dimension_ab,bond_dimension_ba,cap_reached_now,maximum_dimension_seen,cap_ever_reached,cap_observed_strang_steps,cap_coverage
+```
+
+`cap_reached_now` describes the sampled canonical dimensions. Cumulative cap evidence
+also observes each complete Strang StepInfo (including its substep maximum), so a
+previous cap hit survives later shrinking. `cap_coverage` is `complete_through_stop`
+or `unobserved_tail`. If an in-place failure or dead process leaves an unobserved tail,
+`cap_ever_reached` remains true if proven; otherwise it is empty/unknown, never false.
+The summary repeats this evidence as `cap`, alongside actual `beta_actual`,
+`accumulated_log_norm`, `budget_overrun_seconds` and the Ising-style progress/status
+fields. Elapsed/overrun are null only for an unobserved interruption.
+
+Native verification checks exact settings, schedule, model matrices, endpoint bits,
+thermodynamic identities, cap monotonicity and applicable terminal remeasurement.
+Off-target beta is never rounded to a target. Interrupted finalization is allowed
+only after worker death; corrupt checkpoints remain unsuccessful integrity evidence.
+The publication report adds disjoint `timing.trajectory_seconds`,
+`timing.terminal_publication_seconds` and `timing.native_verification_seconds`.
+A caller's inclusive process wall time is an additional measurement, not an amount
+to add to these intervals. Earlier sampled states are not retained or replayed.

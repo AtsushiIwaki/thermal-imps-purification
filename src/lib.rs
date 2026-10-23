@@ -34,3 +34,5 @@ pub mod variance;
 mod reference_trajectory;
 
 pub mod aklt_reference;
+
+mod reference_output;

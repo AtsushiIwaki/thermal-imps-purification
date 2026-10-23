@@ -1,4 +1,5 @@
 //! Fixed coefficient-one AKLT projector reference, with ordinary spin-one thermodynamics.
+pub mod output;
 use crate::itebd_auto::{ItebdHamiltonian, ItebdState};
 use crate::itebd_checkpoint::ItebdStepSegment;
 use crate::reference_trajectory::{
