@@ -13,15 +13,16 @@ MIT is applied to project-authored material; copied upstream material retains it
 The README is a short finite-temperature quickstart; advanced CLI and library details live in
 the linked usage and API guides.
 
-The new coefficient-one AKLT projector reference worker is implemented on
-`codex/aklt-reference` in the isolated checkout, based on
+The coefficient-one AKLT projector reference worker is integrated into local main
+by the user-approved fast-forward to `b764331` on2026-10-24 JST. Its base is
 `bf4d627b19f5ed785608c050efbad1be8efca400`; reviewed code is `f0e5be0`.
 It shares the scheduled trajectory engine with the unchanged Ising public contract.
 The strict AKLT worker supports fine/time-step cap128 variants, cooperative trajectory
 budgets, cumulative cap-hit evidence, retained scalar prefixes and one native terminal
 checkpoint. See the [worker contract](docs/usage.md#fixed-aklt-projector-reference-worker).
-No new AKLT production trajectory has launched. Local integration remains pending;
-no push, PR or hosted CI is authorized for this task.
+The controlling Infinite_MST study passed its stable-source supervisor preflight.
+Its bounded execution is the active stage; exact attempted/completed status is in
+that study's supervision.json. No push, PR or hosted CI is authorized for this task.
 
 One independent whole-branch review across this repository and Infinite_MST found one
 Important Python/Rust schedule-rounding mismatch in the main Python bridge. It was fixed
@@ -60,9 +61,9 @@ The controlling study retains its detailed numerical and cleanup evidence.
 ## Next action
 
 The controlling study qualified all three chi24 initial states with identical raw/admitted
-hashes,0 updates and1 AD evaluation each. Obtain the required local integration choice, then
-finish the stable-source supervisor preflight before the two approved AKLT trajectories from the stable
-Dropbox results root. No extra bond-cap, retry or refinement study is authorized. Preserve
+hashes,0 updates and1 AD evaluation each, and passed the stable supervisor preflight.
+Run only its two approved AKLT trajectories from the stable Dropbox results root, after
+the thermal chains if the shared verification allowance permits. No extra bond-cap, retry or refinement study is authorized. Preserve
 both task checkouts/builds until integration and remaining use, then perform only explicitly
 reviewed recoverable cleanup. The earlier Ising publication/cleanup remains complete.
 
