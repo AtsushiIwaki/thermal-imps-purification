@@ -57,9 +57,14 @@ established by software fixtures labeled with scheduled progress.
 ## New AKLT reference adapter (2026-10-24 implementation)
 
 The cap128 fine/time-step adapter and its native retention/verification interfaces have
-passed local software tests. Its new study trajectories have not launched; there is no
-new AKLT accuracy, time-step refinement or low-temperature/bond-dimension convergence
-claim. Cumulative cap evidence observes returned Strang-step dimensions and canonical
+passed local software tests. The controlling Infinite_MST bounded study ended after20
+thermal endpoints, exhausting its shared3600s verification allowance (actual3972.609327127s
+including completion of the in-flight invocation). Neither new reference trajectory
+launched. Their40 planned target rows and20 comparison rows are explicitly unavailable
+in the controlling report. No new reference directory/checkpoint was fabricated, and
+older/coarse results were not substituted. Time-step differences and cap-hit evidence
+are unobserved, not zero/false. There is no new AKLT accuracy, time-step refinement or
+low-temperature/bond-dimension convergence claim. Cumulative cap evidence observes returned Strang-step dimensions and canonical
 endpoints; an unobserved failure/interruption tail remains unknown unless a prior cap hit
 was proved. A completed software check or an unhit cap is not an accuracy certificate.
 The controlling Infinite_MST study fixes the two variants and does not authorize a cap64

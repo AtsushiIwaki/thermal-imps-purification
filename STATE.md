@@ -20,9 +20,14 @@ It shares the scheduled trajectory engine with the unchanged Ising public contra
 The strict AKLT worker supports fine/time-step cap128 variants, cooperative trajectory
 budgets, cumulative cap-hit evidence, retained scalar prefixes and one native terminal
 checkpoint. See the [worker contract](docs/usage.md#fixed-aklt-projector-reference-worker).
-The controlling Infinite_MST study passed its stable-source supervisor preflight.
-Its bounded execution is the active stage; exact attempted/completed status is in
-that study's supervision.json. No push, PR or hosted CI is authorized for this task.
+The controlling Infinite_MST study passed stable-source preflight, then its single
+bounded run stopped after20 thermal endpoints (m1/m2 through T0.2; m3 through T1.6).
+Its shared verification/publication/report scope reached3972.609327127s against3600s,
+including372.609327127s overrun to finish the in-flight invocation. Both AKLT reference
+trajectories were unattempted. No new reference samples/checkpoints, time-step differences
+or cap-hit evidence exist for this study. Infinite_MST retains a six-page report with
+explicit reference gaps; `completed=false` and no integrity debt. No retry, changed
+budget, push, PR or hosted CI was performed.
 
 One independent whole-branch review across this repository and Infinite_MST found one
 Important Python/Rust schedule-rounding mismatch in the main Python bridge. It was fixed
@@ -60,12 +65,12 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-The controlling study qualified all three chi24 initial states with identical raw/admitted
-hashes,0 updates and1 AD evaluation each, and passed the stable supervisor preflight.
-Run only its two approved AKLT trajectories from the stable Dropbox results root, after
-the thermal chains if the shared verification allowance permits. No extra bond-cap, retry or refinement study is authorized. Preserve
-both task checkouts/builds until integration and remaining use, then perform only explicitly
-reviewed recoverable cleanup. The earlier Ising publication/cleanup remains complete.
+The controlling study has preserved its bounded outcome and verified frozen-report
+regeneration/visuals. Cleanup review and final record commits remain. Task builds and
+worktrees are retained pending explicit review. Completing the two unattempted AKLT
+trajectories now requires a separately authorized scope/budget decision; the prior
+controller refuses automatic restart. No additional bond-cap, retry, refinement or
+algorithm change is authorized. The earlier Ising publication/cleanup remains complete.
 
 ## Relevant links
 
