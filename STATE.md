@@ -36,7 +36,8 @@ Final local routine verification passes462 tests in38 binaries,0 failures,16 opt
 ignored tests and0 warnings; doc tests select0 and pass. The debug no-run build took273.31s,
 routine wall192.70s, doc-test wall0.53s. The standalone release worker build passed in290.05s.
 The controlling Infinite_MST implementation record owns preparation cost, integration,
-launch and recoverable cleanup; builds are under /private/tmp/imst-current-build/purification.
+launch and recoverable cleanup. The task build under /private/tmp/imst-current-build
+was retired to normal recoverable Trash after explicit user approval.
 
 The published canonical repair and mixed-field Ising worker remain the baseline.
 The [successful hosted follow-up](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38651815754)
@@ -66,8 +67,13 @@ The controlling study retains its detailed numerical and cleanup evidence.
 ## Next action
 
 The controlling study has preserved its bounded outcome and verified frozen-report
-regeneration/visuals. Cleanup review and final record commits remain. Task builds and
-worktrees are retained pending explicit review. Completing the two unattempted AKLT
+regeneration/visuals. User-approved cleanup is complete: the task build and this
+repository's temporary worktree went to normal recoverable Trash; the managed main
+worktree was archived by Codex. Both integrated task branches were deleted. The
+controlling strict policy inventory passes with zero issues, and retained result,
+workflow and verification-log hashes are unchanged. Receipts and rebuild provenance
+are preserved; no physical disk reclamation or historical replay is claimed.
+Completing the two unattempted AKLT
 trajectories now requires a separately authorized scope/budget decision; the prior
 controller refuses automatic restart. No additional bond-cap, retry, refinement or
 algorithm change is authorized. The earlier Ising publication/cleanup remains complete.
