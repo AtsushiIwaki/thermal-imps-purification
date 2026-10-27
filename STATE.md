@@ -30,9 +30,17 @@ three JSON `.contract` field reads outside macros; the audit itself is unchanged
 One fresh whole-branch review found two Important frozen-report consistency gaps
 in the controlling Infinite_MST Python code; both were fixed by RED-GREEN tests
 and its full affected Python gate.
-No native/reference-worker defect or deferred minor was found. No physical
-reference trajectory has launched for this continuation. The original bounded
-studies remain partial with unattempted references; their records are unchanged.
+No deferred minor finding remains. The single controlling operation ended on
+2026-10-27 JST. Fine purification completed all20 targets/1014 steps in1096.053s;
+its checkpoint and terminal consistency were natively verified. Cap128 was reached
+at T=0.1/0.2. The time-step variant retained18 targets through T=0.3, then exited101
+on an SVD decomposition error at src/tensor.rs:143. Native finalization retained
+its actual reason, T=0.1/0.2 gaps and no certified endpoint. Its173 retained steps
+are a lower bound; maximum observed dimension120 does not establish that the cap
+was never reached in the unobserved tail. No retry occurred. The controlling
+study remains completed=false despite all60 thermal endpoints being verified.
+See [the observed limits](docs/limitations.md#new-aklt-reference-adapter-2026-10-24-implementation).
+The original bounded studies and their unattempted references are unchanged.
 
 The published canonical repair and mixed-field Ising worker remain the baseline.
 The [successful hosted follow-up](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38651815754)
@@ -61,8 +69,12 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-Complete the controlling study's single approved continuation operation after
-local integration. Bind exact source/worker identities after local
-integration. The current task uses /private/tmp/imst-current-build/purification;
-the user explicitly retained the build and worktree resources. No cleanup, remote
-push, registry publication, extra bond cap, retry or numerical refinement is selected.
+The approved single continuation attempt and its report are finished. A separate
+scoped investigation is needed for the time-step SVD failure; the exact failing
+matrix/backtrace was not retained, so no common root cause with earlier Faer
+failures is established. Low-temperature time-step and cap convergence remain
+unresolved. Launch bindings retain revision b61ae0f and the exact tested worker;
+closing documentation does not change the numerical source or rebuild it.
+The user retains /private/tmp/imst-current-build/purification and worktree/branch
+resources. No cleanup, remote push, registry publication, extra cap, retry or
+numerical refinement is selected.

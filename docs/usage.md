@@ -306,3 +306,10 @@ identity. Elapsed time remains measured (or null if unknown after interruption);
 `budget_overrun_seconds` is always null. Cap observations and unknown-tail
 coverage remain independent of deadline selection. Output creation remains
 exclusive and interruption finalization does not resume evolution.
+
+
+The2026-10-27 single v2 operation exercised both variants. Fine completed20 targets
+and its endpoint verification; time-step retained18 targets and was finalized as
+partial after an SVD backend failure, without a checkpoint or retry. Partial native
+verification validates retained evidence, not an unavailable physical endpoint.
+See [the measured outcome and limits](limitations.md#new-aklt-reference-adapter-2026-10-24-implementation).

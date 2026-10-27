@@ -75,4 +75,21 @@ The2026-10-27 v2 deadline-removal contract retains all of those numerical limits
 An absent elapsed-time cap does not remove the cap128 bound, establish time-step
 convergence or authorize retries. Software/native fixtures for v2 are retention
 and failure-path evidence; they are not physical reference trajectories. The
-controlling Dense continuation has not yet launched its two references.
+controlling Dense continuation made exactly one attempt per reference on2026-10-27.
+Fine completed20 targets/1014 steps in1096.053096s, with native terminal checkpoint
+and scalar-consistency verification. It reached cap128 at T=0.1/0.2.
+Time-step exited101 after95.579933s of process wall with an SVD decomposition
+failure propagated by `svd_with::<f64>(...).unwrap()` at src/tensor.rs:143.
+Its18 retained samples span T=0.3..2.0; the last sample's beta=3.333333333333328
+and173 steps are retained lower bounds, not the failure location. T=0.1/0.2 are
+missing, no endpoint checkpoint is certified, and cap-ever-reached is unknown
+for the unobserved tail despite maximum observed dimension120. Native
+interruption finalization and partial verification preserved this distinction.
+No diagnostic rerun or numerical retry occurred. The exact failing matrix and
+backtrace were not retained; attribution to an earlier Faer defect is unproved.
+
+On T=0.3..2.0 the maximum absolute fine/time-step differences were3.95452e-6
+in E,1.96140e-6 in f and2.82720e-6 in s. Prescribed heat-capacity comparisons
+exist only at T=0.4..2.0 (17 points), with maximum difference1.43150e-5.
+These observations do not validate the missing low-temperature comparison or
+bond-cap convergence. The controlling study correctly remains completed=false.
