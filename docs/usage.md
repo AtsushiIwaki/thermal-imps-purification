@@ -280,7 +280,8 @@ or `unobserved_tail`. If an in-place failure or dead process leaves an unobserve
 `cap_ever_reached` remains true if proven; otherwise it is empty/unknown, never false.
 The summary repeats this evidence as `cap`, alongside actual `beta_actual`,
 `accumulated_log_norm`, `budget_overrun_seconds` and the Ising-style progress/status
-fields. Elapsed/overrun are null only for an unobserved interruption.
+fields. In v1, elapsed/overrun are null only for an unobserved interruption.
+In v2, overrun is always null because no deadline exists.
 
 Native verification checks exact settings, schedule, model matrices, endpoint bits,
 thermodynamic identities, cap monotonicity and applicable terminal remeasurement.

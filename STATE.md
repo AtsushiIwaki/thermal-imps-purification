@@ -13,31 +13,20 @@ MIT is applied to project-authored material; copied upstream material retains it
 The README is a short finite-temperature quickstart; advanced CLI and library details live in
 the linked usage and API guides.
 
-The coefficient-one AKLT projector reference worker is integrated into local main
-by the user-approved fast-forward to `b764331` on2026-10-24 JST. Its base is
-`bf4d627b19f5ed785608c050efbad1be8efca400`; reviewed code is `f0e5be0`.
-It shares the scheduled trajectory engine with the unchanged Ising public contract.
-The strict AKLT worker supports fine/time-step cap128 variants, cooperative trajectory
-budgets, cumulative cap-hit evidence, retained scalar prefixes and one native terminal
-checkpoint. See the [worker contract](docs/usage.md#fixed-aklt-projector-reference-worker).
-The controlling Infinite_MST study passed stable-source preflight, then its single
-bounded run stopped after20 thermal endpoints (m1/m2 through T0.2; m3 through T1.6).
-Its shared verification/publication/report scope reached3972.609327127s against3600s,
-including372.609327127s overrun to finish the in-flight invocation. Both AKLT reference
-trajectories were unattempted. No new reference samples/checkpoints, time-step differences
-or cap-hit evidence exist for this study. Infinite_MST retains a six-page report with
-explicit reference gaps; `completed=false` and no integrity debt. No retry, changed
-budget, push, PR or hosted CI was performed.
+The approved Dense AKLT continuation adds `aklt-projector-reference-v2`/schema2
+with required `max_seconds:null`; v1/schema1 retains its exact3600-second contract.
+The cap128 fine/time-step variants keep cutoff1e-13, max_dtau0.005/0.01 and
+1014/507 complete Strang steps. Both share the existing trajectory engine; Ising
+behavior is unchanged. Native retention and verification preserve contract version,
+cap history, actual stop reasons and uncertainty after mutating failure/interruption.
+See the [worker contract](docs/usage.md#aklt-reference-without-a-deadline).
 
-One independent whole-branch review across this repository and Infinite_MST found one
-Important Python/Rust schedule-rounding mismatch in the main Python bridge. It was fixed
-there with native-wire regression evidence; no reference source change was needed.
-Final local routine verification passes462 tests in38 binaries,0 failures,16 optional
-ignored tests and0 warnings; doc tests select0 and pass. The debug no-run build took273.31s,
-routine wall192.70s, doc-test wall0.53s. The standalone release worker build passed in290.05s.
-The controlling Infinite_MST implementation record owns preparation cost, integration,
-launch and recoverable cleanup. The task build under /private/tmp/imst-current-build
-was retired to normal recoverable Trash after explicit user approval.
+Focused implementation checks passed7 trajectory/publication tests,5 API tests,
+6 native CLI tests and a strengthened v2 verification check, with0 required skips.
+The final routine/doc/release qualification and one whole-branch review are in
+progress under the controlling Infinite_MST implementation plan. No physical
+reference trajectory has launched for this continuation. The original bounded
+studies remain partial with unattempted references; their records are unchanged.
 
 The published canonical repair and mixed-field Ising worker remain the baseline.
 The [successful hosted follow-up](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38651815754)
@@ -66,29 +55,8 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-The controlling study has preserved its bounded outcome and verified frozen-report
-regeneration/visuals. User-approved cleanup is complete: the task build and this
-repository's temporary worktree went to normal recoverable Trash; the managed main
-worktree was archived by Codex. Both integrated task branches were deleted. The
-controlling strict policy inventory passes with zero issues, and retained result,
-workflow and verification-log hashes are unchanged. Receipts and rebuild provenance
-are preserved; no physical disk reclamation or historical replay is claimed.
-Completing the two unattempted AKLT
-trajectories now requires a separately authorized scope/budget decision; the prior
-controller refuses automatic restart. No additional bond-cap, retry, refinement or
-algorithm change is authorized. The earlier Ising publication/cleanup remains complete.
-
-## Relevant links
-
-- [README](README.md) — build, usage, model, output, and verification entry points.
-- [Usage guide](docs/usage.md) — configuration, matrix input, output and restart details.
-- [Library APIs](docs/library-api.md) — evolution, specific heat, checkpoints and RDM contracts.
-- [Contributing](CONTRIBUTING.md) — scoped development and review procedure.
-- [Development workflow](docs/development-workflow.md) — handoff, checks, evidence, and cleanup.
-- [Knowledge index](knowledge/index.md) — focused numerical and engineering background.
-- [Numerical conventions](docs/numerical-conventions.md) — authoritative index and normalization contracts.
-- [Validation](docs/validation.md) — measured evidence and exact scientific commands.
-- [Limitations](docs/limitations.md) — scientific, resource, persistence, and platform bounds.
-- [Provenance](docs/provenance.md) — extraction, dependencies, and later adaptation history.
-- [License](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md) — project and upstream terms.
-- [References](docs/references.md) — upstream software and method sources.
+Complete the final software qualification and the controlling study's single
+approved continuation operation. Bind exact source/worker identities after local
+integration. The current task uses /private/tmp/imst-current-build/purification;
+the user explicitly retained the build and worktree resources. No cleanup, remote
+push, registry publication, extra bond cap, retry or numerical refinement is selected.

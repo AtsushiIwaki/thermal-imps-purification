@@ -69,3 +69,10 @@ endpoints; an unobserved failure/interruption tail remains unknown unless a prio
 was proved. A completed software check or an unhit cap is not an accuracy certificate.
 The controlling Infinite_MST study fixes the two variants and does not authorize a cap64
 comparison, retries, extrapolation or additional refinement.
+
+
+The2026-10-27 v2 deadline-removal contract retains all of those numerical limits.
+An absent elapsed-time cap does not remove the cap128 bound, establish time-step
+convergence or authorize retries. Software/native fixtures for v2 are retention
+and failure-path evidence; they are not physical reference trajectories. The
+controlling Dense continuation has not yet launched its two references.
