@@ -21,10 +21,15 @@ behavior is unchanged. Native retention and verification preserve contract versi
 cap history, actual stop reasons and uncertainty after mutating failure/interruption.
 See the [worker contract](docs/usage.md#aklt-reference-without-a-deadline).
 
-Focused implementation checks passed7 trajectory/publication tests,5 API tests,
-6 native CLI tests and a strengthened v2 verification check, with0 required skips.
-The final routine/doc/release qualification and one whole-branch review are in
-progress under the controlling Infinite_MST implementation plan. No physical
+Final qualification passed466 routine tests across38 binaries (16 optional tests
+unselected,0 failures,0 warnings),0 selected doc tests and6 release native CLI
+tests, with0 required skips. Routine wall224.5s includes debug compilation and
+execution; doc0.496s, release build22.067s and release CLI26.203s (0.74s execution)
+were recorded separately. The existing contraction AST audit required lifting
+three JSON `.contract` field reads outside macros; the audit itself is unchanged.
+One fresh whole-branch review found two Important frozen-report consistency gaps
+in the controlling Infinite_MST Python code; its verified fix pass is in progress.
+No native/reference-worker defect or deferred minor was found. No physical
 reference trajectory has launched for this continuation. The original bounded
 studies remain partial with unattempted references; their records are unchanged.
 
@@ -55,8 +60,8 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-Complete the final software qualification and the controlling study's single
-approved continuation operation. Bind exact source/worker identities after local
+Complete the controlling study's verified report fix pass and single approved
+continuation operation after local integration. Bind exact source/worker identities after local
 integration. The current task uses /private/tmp/imst-current-build/purification;
 the user explicitly retained the build and worktree resources. No cleanup, remote
 push, registry publication, extra bond cap, retry or numerical refinement is selected.
