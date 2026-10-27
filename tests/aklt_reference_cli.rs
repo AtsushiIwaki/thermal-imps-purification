@@ -139,9 +139,10 @@ fn fixture_request(
         writer.append((&state).into(), &progress).unwrap();
         writer.finish().unwrap();
     }
+    let contract_name = &req.contract;
     put(
         &path.join("summary.json"),
-        &json!({"schema_version":req.schema_version,"contract":req.contract,"request":req,"status":if available==20 && checkpoint{"complete"}else{"partial"},"reason":"integrity fixture","completed_steps":steps,"beta_actual":beta,"accumulated_log_norm":0.,"completed_steps_kind":"exact","available_samples":available,"elapsed_seconds":if req.schema_version==2 {4001.}else{0.},"budget_overrun_seconds":if req.schema_version==2 {Value::Null}else{json!(0.)},"checkpoint_available":checkpoint,
+        &json!({"schema_version":req.schema_version,"contract":contract_name,"request":req,"status":if available==20 && checkpoint{"complete"}else{"partial"},"reason":"integrity fixture","completed_steps":steps,"beta_actual":beta,"accumulated_log_norm":0.,"completed_steps_kind":"exact","available_samples":available,"elapsed_seconds":if req.schema_version==2 {4001.}else{0.},"budget_overrun_seconds":if req.schema_version==2 {Value::Null}else{json!(0.)},"checkpoint_available":checkpoint,
         "cap":{"maximum_dimension_seen":if hit{128}else{1},"ever_reached":hit,"observed_strang_steps":steps,"coverage":"complete_through_stop"}}),
     );
     progress

@@ -700,8 +700,9 @@ fn inspect(
             "summary.json norm disagrees with retained scalar evidence"
         );
     }
+    let contract_name = &summary.contract;
     Ok(
-        json!({"schema_version":summary.schema_version,"contract":summary.contract,"status":summary.status,"sample_count":rows.len(),"available_samples":available,"checkpoint_available":checkpoint,"checkpoint_verified":checkpoint,"terminal_consistency_passed":terminal,"completed_steps":summary.completed_steps,"completed_steps_kind":summary.completed_steps_kind,"request":summary.request,"beta_actual":summary.beta_actual,"accumulated_log_norm":summary.accumulated_log_norm,"cap":summary.cap,"elapsed_seconds":summary.elapsed_seconds,"budget_overrun_seconds":summary.budget_overrun_seconds}),
+        json!({"schema_version":summary.schema_version,"contract":contract_name,"status":summary.status,"sample_count":rows.len(),"available_samples":available,"checkpoint_available":checkpoint,"checkpoint_verified":checkpoint,"terminal_consistency_passed":terminal,"completed_steps":summary.completed_steps,"completed_steps_kind":summary.completed_steps_kind,"request":summary.request,"beta_actual":summary.beta_actual,"accumulated_log_norm":summary.accumulated_log_norm,"cap":summary.cap,"elapsed_seconds":summary.elapsed_seconds,"budget_overrun_seconds":summary.budget_overrun_seconds}),
     )
 }
 /// Read-only integrity check; does not certify convergence at earlier target betas.

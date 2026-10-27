@@ -155,8 +155,9 @@ pub fn preflight(request: &AkltReferenceRequest) -> Result<serde_json::Value> {
             .collect::<Vec<_>>()
     };
     let rdm = crate::itebd_rdm::RdmOptions::default();
+    let contract_name = &request.contract;
     Ok(serde_json::json!({
-        "schema_version":request.schema_version,"contract":request.contract,"max_seconds":request.max_seconds,"request":request,"basis_order":"first_site_fastest","physical_dimension":3,
+        "schema_version":request.schema_version,"contract":contract_name,"max_seconds":request.max_seconds,"request":request,"basis_order":"first_site_fastest","physical_dimension":3,
         "cell_sites":2,"backend":"real","initial_beta":0.0,"temperature_tick_scale":10,
         "log_norm_convention":"sum step and canonicalization log norms per two-site cell; f=-(ln(3)+sum/2)/beta",
         "max_dtau":settings.max_dtau,"max_bond":settings.truncation.max_bond,"svd_cutoff":settings.truncation.epsilon,
