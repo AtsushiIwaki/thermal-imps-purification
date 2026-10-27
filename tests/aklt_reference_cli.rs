@@ -25,8 +25,17 @@ fn fixture(
     off_target: bool,
     hit: bool,
 ) -> ItebdCheckpointProgress {
+    fixture_request(path, checkpoint, available, off_target, hit, request())
+}
+fn fixture_request(
+    path: &Path,
+    checkpoint: bool,
+    available: usize,
+    off_target: bool,
+    hit: bool,
+    req: AkltReferenceRequest,
+) -> ItebdCheckpointProgress {
     fs::create_dir(path).unwrap();
-    let req = request();
     let settings = resolve_request(&req).unwrap();
     put(&path.join("conditions.json"), &preflight(&req).unwrap());
     let steps = if off_target {
@@ -132,7 +141,7 @@ fn fixture(
     }
     put(
         &path.join("summary.json"),
-        &json!({"schema_version":1,"contract":"aklt-projector-reference-v1","request":req,"status":if available==20 && checkpoint{"complete"}else{"partial"},"reason":"integrity fixture","completed_steps":steps,"beta_actual":beta,"accumulated_log_norm":0.,"completed_steps_kind":"exact","available_samples":available,"elapsed_seconds":0.,"budget_overrun_seconds":0.,"checkpoint_available":checkpoint,
+        &json!({"schema_version":req.schema_version,"contract":req.contract,"request":req,"status":if available==20 && checkpoint{"complete"}else{"partial"},"reason":"integrity fixture","completed_steps":steps,"beta_actual":beta,"accumulated_log_norm":0.,"completed_steps_kind":"exact","available_samples":available,"elapsed_seconds":if req.schema_version==2 {4001.}else{0.},"budget_overrun_seconds":if req.schema_version==2 {Value::Null}else{json!(0.)},"checkpoint_available":checkpoint,
         "cap":{"maximum_dimension_seen":if hit{128}else{1},"ever_reached":hit,"observed_strang_steps":steps,"coverage":"complete_through_stop"}}),
     );
     progress
@@ -359,4 +368,60 @@ fn aklt_output_collisions_are_real_errors() {
     fs::create_dir(&existing).unwrap();
     assert!(run_to_directory(&request(), &existing).is_err());
     assert!(run_to_directory(&request(), &file.join("child")).is_err());
+}
+
+#[test]
+fn aklt_v2_bundle_roundtrip_and_interrupted_tail() {
+    let _guard = PROCESS_IO.lock().unwrap_or_else(|e| e.into_inner());
+    let mut value = serde_json::to_value(request()).unwrap();
+    value["schema_version"] = json!(2);
+    value["contract"] = json!("aklt-projector-reference-v2");
+    value["max_seconds"] = Value::Null;
+    let req: AkltReferenceRequest = serde_json::from_value(value).unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let bundle = dir.path().join("v2");
+    let expected = fixture_request(&bundle, true, 20, false, true, req);
+    let state_bytes = fs::read(bundle.join("state.h5")).unwrap();
+    let verified = verify_directory(&bundle).unwrap();
+    assert_eq!(verified["schema_version"], 2);
+    assert_eq!(verified["contract"], "aklt-projector-reference-v2");
+    assert_eq!(verified["elapsed_seconds"], 4001.);
+    assert!(verified["budget_overrun_seconds"].is_null());
+    let loaded = load_itebd_checkpoint(&bundle.join("state.h5"), 0, &Default::default()).unwrap();
+    assert_eq!(loaded.progress.beta.to_bits(), expected.beta.to_bits());
+    assert_eq!(verified["checkpoint_verified"], true);
+    let output = Command::new(env!("CARGO_BIN_EXE_aklt_reference"))
+        .arg("--verify")
+        .arg(&bundle)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let cli: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(cli, verified);
+
+    let sp = bundle.join("summary.json");
+    let original: Value = serde_json::from_slice(&fs::read(&sp).unwrap()).unwrap();
+    for (key, value) in [
+        ("budget_overrun_seconds", json!(0.)),
+        ("schema_version", json!(1)),
+        ("contract", json!("aklt-projector-reference-v1")),
+    ] {
+        let mut bad = original.clone();
+        bad[key] = value;
+        put(&sp, &bad);
+        assert!(verify_directory(&bundle).is_err(), "{key}");
+    }
+    fs::remove_file(&sp).unwrap();
+    let finalised = finalize_interrupted_directory(&bundle, "fixture process ended").unwrap();
+    assert_eq!(finalised["schema_version"], 2);
+    assert_eq!(finalised["cap"]["coverage"], "unobserved_tail");
+    assert_eq!(finalised["cap"]["ever_reached"], true);
+    assert!(finalised["elapsed_seconds"].is_null());
+    assert!(finalised["budget_overrun_seconds"].is_null());
+    assert_eq!(fs::read(bundle.join("state.h5")).unwrap(), state_bytes);
+    verify_directory(&bundle).unwrap();
 }

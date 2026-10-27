@@ -71,6 +71,18 @@ fn aklt_reference_nested_schedule_and_preflight() {
             assert!((p["two_site_h"][i][j].as_f64().unwrap() - h[(i, j)]).abs() < 1e-14);
         }
     }
+    let mut v2 = serde_json::to_value(request("fine")).unwrap();
+    v2["schema_version"] = json!(2);
+    v2["contract"] = json!("aklt-projector-reference-v2");
+    v2["max_seconds"] = serde_json::Value::Null;
+    let r2: AkltReferenceRequest = serde_json::from_value(v2).unwrap();
+    let mut unlimited = preflight(&r2).unwrap();
+    assert_eq!(unlimited["schema_version"], 2);
+    assert!(unlimited["max_seconds"].is_null());
+    for key in ["schema_version", "contract", "request", "max_seconds"] {
+        unlimited[key] = p[key].clone();
+    }
+    assert_eq!(unlimited, p);
     assert_eq!(p["site_energy"], p["two_site_h"]);
     assert!(p["log_norm_convention"].as_str().unwrap().contains("ln(3)"));
 }
@@ -163,5 +175,32 @@ fn aklt_reference_norm_ledger_uses_two_sites() {
     assert!((1e-8 * tiny.free_energy + 3f64.ln()).abs() < 1e-12);
     for (b, n) in [(0., 0.), (-1., 0.), (1., f64::NAN)] {
         assert!(measure_reference(&state, settings.hamiltonian(), b, n).is_err());
+    }
+}
+
+#[test]
+fn aklt_v2_requires_explicit_null_deadline() {
+    let mut base = serde_json::to_value(request("fine")).unwrap();
+    base["schema_version"] = json!(2);
+    base["contract"] = json!("aklt-projector-reference-v2");
+    base["max_seconds"] = serde_json::Value::Null;
+    resolve_request(&serde_json::from_value::<AkltReferenceRequest>(base.clone()).unwrap())
+        .unwrap();
+    let mut missing = base.clone();
+    missing.as_object_mut().unwrap().remove("max_seconds");
+    let error = serde_json::from_value::<AkltReferenceRequest>(missing).unwrap_err();
+    assert!(error.to_string().contains("max_seconds"), "{error}");
+    for (key, value) in [
+        ("max_seconds", json!(0.)),
+        ("max_seconds", json!(3600.)),
+        ("max_seconds", json!("null")),
+        ("schema_version", json!(1)),
+        ("contract", json!("aklt-projector-reference-v1")),
+    ] {
+        let mut bad = base.clone();
+        bad[key] = value;
+        if let Ok(request) = serde_json::from_value::<AkltReferenceRequest>(bad) {
+            assert!(resolve_request(&request).is_err(), "{key}");
+        }
     }
 }

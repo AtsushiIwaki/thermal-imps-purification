@@ -13,6 +13,7 @@ use nalgebra::DMatrix;
 use num_complex::Complex64;
 use serde::{Deserialize, Serialize};
 pub const CONTRACT: &str = "aklt-projector-reference-v1";
+pub const CONTRACT_V2: &str = "aklt-projector-reference-v2";
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum AkltVariant {
@@ -31,9 +32,16 @@ pub struct AkltReferenceRequest {
     pub contract: String,
     pub model: AkltModel,
     pub variant: AkltVariant,
-    pub max_seconds: f64,
+    #[serde(deserialize_with = "required_deadline")]
+    pub max_seconds: Option<f64>,
     pub source_revision: String,
     pub worker_sha256: String,
+}
+// A missing key must remain an error; explicit JSON null selects v2 only.
+fn required_deadline<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> std::result::Result<Option<f64>, D::Error> {
+    Option::<f64>::deserialize(deserializer)
 }
 /// Construct only with resolve_request; production numerical controls cannot be changed.
 pub struct AkltReferenceSettings {
@@ -88,18 +96,19 @@ pub struct AkltSampleValues {
 pub type AkltSample = crate::reference_trajectory::ScheduledSample<AkltSampleValues>;
 pub type AkltOutcome = crate::reference_trajectory::ScheduledOutcome<AkltSampleValues>;
 pub fn resolve_request(request: &AkltReferenceRequest) -> Result<AkltReferenceSettings> {
-    let valid_contract = request.contract == CONTRACT;
+    let valid_contract = (request.schema_version == 1
+        && request.contract == CONTRACT
+        && request.max_seconds == Some(3600.))
+        || (request.schema_version == 2
+            && request.contract == CONTRACT_V2
+            && request.max_seconds.is_none());
     ensure!(
-        request.schema_version == 1 && valid_contract,
-        "request schema/contract mismatch"
+        valid_contract,
+        "request schema/contract/max_seconds mismatch: v1 requires3600; v2 requires explicit null"
     );
     ensure!(
         request.model.name == "aklt_projector",
         "request.model requires aklt_projector"
-    );
-    ensure!(
-        request.max_seconds == 3600.,
-        "request.max_seconds must be 3600"
     );
     for (name, value, length) in [
         ("source_revision", &request.source_revision, 40),
@@ -147,7 +156,7 @@ pub fn preflight(request: &AkltReferenceRequest) -> Result<serde_json::Value> {
     };
     let rdm = crate::itebd_rdm::RdmOptions::default();
     Ok(serde_json::json!({
-        "schema_version":1,"contract":CONTRACT,"max_seconds":request.max_seconds,"request":request,"basis_order":"first_site_fastest","physical_dimension":3,
+        "schema_version":request.schema_version,"contract":request.contract,"max_seconds":request.max_seconds,"request":request,"basis_order":"first_site_fastest","physical_dimension":3,
         "cell_sites":2,"backend":"real","initial_beta":0.0,"temperature_tick_scale":10,
         "log_norm_convention":"sum step and canonicalization log norms per two-site cell; f=-(ln(3)+sum/2)/beta",
         "max_dtau":settings.max_dtau,"max_bond":settings.truncation.max_bond,"svd_cutoff":settings.truncation.epsilon,
@@ -296,7 +305,7 @@ pub(crate) fn run_with_elapsed(
             truncation: &settings.truncation,
             segments: &settings.segments,
             targets: &settings.targets,
-            policy: RunPolicy::AkltV1 {
+            policy: RunPolicy::Aklt {
                 max_seconds: settings.request.max_seconds,
                 bond_cap: 128,
             },

@@ -89,7 +89,10 @@ impl CapEvidence {
 #[derive(Clone, Copy)]
 pub(crate) enum RunPolicy {
     IsingV1,
-    AkltV1 { max_seconds: f64, bond_cap: usize },
+    Aklt {
+        max_seconds: Option<f64>,
+        bond_cap: usize,
+    },
 }
 pub(crate) struct TrajectorySettings<'a> {
     pub hamiltonian: &'a ItebdHamiltonian,
@@ -175,15 +178,15 @@ pub(crate) fn run_scheduled<V: Measurement>(
     );
     let (limit, bond_cap) = match settings.policy {
         RunPolicy::IsingV1 => (None, None),
-        RunPolicy::AkltV1 {
+        RunPolicy::Aklt {
             max_seconds,
             bond_cap,
         } => {
             ensure!(
-                max_seconds.is_finite() && max_seconds > 0. && bond_cap > 0,
+                max_seconds.is_none_or(|v| v.is_finite() && v > 0.) && bond_cap > 0,
                 "invalid reference run policy"
             );
-            (Some(max_seconds), Some(bond_cap))
+            (max_seconds, Some(bond_cap))
         }
     };
     let expired = |clock: &mut dyn FnMut() -> f64| limit.is_some_and(|v| clock() >= v);
@@ -485,8 +488,8 @@ mod tests {
                 truncation: &self.trunc,
                 segments: &self.segments,
                 targets: &self.targets,
-                policy: RunPolicy::AkltV1 {
-                    max_seconds: 3600.,
+                policy: RunPolicy::Aklt {
+                    max_seconds: Some(3600.),
                     bond_cap: 128,
                 },
             }
@@ -499,6 +502,7 @@ mod tests {
         Canonical,
         Validation,
         Measurement,
+        NonfiniteMeasurement,
         Callback,
     }
     struct Seam {
@@ -580,7 +584,13 @@ mod tests {
             if self.failure == Some((Phase::Measurement, self.measures)) {
                 bail!("originating measurement failure");
             }
-            Ok(Value(norm))
+            Ok(Value(
+                if self.failure == Some((Phase::NonfiniteMeasurement, self.measures)) {
+                    f64::NAN
+                } else {
+                    norm
+                },
+            ))
         }
     }
     fn run(f: &Fixture, engine: &mut Seam) -> Result<ScheduledOutcome<Value>> {
@@ -600,6 +610,62 @@ mod tests {
             engine,
             &mut || clock.get(),
         )
+    }
+    #[test]
+    fn aklt_unlimited_clock_keeps_cap_evidence() {
+        let f = Fixture::new();
+        let mut settings = f.settings();
+        settings.policy = RunPolicy::Aklt {
+            max_seconds: None,
+            bond_cap: 128,
+        };
+        let mut e = Seam::new();
+        e.clock.set(4000.);
+        e.hit = true;
+        let clock = e.clock.clone();
+        let out = run_scheduled(settings, &mut |_| Ok(()), &mut e, &mut || clock.get()).unwrap();
+        assert_eq!(e.steps, 4);
+        assert!(out.samples.iter().all(|s| s.available));
+        assert_eq!(out.elapsed_seconds, 4000.);
+        let cap = out.cap.unwrap();
+        assert_eq!(cap.ever_reached, Some(true));
+        assert_eq!(cap.maximum_dimension_seen, Some(128));
+        assert_eq!(cap.observed_strang_steps, 4);
+        assert_eq!(cap.coverage, CapCoverage::CompleteThroughStop);
+        let mut old = Seam::new();
+        old.clock.set(4000.);
+        let bounded = run(&f, &mut old).unwrap();
+        assert_eq!(old.steps, 0);
+        assert!(bounded.reason.contains("time limit"));
+        for (phase, n, cause) in [
+            (Phase::Step, 3, "originating step"),
+            (Phase::Canonical, 3, "originating canonicalization"),
+            (Phase::Validation, 3, "lambda_ab"),
+            (Phase::NonfiniteMeasurement, 2, "nonfinite measurement"),
+        ] {
+            let mut settings = f.settings();
+            settings.policy = RunPolicy::Aklt {
+                max_seconds: None,
+                bond_cap: 128,
+            };
+            let mut e = Seam::new();
+            e.clock.set(4000.);
+            e.failure = Some((phase, n));
+            let clock = e.clock.clone();
+            let out =
+                run_scheduled(settings, &mut |_| Ok(()), &mut e, &mut || clock.get()).unwrap();
+            assert!(out.samples[0].available);
+            assert!(!out.samples[1].available);
+            assert!(out.reason.contains(cause), "{}", out.reason);
+            assert!(!out.reason.contains("time limit"));
+            assert_eq!(
+                out.terminal_state.is_some(),
+                phase == Phase::NonfiniteMeasurement
+            );
+            if phase != Phase::NonfiniteMeasurement {
+                assert_eq!(out.cap.unwrap().coverage, CapCoverage::UnobservedTail);
+            }
+        }
     }
     #[test]
     fn aklt_deadline_retains_completed_measurement() {

@@ -290,3 +290,18 @@ The publication report adds disjoint `timing.trajectory_seconds`,
 `timing.terminal_publication_seconds` and `timing.native_verification_seconds`.
 A caller's inclusive process wall time is an additional measurement, not an amount
 to add to these intervals. Earlier sampled states are not retained or replayed.
+
+### AKLT reference without a deadline
+
+The fixed `aklt-projector-reference-v2` contract uses `schema_version: 2` and
+a required `max_seconds: null`. Omission, a finite number, and a string are
+rejected. The original v1 contract still requires schema 1 and 3600 seconds.
+Both use the same independent beta=0 starts, cap 128, cutoff 1e-13,
+max_dtau 0.005/0.01 and 1014/507 Strang steps for fine/time-step respectively.
+No Ising policy or numerical fallback is substituted.
+
+All v2 preflight, conditions, summary and verification envelopes preserve v2
+identity. Elapsed time remains measured (or null if unknown after interruption);
+`budget_overrun_seconds` is always null. Cap observations and unknown-tail
+coverage remain independent of deadline selection. Output creation remains
+exclusive and interruption finalization does not resume evolution.

@@ -172,8 +172,8 @@ fn publish_with(
         native_seconds += checked.elapsed().as_secs_f64();
     }
     let summary = Summary {
-        schema_version: 1,
-        contract: CONTRACT.into(),
+        schema_version: settings.request().schema_version,
+        contract: settings.request().contract.clone(),
         request: settings.request().clone(),
         status: outcome.status,
         reason: outcome.reason,
@@ -184,7 +184,10 @@ fn publish_with(
         completed_steps_kind: "exact".into(),
         available_samples: rows.iter().filter(|r| r.available).count(),
         elapsed_seconds: Some(outcome.elapsed_seconds),
-        budget_overrun_seconds: Some(outcome.budget_overrun_seconds),
+        budget_overrun_seconds: settings
+            .request()
+            .max_seconds
+            .map(|_| outcome.budget_overrun_seconds),
         checkpoint_available: outcome.terminal_state.is_some(),
     };
     let checked = std::time::Instant::now();
@@ -483,8 +486,8 @@ fn inspect(
 ) -> Result<Value> {
     let checkpoint = membership(directory, false)?;
     validate_samples(settings, rows)?;
-    let valid_contract = summary.contract == CONTRACT;
-    ensure!(valid_contract && summary.schema_version==1 && serde_json::to_value(&summary.request)?==serde_json::to_value(settings.request())?,"conditions.json/summary.json request identity mismatch (model/source_revision/worker_sha256)");
+    let valid_contract = summary.contract == settings.request().contract;
+    ensure!(valid_contract && summary.schema_version==settings.request().schema_version && serde_json::to_value(&summary.request)?==serde_json::to_value(settings.request())?,"conditions.json/summary.json request identity mismatch (model/source_revision/worker_sha256)");
     ensure!(
         ["complete", "partial"].contains(&summary.status.as_str())
             && !summary.reason.trim().is_empty(),
@@ -506,10 +509,15 @@ fn inspect(
         "summary.json beta/norm/grid mismatch"
     );
     ensure!(
-        match (summary.elapsed_seconds, summary.budget_overrun_seconds) {
-            (Some(elapsed), Some(overrun)) =>
-                overrun.is_finite() && overrun >= 0. && close(overrun, (elapsed - 3600.).max(0.)),
-            (None, None) => true,
+        match (
+            settings.request().max_seconds,
+            summary.elapsed_seconds,
+            summary.budget_overrun_seconds
+        ) {
+            (None, _, None) => true,
+            (Some(limit), Some(elapsed), Some(overrun)) =>
+                overrun.is_finite() && overrun >= 0. && close(overrun, (elapsed - limit).max(0.)),
+            (Some(_), None, None) => true,
             _ => false,
         },
         "summary.json elapsed/overrun evidence mismatch"
@@ -693,7 +701,7 @@ fn inspect(
         );
     }
     Ok(
-        json!({"schema_version":1,"contract":CONTRACT,"status":summary.status,"sample_count":rows.len(),"available_samples":available,"checkpoint_available":checkpoint,"checkpoint_verified":checkpoint,"terminal_consistency_passed":terminal,"completed_steps":summary.completed_steps,"completed_steps_kind":summary.completed_steps_kind,"request":summary.request,"beta_actual":summary.beta_actual,"accumulated_log_norm":summary.accumulated_log_norm,"cap":summary.cap,"elapsed_seconds":summary.elapsed_seconds,"budget_overrun_seconds":summary.budget_overrun_seconds}),
+        json!({"schema_version":summary.schema_version,"contract":summary.contract,"status":summary.status,"sample_count":rows.len(),"available_samples":available,"checkpoint_available":checkpoint,"checkpoint_verified":checkpoint,"terminal_consistency_passed":terminal,"completed_steps":summary.completed_steps,"completed_steps_kind":summary.completed_steps_kind,"request":summary.request,"beta_actual":summary.beta_actual,"accumulated_log_norm":summary.accumulated_log_norm,"cap":summary.cap,"elapsed_seconds":summary.elapsed_seconds,"budget_overrun_seconds":summary.budget_overrun_seconds}),
     )
 }
 /// Read-only integrity check; does not certify convergence at earlier target betas.
@@ -750,8 +758,8 @@ pub fn finalize_interrupted_directory(directory: &Path, reason: &str) -> Result<
     };
     cap.mark_unobserved();
     let summary = Summary {
-        schema_version: 1,
-        contract: CONTRACT.into(),
+        schema_version: settings.request().schema_version,
+        contract: settings.request().contract.clone(),
         request: settings.request().clone(),
         status: "partial".into(),
         reason: reason.into(),
@@ -847,6 +855,34 @@ mod tests {
             budget_overrun_seconds: 1.,
             cap: Some(cap),
         })
+    }
+    #[test]
+    fn aklt_v2_reference_trajectory_publication_keeps_unlimited_timing() -> Result<()> {
+        let req: AkltReferenceRequest = serde_json::from_value(
+            json!({"schema_version":2,"contract":"aklt-projector-reference-v2","model":{"name":"aklt_projector"},"variant":"fine","max_seconds":null,"source_revision":"a".repeat(40),"worker_sha256":"b".repeat(64)}),
+        )?;
+        let settings = resolve_request(&req)?;
+        let temp = tempfile::tempdir()?;
+        let path = temp.path().join("v2");
+        let report = publish_with(
+            &settings,
+            &path,
+            &mut |settings, callback| {
+                let mut result = fixture_run(settings, callback)?;
+                result.reason = "fixture numerical stop".into();
+                result.elapsed_seconds = 4001.;
+                result.budget_overrun_seconds = 0.;
+                Ok(result)
+            },
+            &mut || Ok(()),
+        )?;
+        assert_eq!(report["schema_version"], 2);
+        assert_eq!(report["contract"], "aklt-projector-reference-v2");
+        assert_eq!(report["elapsed_seconds"], 4001.);
+        assert!(report["budget_overrun_seconds"].is_null());
+        assert_eq!(report["checkpoint_verified"], true);
+        verify_directory(&path)?;
+        Ok(())
     }
     #[test]
     fn aklt_publication_failure_retains_endpoint_and_observed_rows() -> Result<()> {
