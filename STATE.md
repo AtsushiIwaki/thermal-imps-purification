@@ -75,6 +75,11 @@ matrix/backtrace was not retained, so no common root cause with earlier Faer
 failures is established. Low-temperature time-step and cap convergence remain
 unresolved. Launch bindings retain revision b61ae0f and the exact tested worker;
 closing documentation does not change the numerical source or rebuild it.
-The user retains /private/tmp/imst-current-build/purification and worktree/branch
-resources. No cleanup, remote push, registry publication, extra cap, retry or
-numerical refinement is selected.
+After explicit review on 2026-10-27, the shared /private/tmp/imst-current-build
+parent (including purification targets) was moved to normal recoverable Trash.
+The original path is absent, the Trash inventory and tested worker hash match,
+and the Trash was not emptied. Infinite_MST retains the cleanup receipt, path
+mapping, rebuild record and successful strict inventory; retained reference
+results and source remain here. Worktree/branch resources remain user-retained.
+Future native execution requires rebuilding. No remote push, registry publication,
+extra cap, retry or numerical refinement is selected.
