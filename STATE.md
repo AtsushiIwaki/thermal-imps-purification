@@ -83,5 +83,5 @@ mapping, rebuild record and successful strict inventory; retained reference
 results and source remain here. After a Local handoff on 2026-10-28, Codex
 archived the controlling Infinite_MST worktree with recovery available; its
 directory and Git registration are absent. Git branches remain retained.
-Future native execution requires rebuilding. No remote push, registry publication,
-extra cap, retry or numerical refinement is selected.
+Future native execution requires rebuilding. Registry publication, extra cap,
+retry or numerical refinement remains unselected.
