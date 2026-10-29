@@ -71,7 +71,7 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 A separately scoped investigation is needed for the cap256 SVD failure before
 any new attempt. Cold cap256 values and low-temperature cap/time-step convergence
-remain unresolved. The ordinary task worktree is being retired after verified
-integration/preservation. `/private/tmp/imst-current-build` awaits explicit
+remain unresolved. The ordinary task worktree/branch were retired with Git without force after
+verified integration and SHA-256 preservation; directory/registration are absent. `/private/tmp/imst-current-build` awaits explicit
 normal-Trash review; required source, vendor patches, locks and terminal results
 remain. No extra calculation, retry or registry publication is selected.
