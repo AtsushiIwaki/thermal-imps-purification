@@ -69,9 +69,20 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-A separately scoped investigation is needed for the cap256 SVD failure before
-any new attempt. Cold cap256 values and low-temperature cap/time-step convergence
-remain unresolved. The ordinary task worktree/branch were retired with Git without force after
-verified integration and SHA-256 preservation; directory/registration are absent. `/private/tmp/imst-current-build` awaits explicit
-normal-Trash review; required source, vendor patches, locks and terminal results
-remain. No extra calculation, retry or registry publication is selected.
+The user-authorized bounded SVD investigation did not reproduce the thermal
+failure in one checkpoint continuation from T0.7 to0.6 or one original-flow
+beta0 prefix ending at step178/T0.6. Original/prefix tensor components matched
+bitwise through step122; they differed by step136. The current registry
+Faer0.24.4 failed the known finite3x3 control at threads1 and24; main's patched
+Faer and NumPy succeeded. No failing thermal matrix was captured, so the original
+root cause remains unproved. No production repair or full-temperature retry ran.
+Detailed evidence is owned by the controlling Infinite_MST investigation note
+`notes/2026-10-29-aklt-purification-svd-investigation.md` and its ignored records.
+
+Cold cap256 values and low-temperature cap/time-step convergence remain unresolved.
+The previous integrated worktree/branch were retired after verified preservation.
+The throwaway diagnostic worktree `/private/tmp/thermal-purification-svd-worktree`
+and reactivated `/private/tmp/imst-current-build` remain pending disposition;
+the previous build Trash manifest was superseded before reuse. Required source,
+locks, old/new production results and the original executable are preserved.
+No further trajectory, dependency repair or registry publication is selected.
