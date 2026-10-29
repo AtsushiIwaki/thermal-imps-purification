@@ -16,8 +16,8 @@ third SVD (beta_before_step3.878968253968235, temperature context~0.2578).
 The captured2304x2304 matrix has5,308,416 nonfinite entries. The first corrupting
 operation within that production full step remains unobserved.
 
-The approved secular-root bracket repair is implemented on branch
-codex/faer-secular-bracket-fix, pending integration. It rejects invalid secant
+The approved secular-root bracket repair is integrated into local main at
+5400c7c following the user's local-merge selection. It rejects invalid secant
 candidates before use and preserves the fallback bracket. An independent small
 polynomial-root regression failed before the change and passes after it; prior
 terminal2x2 regressions also pass. The captured963x963 matrix is now finite and
@@ -74,17 +74,20 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 
 ## Next actions and limits
 
-- Integrate the reviewed root-bracket repair after final gates and the user
-  selects integration. Final gates passed495 Native/42 binaries (16 optional
-  ignored), six vendor plus three selected SVD checks and14 main native HDF5
-  checks (4 optional exporters ignored); doctests discovered0. Original402 attribution and cold cap256 completion remain
-  open; no further trajectory is selected. Bond/time-step convergence is unproved.
-- Both integrated ordinary worktrees/registrations and repair branches are retired
-  with unchanged retained hashes. The earlier diagnostic branch b751a9e remains.
-  Ordinary `/private/tmp/thermal-purification-nonfinite-worktree` now hosts the
-  repair branch and awaits integration/disposition, with no production merge. Task build `/private/tmp/imst-current-build`
-  was reactivated for diagnosis; its pending Trash manifest is superseded with no
-  actionable rows. Fresh review is needed before Trash.
+- Root-bracket repair5400c7c is integrated locally. Fresh merged-source gates
+  passed495 Native/42 binaries (16 optional ignored), six vendor regressions
+  and0 discovered doctests. Release aklt_reference was rebuilt/relinked from
+  stable main and read-only runtime smoke passed; no thermal calculation ran.
+  The prior three selected SVD and14 main native HDF5 checks remain valid with
+  unchanged numerical source. Original402 attribution, cold cap256 completion
+  and bond/time-step convergence remain open; no further trajectory is selected.
+- The completed repair worktree/registration and repair branch are retired
+  after clean/integrated checks; protected27 output hashes are unchanged.
+  Diagnostic branches b751a9e/cd9a468 remain. Task build
+  `/private/tmp/imst-current-build` is retained pending fresh explicit normal-Trash
+  review; no build removal or physical-space reclamation is claimed. The prior
+  cleanup manifest is superseded. Integration/retirement evidence is in the
+  controlling bracket-repair records.
 - Checkpoint publication is exclusive, not transactional across every format or
   arbitrary power loss. Use the documented completed-prefix recovery.
 - Native HDF5 in-process Git launcher support remains scoped to documented

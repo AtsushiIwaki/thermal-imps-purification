@@ -1,11 +1,12 @@
 # Faer secular-root bracket repair
 
-2026-10-29: The bounded repair preserves the valid pole interval when secant
-extrapolation fails. A small independent polynomial-root regression reproduces
+2026-10-30 JST: The bounded repair is integrated into local main at5400c7c,
+following the user's local-merge selection. It preserves the valid pole interval
+when secant extrapolation fails. A small independent polynomial-root regression reproduces
 the previous below-pole return, and the captured finite963x963 matrix now
 factorizes with finite, accurate singular vectors under the selected24-way
-parallelism setting. Implementation is on the local repair branch, pending
-integration. No thermal trajectory or reference publication is part of this task.
+parallelism setting. No thermal trajectory or reference publication is part of
+this task.
 
 ## Cause and change
 
@@ -95,3 +96,20 @@ execution; its existing wrapper does not expose their split. Separate Faer
 release library builds took25.87s before and26.195s after; the final vendor-test
 process took74.602s, predominantly74s compilation. Main HDF5 wall81.660s includes
 77s build and2.41s execution. Full unchanged Python/main suites were unselected.
+
+## Local integration and retirement
+
+The user selected local integration. Main fast-forwarded from6e77e93 to5400c7c.
+Fresh verification at the stable checkout passed495 Native tests/42 binaries
+(16 optional ignored, one known warning), six Faer regressions and0 discovered
+doctests. Routine wall283.605s includes build/execution without an exposed split;
+the vendor process took74.444s (73s build, execution rounded0.00s). The release
+worker rebuilt/relinked in268.253s and read-only runtime smoke passed in0.606s.
+No benchmark or thermal trajectory was repeated. Unchanged main HDF5/selected
+SVD/Python suites were not repeated without a new change or unresolved concern.
+
+The clean ordinary worktree and integrated repair branch were removed using
+normal Git commands; source history and diagnostic branches b751a9e/cd9a468 remain.
+All27 protected reference/figure/matrix hashes and the consumed production
+launch guard are unchanged. The external task build remains pending explicit
+normal-Trash review; no physical disk reclamation is claimed.
