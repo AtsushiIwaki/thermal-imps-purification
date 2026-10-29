@@ -368,3 +368,55 @@ variance rows through T=0.7 were verified, then SVD failed before the next targe
 The retained154 steps are a lower bound, not the exact failure step; missing
 T=0.6,...,0.1 values remain unavailable. No retry was performed. The controlling
 Infinite_MST record owns the comparison, runtime and cleanup evidence.
+
+### AKLT cap256 continuation after the SVD repair
+
+The explicit `aklt-projector-reference-resume-v4` request (schema4) continues the
+original v3 fourteen-target bundle from snapshot13 at T=0.7. It keeps every v3
+fine control and requires `restart` with a relative `directory`, the four
+parent file pins (`bytes`, `sha256` for conditions.json, samples.csv, states.h5,
+summary.json), `snapshot_index:13`, and exact saved `progress`
+(`completed_steps:154`, `beta`, `accumulated_log_norm`). Its `cap` comes from
+the saved boundary row, with `coverage:"complete_through_stop"` and
+`observed_strang_steps:154`; the failed parent's unobserved tail is not inherited.
+Unknown fields and control changes are rejected. Preflight resolves the request
+without evolving or opening the parent; launch verifies the parent before
+reserving output, including pins, native physical consistency, raw progress,
+normalization and the complete original segmented schedule.
+
+The loaded state goes directly into the remaining six original segments:
+860 new full Strang steps, absolute endpoint1014. No beta0 setup or initial
+canonicalization is repeated. The accumulated log normalization and observed cap
+history continue from the checkpoint. One new `states.h5` contains only the six
+new snapshots, T=0.6,0.5,...,0.1, local indices0..5; T=0.7 is not copied.
+Conditions preserve the full1014-step schedule, remaining_steps860, initial
+progress and source pins. Summary and verification sample/snapshot/physical/heat
+counts refer to these six new targets; completed_steps remains absolute.
+Interrupted finalization may retain zero new snapshots and progress154.
+Verification also requires the pinned original v3 parent. A compatible rebuilt
+reader can inspect either producer without requiring the original executable.
+
+The controlling report combines the original14 scalar/variance rows with the
+six continuation rows, retaining both producers and local snapshot mappings.
+Old variance sums are not evaluated again. That report uses the explicit
+`aklt-purification-bond-comparison-report-v2` frozen format; its original v1
+report remains readable. Continuation plots identify the T=0.7 boundary.
+
+Faer0.24.4 is bound to the retained terminal2x2 SVD repair; see
+[vendoring provenance](../vendor/faer/VENDORING.md). The tensor4all/tenferro pins,
+cutoff, schedule, canonicalizer and variance defaults remain unchanged. Native
+production thread defaults are preserved and recorded. One selected invocation
+has no elapsed-time cap, automatic retry or fallback.
+
+Only on a returned real bond-SVD error during this continuation, a scoped hook
+attempts exclusive creation of `../svd-failure.h5`, at most once. It records the
+exact column-major f64 input with raw-bit hash, shape and tensor split, absolute
+step, beta, SVD call1..3 within that full step, error and producer identity.
+The bound is2304x2304 entries (42,467,328 matrix bytes). It records no per-step
+history and does not certify a physical state. Capture failure preserves the
+original SVD panic; unrelated backend panics are not promised matrix capture.
+`aklt_reference --verify-svd-failure FILE` checks schema, completeness, dimensions,
+layout, hash and producer fields and returns small diagnostic metadata, including
+nonfinite count. It does not replay SVD or emit matrix JSON. Existing files are
+never overwritten. A passing finite control does not identify the original
+uncaptured thermal failure's cause.

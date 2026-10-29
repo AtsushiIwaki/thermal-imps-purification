@@ -26,6 +26,7 @@ pub mod runner;
 pub mod solve_run;
 pub mod specific_heat;
 pub mod tensor;
+mod svd_failure;
 #[cfg(test)]
 pub(crate) mod test_tensor_support;
 pub mod transfer;

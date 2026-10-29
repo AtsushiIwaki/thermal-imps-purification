@@ -140,7 +140,12 @@ pub fn svd_bond(t: &Tensor, left: &[Idx], trunc: &Truncation) -> SvdResult {
     if let Some(chi) = trunc.max_bond {
         opts = opts.with_max_bond_dim(chi);
     }
-    let (u, s_tensor, v_raw) = svd_with::<f64>(t, left, &opts).unwrap();
+    crate::svd_failure::enter_svd();
+    let result = svd_with::<f64>(t, left, &opts);
+    if let Err(error) = &result {
+        crate::svd_failure::record_error(t, left, &format!("{error:?}"));
+    }
+    let (u, s_tensor, v_raw) = result.unwrap();
     // s is a 2D diagonal matrix [bond, bond_sim]; extract diagonal via stride k*(r+1)
     let s_dense = s_tensor.to_vec::<f64>().unwrap();
     let r = s_tensor.dims()[0];

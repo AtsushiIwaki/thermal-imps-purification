@@ -200,6 +200,20 @@ pub(crate) fn run_scheduled_observed<V: Measurement>(
     engine: &mut dyn Engine<V>,
     elapsed: &mut dyn FnMut() -> f64,
 ) -> Result<ScheduledOutcome<V>> {
+    run_scheduled_observed_from(settings, observer, engine, elapsed, None)
+}
+pub(crate) struct ScheduledStart {
+    pub state: ItebdState,
+    pub progress: ItebdCheckpointProgress,
+    pub cap: CapEvidence,
+}
+pub(crate) fn run_scheduled_observed_from<V: Measurement>(
+    settings: TrajectorySettings<'_>,
+    observer: &mut dyn TargetObserver<V>,
+    engine: &mut dyn Engine<V>,
+    elapsed: &mut dyn FnMut() -> f64,
+    start: Option<ScheduledStart>,
+) -> Result<ScheduledOutcome<V>> {
     ensure!(
         settings.segments.len() == settings.targets.len() && !settings.targets.is_empty(),
         "reference schedule length mismatch"
@@ -225,6 +239,20 @@ pub(crate) fn run_scheduled_observed<V: Measurement>(
         accumulated_log_norm: 0.,
         last_step: None,
     };
+    let initial_state = if let Some(initial) = start {
+        ensure!(
+            bond_cap.is_some()
+                && initial.progress.completed_steps < settings.targets[0].completed_steps
+                && initial.progress.beta.is_finite()
+                && initial.progress.accumulated_log_norm.is_finite(),
+            "invalid reference restart progress"
+        );
+        progress = initial.progress;
+        cap = Some(initial.cap);
+        Some(initial.state)
+    } else {
+        None
+    };
     let mut stopped = None;
     let mut reasons = Vec::new();
     let mut state = if expired(elapsed) {
@@ -235,9 +263,12 @@ pub(crate) fn run_scheduled_observed<V: Measurement>(
         );
         None
     } else {
-        let state = engine
-            .setup(settings.hamiltonian)
-            .context("reference initial state setup")?;
+        let state = match initial_state {
+            Some(state) => state,
+            None => engine
+                .setup(settings.hamiltonian)
+                .context("reference initial state setup")?,
+        };
         let summary = crate::itebd_state_view::ItebdStateRef::from(&state)
             .validate()
             .context("reference initial state validation")?;
@@ -273,6 +304,7 @@ pub(crate) fn run_scheduled_observed<V: Measurement>(
                     .as_mut()
                     .context("missing initialized reference state")?;
                 let attempt = (|| -> Result<_> {
+                    crate::svd_failure::begin_step(progress.completed_steps + 1, progress.beta);
                     let step =
                         engine.step(s, settings.hamiltonian, segment.dtau, settings.truncation)?;
                     if let (Some(c), Some(b)) = (&mut cap, bond_cap) {

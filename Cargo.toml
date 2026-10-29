@@ -27,3 +27,7 @@ proc-macro2 = "1"
 
 [target.'cfg(any(target_os = "macos", all(target_os = "linux", target_env = "gnu")))'.dependencies]
 libc = "0.2.186"
+
+# Reviewed native terminal2x2 SVD repair; see vendor/faer/VENDORING.md.
+[patch.crates-io]
+faer = { path = "vendor/faer" }

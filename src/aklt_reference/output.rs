@@ -716,7 +716,7 @@ fn is_v3_directory(directory: &Path) -> Result<bool> {
         "conditions.json must be regular"
     );
     let value: Value = serde_json::from_slice(&fs::read(&path)?)?;
-    Ok(value["contract"].as_str() == Some(super::v3::CONTRACT_V3))
+    Ok(matches!(value["contract"].as_str(),Some(super::v3::CONTRACT_V3|super::v4::CONTRACT_V4)))
 }
 /// Read-only integrity check; does not certify convergence at earlier target betas.
 pub fn verify_directory(directory: &Path) -> Result<Value> {

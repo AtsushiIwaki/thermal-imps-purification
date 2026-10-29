@@ -69,20 +69,32 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-The user-authorized bounded SVD investigation did not reproduce the thermal
-failure in one checkpoint continuation from T0.7 to0.6 or one original-flow
-beta0 prefix ending at step178/T0.6. Original/prefix tensor components matched
-bitwise through step122; they differed by step136. The current registry
-Faer0.24.4 failed the known finite3x3 control at threads1 and24; main's patched
-Faer and NumPy succeeded. No failing thermal matrix was captured, so the original
-root cause remains unproved. No production repair or full-temperature retry ran.
-Detailed evidence is owned by the controlling Infinite_MST investigation note
-`notes/2026-10-29-aklt-purification-svd-investigation.md` and its ignored records.
+The approved bounded repair/continuation is implemented on the ordinary branch
+`codex/aklt-purification-resume-svd-repair`, based on local main3c49bf5. Integration
+and the single production launch remain pending user selection. It vendors only
+the reviewed Faer terminal2x2 SVD repair, preserving the tensor4all/tenferro pins.
+The v4 contract loads parent snapshot13 at absolute step154/T0.7 and carries its
+raw state, accumulated log normalization and saved-row cap evidence into860 new
+steps. It records six new snapshots and optional first returned SVD failure
+matrix; no beta0 setup, old variance evaluation or automatic retry is selected.
+See [continuation contract](docs/usage.md#aklt-cap256-continuation-after-the-svd-repair).
+Fresh repair gates passed494 native tests/42 binaries (16 optional ignored),
+54 tooling tests and selected vendor SVD5+3 checks; doctests discovered0. Native
+routine wall262.643s includes compilation/setup; one exact upstream ARM64 warning
+is recorded, with no unknown warning. Independent review findings on boundary
+anchoring and old-report protection are resolved. This is software evidence only.
+The controlling Infinite_MST note is
+`notes/2026-10-29-aklt-purification-svd-resume.md`; ignored development evidence
+belongs to its `results/records/aklt-purification-dmax256-resume-svd-repair/`.
+The earlier bounded investigation did not reproduce the thermal failure. The
+old finite3x3 SVD control fails before this repair and passes afterward, but the
+original uncaptured thermal failure's cause remains unproved.
 
 Cold cap256 values and low-temperature cap/time-step convergence remain unresolved.
 The previous integrated worktree/branch were retired after verified preservation.
 The throwaway diagnostic worktree `/private/tmp/thermal-purification-svd-worktree`
 and reactivated `/private/tmp/imst-current-build` remain pending disposition;
 the previous build Trash manifest was superseded before reuse. Required source,
-locks, old/new production results and the original executable are preserved.
-No further trajectory, dependency repair or registry publication is selected.
+locks and original production results are preserved; executables are disposable
+and historical inspection uses a compatible reader. No production continuation
+or registry publication has run in this task.

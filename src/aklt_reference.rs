@@ -2,13 +2,17 @@
 pub mod output;
 pub mod v3;
 pub mod v3_output;
+pub mod v4;
 pub enum AkltWorkerRequest {
     Legacy(AkltReferenceRequest),
     V3(v3::AkltReferenceRequestV3),
+    Resume(v4::AkltReferenceResumeRequest),
 }
 pub fn parse_worker_request(bytes: &[u8]) -> Result<AkltWorkerRequest> {
     let value: serde_json::Value = serde_json::from_slice(bytes)?;
-    if value.get("contract").and_then(|v| v.as_str()) == Some(v3::CONTRACT_V3) {
+    if value.get("contract").and_then(|v| v.as_str()) == Some(v4::CONTRACT_V4) {
+        Ok(AkltWorkerRequest::Resume(serde_json::from_value(value)?))
+    } else if value.get("contract").and_then(|v| v.as_str()) == Some(v3::CONTRACT_V3) {
         Ok(AkltWorkerRequest::V3(serde_json::from_value(value)?))
     } else {
         Ok(AkltWorkerRequest::Legacy(serde_json::from_value(value)?))
@@ -18,6 +22,7 @@ pub fn preflight_worker(request: &AkltWorkerRequest) -> Result<serde_json::Value
     match request {
         AkltWorkerRequest::Legacy(r) => preflight(r),
         AkltWorkerRequest::V3(r) => v3::preflight_v3(r),
+        AkltWorkerRequest::Resume(r) => v4::preflight_resume(r),
     }
 }
 use crate::itebd_auto::{ItebdHamiltonian, ItebdState};

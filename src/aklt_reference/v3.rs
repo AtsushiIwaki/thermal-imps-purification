@@ -26,6 +26,7 @@ pub struct AkltReferenceRequestV3 {
 pub struct AkltReferenceSettingsV3 {
     request: AkltReferenceRequestV3,
     base: AkltReferenceSettings,
+    pub(super) resume: Option<super::v4::AkltReferenceResumeRequest>,
 }
 impl AkltReferenceSettingsV3 {
     pub fn request(&self) -> &AkltReferenceRequestV3 {
@@ -38,10 +39,43 @@ impl AkltReferenceSettingsV3 {
         self.base.truncation()
     }
     pub fn segments(&self) -> &[ItebdStepSegment] {
-        self.base.segments()
+        &self.base.segments()[if self.resume.is_some() { 14 } else { 0 }..]
     }
     pub fn targets(&self) -> &[ReferenceTarget] {
-        self.base.targets()
+        &self.base.targets()[if self.resume.is_some() { 14 } else { 0 }..]
+    }
+    pub(super) fn full_segments(&self) -> &[ItebdStepSegment] {
+        self.base.segments()
+    }
+    pub(super) fn with_resume(mut self, r: super::v4::AkltReferenceResumeRequest) -> Self {
+        self.resume = Some(r);
+        self
+    }
+    pub(super) fn schema_version(&self) -> u32 {
+        if self.resume.is_some() {
+            4
+        } else {
+            3
+        }
+    }
+    pub(super) fn contract(&self) -> &str {
+        if self.resume.is_some() {
+            super::v4::CONTRACT_V4
+        } else {
+            CONTRACT_V3
+        }
+    }
+    pub(super) fn recorded_request(&self) -> Result<serde_json::Value> {
+        match &self.resume {
+            Some(r) => Ok(serde_json::to_value(r)?),
+            None => Ok(serde_json::to_value(&self.request)?),
+        }
+    }
+    pub(super) fn preflight(&self) -> Result<serde_json::Value> {
+        match &self.resume {
+            Some(r) => super::v4::preflight_resume(r),
+            None => preflight_v3(&self.request),
+        }
     }
 }
 
@@ -74,6 +108,7 @@ pub fn resolve_v3_request(request: &AkltReferenceRequestV3) -> Result<AkltRefere
     Ok(AkltReferenceSettingsV3 {
         request: request.clone(),
         base,
+        resume: None,
     })
 }
 

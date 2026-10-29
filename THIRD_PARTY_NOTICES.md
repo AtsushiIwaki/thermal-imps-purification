@@ -12,6 +12,7 @@ separately in [docs/references.md](docs/references.md).
 | `hdf5-metno` wrappers | resolved `hdf5-metno` 0.12.6 and family; MIT **OR** Apache-2.0 | [`hdf5-metno-MIT.txt`](licenses/hdf5-metno-MIT.txt) and [`hdf5-metno-APACHE-2.0.txt`](licenses/hdf5-metno-APACHE-2.0.txt), upstream root at source revision `15683e2dda465c50304b6192acb01a645212548e` |
 | bundled HDF5 | `hdf5-metno-src` 0.10.2, revision `574c6283e191aae0f78ff45d145dd16483b64dae`; HDF5 notice/BSD-style terms | [`HDF5.txt`](licenses/HDF5.txt), resolved `ext/hdf5/LICENSE` |
 | `priority-queue` | crates.io 2.7.0; LGPL-3.0-or-later **OR** MPL-2.0, selecting MPL-2.0 here | [`priority-queue-MPL-2.0.txt`](licenses/priority-queue-MPL-2.0.txt), resolved `MPL-2.0.txt` |
+| vendored `faer` | crates.io0.24.4 with native terminal2x2 SVD repair; MIT and included algorithm notices | [`vendor/faer/VENDORING.md`](vendor/faer/VENDORING.md), `LICENSE` and all `COPYING.*` files there |
 
 The pinned `tensor4all-treetn` README states that portions of `src/tdvp/plan.rs` were derived from
 ITensorNetworks.jl, copyright 2021 The Simons Foundation, Inc. See the pinned
@@ -22,7 +23,7 @@ uses or exposes a public TDVP algorithm.
 
 `Cargo.lock` is authoritative for the full resolved Rust graph. This selected list highlights
 notices relevant to the checked-in source and bundled native HDF5; it is not a complete inventory
-of every transitive crate. The repository does not vendor Rust dependency source trees.
+of every transitive crate. The required patched Faer source is retained under `vendor/faer/`.
 
 The static HDF5 feature compiles bundled C source. Redistributors of resulting binaries must keep
 applicable HDF5 notices and assess the exact artifacts shipped, including linked libraries,

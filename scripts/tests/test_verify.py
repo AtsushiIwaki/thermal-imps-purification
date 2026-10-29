@@ -383,7 +383,7 @@ class VerificationDecisionTests(unittest.TestCase):
 
     def test_current_baseline_summary_stays_within_compact_output_budget(self):
         known = verify.load_known_warnings(KNOWN_WARNINGS)
-        self.assertEqual(known, ())
+        self.assertEqual(known, (verify.KnownWarning("dead_code", "constant `PAR_THRESHOLD_MNK` is never used", "vendor/faer/src/linalg/matmul/mod.rs"),))
         parsed = verify.ParsedCargoOutput(
             4,
             verify.TestTotals(120, 0, 0),

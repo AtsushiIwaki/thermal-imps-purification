@@ -1,1 +1,1 @@
-{"version":1,"warnings":[]}
+{"version":1,"warnings":[{"lint":"dead_code","message":"constant `PAR_THRESHOLD_MNK` is never used","path":"vendor/faer/src/linalg/matmul/mod.rs"}]}

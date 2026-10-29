@@ -6,7 +6,7 @@ use crate::itebd_auto::{ItebdHamiltonian, ItebdState};
 use crate::itebd_checkpoint::*;
 use crate::reference_output::{atomic_write, exact_state, parse_csv, quote_csv};
 use crate::reference_trajectory::{
-    run_scheduled_observed, Engine, NativeEngine, ReferenceTarget, RunPolicy, ScheduledSample,
+    run_scheduled_observed_from, Engine, NativeEngine, ReferenceTarget, RunPolicy, ScheduledSample,
     TargetObserver, TrajectorySettings,
 };
 use anyhow::{bail, ensure, Context, Result};
@@ -81,7 +81,7 @@ fn read_json(path: &Path) -> Result<Value> {
     serde_json::from_slice(&fs::read(path).with_context(|| format!("read {}", path.display()))?)
         .context("parse reference JSON")
 }
-fn fingerprint(path: &Path) -> Result<Value> {
+pub(super) fn fingerprint(path: &Path) -> Result<Value> {
     ensure!(
         fs::symlink_metadata(path)?.file_type().is_file(),
         "not a regular reference file: {}",
@@ -168,6 +168,12 @@ fn empty_rows(settings: &AkltReferenceSettingsV3) -> Vec<Value> {
             row["temperature"] = t.temperature.into();
             row["beta_target"] = t.beta.into();
             row["cap_coverage"] = "unobserved_tail".into();
+            if let Some(r) = &settings.resume {
+                row["completed_steps"] = r.restart.progress.completed_steps.into();
+                row["beta_actual"] = r.restart.progress.beta.into();
+                row["accumulated_log_norm"] = r.restart.progress.accumulated_log_norm.into();
+                put_cap(&mut row, &r.restart.cap).expect("validated restart cap");
+            }
             row
         })
         .collect()
@@ -190,7 +196,7 @@ fn write_rows(directory: &Path, rows: &[Value]) -> Result<()> {
     }
     atomic_write(&directory.join("samples.csv"), text.as_bytes())
 }
-fn read_rows(directory: &Path) -> Result<Vec<Value>> {
+pub(super) fn read_rows(directory: &Path) -> Result<Vec<Value>> {
     let parsed = parse_csv(&fs::read_to_string(directory.join("samples.csv"))?)?;
     let expected = columns();
     ensure!(
@@ -261,15 +267,20 @@ fn read_settings(directory: &Path) -> Result<(AkltReferenceSettingsV3, Value)> {
             && !r.provider.is_empty(),
         "invalid recorded runtime"
     );
-    let request: AkltReferenceRequestV3 = serde_json::from_value(conditions["request"].clone())?;
-    let settings = resolve_v3_request(&request)?;
+    let settings = if conditions["contract"] == super::v4::CONTRACT_V4 {
+        super::v4::resolve_resume_request(&serde_json::from_value(conditions["request"].clone())?)?
+    } else {
+        resolve_v3_request(&serde_json::from_value::<AkltReferenceRequestV3>(
+            conditions["request"].clone(),
+        )?)?
+    };
     ensure!(
-        conditions == preflight_v3(&request)?,
+        conditions == settings.preflight()?,
         "v3 conditions/preflight identity mismatch"
     );
     Ok((settings, runtime))
 }
-fn cap_from(row: &Value) -> Result<CapEvidence> {
+pub(super) fn cap_from(row: &Value) -> Result<CapEvidence> {
     Ok(serde_json::from_value(
         json!({"maximum_dimension_seen":row["maximum_dimension_seen"],"ever_reached":row["cap_ever_reached"],
         "observed_strang_steps":row["cap_observed_strang_steps"],"coverage":row["cap_coverage"]}),
@@ -311,7 +322,7 @@ impl<'a> Publisher<'a> {
     fn create(settings: &'a AkltReferenceSettingsV3, directory: &Path) -> Result<Self> {
         fs::create_dir(directory)
             .with_context(|| format!("reserve exclusive v3 directory {}", directory.display()))?;
-        let mut conditions = preflight_v3(settings.request())?;
+        let mut conditions = settings.preflight()?;
         conditions["runtime_at_launch"] = serde_json::to_value(capture_runtime()?)?;
         atomic_write(
             &directory.join("conditions.json"),
@@ -370,7 +381,7 @@ impl TargetObserver<AkltValuesV3> for Publisher<'_> {
                     self.directory.join("states.h5"),
                     metadata(self.settings),
                     self.settings.hamiltonian(),
-                    self.settings.segments().to_vec(),
+                    self.settings.full_segments().to_vec(),
                 )?);
             }
             let entry = self
@@ -451,14 +462,29 @@ pub fn run_to_directory(request: &AkltReferenceRequestV3, directory: &Path) -> R
         &mut || start.elapsed().as_secs_f64(),
     )
 }
-fn publish_with_engine(
+pub(super) fn publish_with_engine(
     settings: &AkltReferenceSettingsV3,
     directory: &Path,
     engine: &mut dyn Engine<AkltValuesV3>,
     elapsed: &mut dyn FnMut() -> f64,
 ) -> Result<Value> {
+    // Validate/pin the source before reserving a destination or mutating a state.
+    let initial = if settings.resume.is_some() {
+        Some(super::v4::load_restart(settings, directory)?)
+    } else {
+        None
+    };
+    let _capture = if settings.resume.is_some() {
+        Some(crate::svd_failure::activate(
+            directory,
+            &settings.request().source_revision,
+            &settings.request().worker_sha256,
+        )?)
+    } else {
+        None
+    };
     let mut publisher = Publisher::create(settings, directory)?;
-    let outcome = run_scheduled_observed(
+    let outcome = run_scheduled_observed_from(
         TrajectorySettings {
             hamiltonian: settings.hamiltonian(),
             truncation: settings.truncation(),
@@ -472,6 +498,7 @@ fn publish_with_engine(
         &mut publisher,
         engine,
         elapsed,
+        initial,
     )?;
     if let Some(writer) = publisher.writer.take() {
         writer.finish().context("finish target snapshot file")?;
@@ -499,7 +526,7 @@ fn publish_with_engine(
 fn prefix_beta(settings: &AkltReferenceSettingsV3, steps: u64) -> Result<f64> {
     let mut remaining = steps;
     let mut beta = 0.;
-    for segment in settings.segments() {
+    for segment in settings.full_segments() {
         let n = remaining.min(segment.steps);
         beta += 2. * n as f64 * segment.dtau;
         remaining -= n;
@@ -618,8 +645,11 @@ fn validate_heat(row: &Value) -> Result<()> {
     Ok(())
 }
 fn validate_rows(settings: &AkltReferenceSettingsV3, rows: &[Value]) -> Result<()> {
-    ensure!(rows.len() == 20, "v3 requires 20 target rows");
-    let mut previous: Option<CapEvidence> = None;
+    ensure!(
+        rows.len() == settings.targets().len(),
+        "reference target row count mismatch"
+    );
+    let mut previous: Option<CapEvidence> = settings.resume.as_ref().map(|r| r.restart.cap.clone());
     for (row, target) in rows.iter().zip(settings.targets()) {
         (|| -> Result<()> {
             ensure!(
@@ -630,23 +660,40 @@ fn validate_rows(settings: &AkltReferenceSettingsV3, rows: &[Value]) -> Result<(
             );
             let steps = integer(row, "completed_steps")?;
             ensure!(
-                steps <= target.completed_steps
+                steps
+                    >= settings
+                        .resume
+                        .as_ref()
+                        .map_or(0, |r| r.restart.progress.completed_steps)
+                    && steps <= target.completed_steps
                     && close(number(row, "beta_actual")?, prefix_beta(settings, steps)?),
                 "target progress/grid mismatch"
             );
-            number(row, "accumulated_log_norm")?;
-            let cap = cap_from(row)?;
-            validate_cap(&cap, steps)?;
-            if cap.maximum_dimension_seen.is_some() {
-                if let Some(before) = &previous {
+            let norm = number(row, "accumulated_log_norm")?;
+            if let Some(resume) = &settings.resume {
+                let saved = &resume.restart.progress;
+                if steps == saved.completed_steps {
                     ensure!(
-                        cap.maximum_dimension_seen >= before.maximum_dimension_seen
-                            && cap.observed_strang_steps >= before.observed_strang_steps
-                            && (before.ever_reached != Some(true)
-                                || cap.ever_reached == Some(true)),
-                        "cap history is not cumulative"
+                        number(row, "beta_actual")?.to_bits() == saved.beta.to_bits()
+                            && norm.to_bits() == saved.accumulated_log_norm.to_bits(),
+                        "restart boundary beta/norm changed"
                     );
                 }
+            }
+            let cap = cap_from(row)?;
+            validate_cap(&cap, steps)?;
+            if let Some(before) = previous
+                .as_ref()
+                .filter(|_| cap.maximum_dimension_seen.is_some() || settings.resume.is_some())
+            {
+                ensure!(
+                    cap.maximum_dimension_seen >= before.maximum_dimension_seen
+                        && cap.observed_strang_steps >= before.observed_strang_steps
+                        && (before.ever_reached != Some(true) || cap.ever_reached == Some(true)),
+                    "cap history below restart boundary or earlier observations"
+                );
+            }
+            if cap.maximum_dimension_seen.is_some() {
                 previous = Some(cap.clone());
             }
             if boolean(row, "snapshot_available")? {
@@ -761,7 +808,9 @@ fn snapshot_entries(
     for name in names {
         let index = name.parse::<u64>().context("non-numeric snapshot group")?;
         ensure!(
-            index < 20 && name == format!("{index:06}") && all.insert(index),
+            index < settings.targets().len() as u64
+                && name == format!("{index:06}")
+                && all.insert(index),
             "invalid/extra snapshot index"
         );
         let marker = {
@@ -806,7 +855,7 @@ fn snapshot_entries(
         ensure!(
             p.completed_steps == target.completed_steps
                 && close(p.beta, target.beta)
-                && loaded.time_grid == ItebdTimeGrid::Segmented(settings.segments().to_vec()),
+                && loaded.time_grid == ItebdTimeGrid::Segmented(settings.full_segments().to_vec()),
             "snapshot target/grid mismatch"
         );
         ensure!(
@@ -881,9 +930,9 @@ fn make_summary(
     cap: CapEvidence,
     runtime: Value,
 ) -> Result<Value> {
-    let contract_name = &settings.request().contract;
+    let contract_name = settings.contract();
     Ok(
-        json!({"schema_version":3,"contract":contract_name,"request":settings.request(),"status":status,"reason":why,
+        json!({"schema_version":settings.schema_version(),"contract":contract_name,"request":settings.recorded_request()?,"status":status,"reason":why,
         "completed_steps":progress.completed_steps,"beta_actual":progress.beta,"accumulated_log_norm":progress.accumulated_log_norm,
         "completed_steps_kind":kind,"elapsed_seconds":elapsed,"budget_overrun_seconds":null,"cap":cap,
         "snapshot_count":rows.iter().filter(|r|r["snapshot_available"]==true).count(),
@@ -899,13 +948,16 @@ pub fn verify_directory(directory: &Path) -> Result<Value> {
 fn inspect(directory: &Path, summary: Value) -> Result<Value> {
     membership(directory, false)?;
     let (settings, runtime) = read_settings(directory)?;
+    if settings.resume.is_some() {
+        super::v4::load_restart(&settings, directory)?;
+    }
     let rows = read_rows(directory)?;
     validate_rows(&settings, &rows)?;
-    let request = settings.request();
+    let contract_name = settings.contract();
     ensure!(
-        summary["schema_version"] == 3
-            && summary["contract"] == CONTRACT_V3
-            && summary["request"] == serde_json::to_value(request)?
+        summary["schema_version"] == settings.schema_version()
+            && summary["contract"] == contract_name
+            && summary["request"] == settings.recorded_request()?
             && summary["runtime_at_launch"] == runtime,
         "v3 summary/request/runtime identity mismatch"
     );
@@ -970,6 +1022,16 @@ fn inspect(directory: &Path, summary: Value) -> Result<Value> {
         .max()
         .context("missing retained progress")?;
     let norm = number(&summary, "accumulated_log_norm")?;
+    if let Some(resume) = &settings.resume {
+        let saved = &resume.restart.progress;
+        if steps == saved.completed_steps {
+            ensure!(
+                number(&summary, "beta_actual")?.to_bits() == saved.beta.to_bits()
+                    && norm.to_bits() == saved.accumulated_log_norm.to_bits(),
+                "summary restart boundary beta/norm changed"
+            );
+        }
+    }
     ensure!(steps == retained_steps, "summary exceeds retained progress");
     ensure!(
         rows.iter()
@@ -1010,9 +1072,9 @@ fn inspect(directory: &Path, summary: Value) -> Result<Value> {
     );
     if summary["status"] == "complete" {
         ensure!(
-            entries.len() == 20
-                && summary["available_samples"] == 20
-                && summary["available_heat_samples"] == 20
+            entries.len() == settings.targets().len()
+                && summary["available_samples"] == settings.targets().len()
+                && summary["available_heat_samples"] == settings.targets().len()
                 && steps == 1014
                 && summary["completed_steps_kind"] == "exact"
                 && uncertain.is_none(),
@@ -1024,7 +1086,7 @@ fn inspect(directory: &Path, summary: Value) -> Result<Value> {
         "v3 files changed during native verification"
     );
     let mut result = summary;
-    result["sample_count"] = 20.into();
+    result["sample_count"] = settings.targets().len().into();
     result["verified_snapshot_count"] = entries.len().into();
     result["checkpoint_verified"] = (!entries.is_empty()).into();
     result["scalar_state_consistency_passed"] = true.into();
@@ -1048,7 +1110,10 @@ pub fn finalize_interrupted_directory(directory: &Path, why: &str) -> Result<Val
         };
         for name in names {
             let index = name.parse::<usize>().context("invalid snapshot index")?;
-            ensure!(index < 20, "extra interrupted snapshot");
+            ensure!(
+                index < settings.targets().len(),
+                "extra interrupted snapshot"
+            );
             if uncertain.is_some_and(|i| index as u64 >= i) {
                 continue;
             }
@@ -1191,6 +1256,245 @@ mod tests {
         )
         .unwrap()
     }
+    struct ContinuationFixture {
+        steps: usize,
+        setups: usize,
+        measures: usize,
+        stop_after: Option<usize>,
+    }
+    impl Engine<AkltValuesV3> for ContinuationFixture {
+        fn setup(&mut self, h: &ItebdHamiltonian) -> Result<ItebdState> {
+            self.setups += 1;
+            Ok(ItebdState::infinite_temperature(h)?)
+        }
+        fn step(
+            &mut self,
+            _: &mut ItebdState,
+            _: &ItebdHamiltonian,
+            _: f64,
+            _: &crate::tensor::Truncation,
+        ) -> Result<StepInfo> {
+            if self.stop_after == Some(self.steps) {
+                bail!("fixture stop before next step");
+            }
+            self.steps += 1;
+            Ok(StepInfo {
+                max_bond: 1,
+                min_singular_value: 1.,
+                log_norm: -0.01,
+            })
+        }
+        fn canonicalize(&mut self, _: &mut ItebdState, _: &ItebdHamiltonian) -> Result<f64> {
+            Ok(0.)
+        }
+        fn measure(
+            &mut self,
+            s: &ItebdState,
+            h: &ItebdHamiltonian,
+            b: f64,
+            n: f64,
+        ) -> Result<AkltValuesV3> {
+            self.measures += 1;
+            measure_v3_reference(s, h, b, n)
+        }
+    }
+    fn resume_fixture(parent: &Path) -> AkltReferenceSettingsV3 {
+        let mut old = ContinuationFixture {
+            steps: 0,
+            setups: 0,
+            measures: 0,
+            stop_after: Some(154),
+        };
+        let outcome = publish_with_engine(&settings(), &parent, &mut old, &mut || 0.).unwrap();
+        assert_eq!(outcome["snapshot_count"], 14);
+        assert_eq!(outcome["available_heat_samples"], 14);
+        let rows = read_rows(&parent).unwrap();
+        let boundary = &rows[13];
+        let mut pins = files(&parent).unwrap();
+        pins["summary.json"] = fingerprint(&parent.join("summary.json")).unwrap();
+        let mut r = serde_json::to_value(settings().request()).unwrap();
+        r["schema_version"] = 4.into();
+        r["contract"] = super::super::v4::CONTRACT_V4.into();
+        r["source_revision"] = "c".repeat(40).into();
+        r["restart"] = json!({"directory":"../parent","snapshot_index":13,"files":pins,
+            "progress":{"beta":boundary["beta_actual"],"completed_steps":154,"accumulated_log_norm":boundary["accumulated_log_norm"]},"cap":cap_from(boundary).unwrap()});
+        super::super::v4::resolve_resume_request(&serde_json::from_value(r).unwrap()).unwrap()
+    }
+    // Losing the saved normalization/progress or replaying beta0 must fail this real-I/O check.
+    #[test]
+    fn resumed_publication_uses_parent_state_and_saves_only_six_new_snapshots() {
+        let temp = tempfile::tempdir().unwrap();
+        let parent = temp.path().join("parent");
+        let child = temp.path().join("child");
+        let resumed = resume_fixture(&parent);
+        let mut engine = ContinuationFixture {
+            steps: 0,
+            setups: 0,
+            measures: 0,
+            stop_after: None,
+        };
+        let result = publish_with_engine(&resumed, &child, &mut engine, &mut || 0.);
+        assert!(result.is_ok(), "continuation failed: {:?}", result.err());
+        let result = result.unwrap();
+        assert_eq!(engine.setups, 0, "must not initialize beta0");
+        assert_eq!(engine.steps, 860);
+        assert_eq!(engine.measures, 6);
+        assert_eq!(result["snapshot_count"], 6);
+        assert_eq!(result["completed_steps"], 1014);
+        let first =
+            load_itebd_checkpoint(&child.join("states.h5"), 0, &Default::default()).unwrap();
+        assert_eq!(first.progress.completed_steps, 178);
+        assert!(
+            (first.progress.accumulated_log_norm - (-1.78)).abs() < 1e-12,
+            "saved normalization must survive restart"
+        );
+        assert_eq!(
+            first.metadata.git_revision.as_deref(),
+            Some("cccccccccccccccccccccccccccccccccccccccc")
+        );
+        assert_eq!(
+            first.time_grid,
+            ItebdTimeGrid::Segmented(settings().segments().to_vec())
+        );
+        let bytes = fs::read(parent.join("samples.csv")).unwrap();
+        fs::write(
+            parent.join("samples.csv"),
+            [bytes.as_slice(), b"\n"].concat(),
+        )
+        .unwrap();
+        assert!(
+            verify_directory(&child).is_err(),
+            "changed parent must invalidate child"
+        );
+        let unstarted = temp.path().join("unstarted");
+        let mut engine = ContinuationFixture {
+            steps: 0,
+            setups: 0,
+            measures: 0,
+            stop_after: None,
+        };
+        assert!(publish_with_engine(&resumed, &unstarted, &mut engine, &mut || 0.).is_err());
+        assert!(!unstarted.exists());
+        assert_eq!(engine.steps, 0);
+        assert_eq!(engine.setups, 0);
+    }
+    struct FailingSvdFixture {
+        collision: Option<PathBuf>,
+    }
+    impl Engine<AkltValuesV3> for FailingSvdFixture {
+        fn step(
+            &mut self,
+            _: &mut ItebdState,
+            _: &ItebdHamiltonian,
+            _: f64,
+            _: &crate::tensor::Truncation,
+        ) -> Result<StepInfo> {
+            if let Some(path) = &self.collision {
+                fs::write(path, b"concurrent file").unwrap();
+            }
+            let a = crate::tensor::new_index(2);
+            let b = crate::tensor::new_index(3);
+            let c = crate::tensor::new_index(2);
+            let t = crate::tensor::from_fn(&[a.clone(), b, c.clone()], |x| {
+                if x == [0, 0, 0] {
+                    f64::from_bits(0x7ff8_0000_0000_1234)
+                } else {
+                    (x[0] + 2 * x[1] + 6 * x[2]) as f64
+                }
+            });
+            crate::tensor::svd_bond(&t, &[c, a], &crate::tensor::Truncation::default());
+            bail!("nonfinite SVD unexpectedly accepted")
+        }
+        fn canonicalize(&mut self, _: &mut ItebdState, _: &ItebdHamiltonian) -> Result<f64> {
+            unreachable!()
+        }
+        fn measure(
+            &mut self,
+            _: &ItebdState,
+            _: &ItebdHamiltonian,
+            _: f64,
+            _: f64,
+        ) -> Result<AkltValuesV3> {
+            unreachable!()
+        }
+    }
+    // Capture must preserve matrix layout/bits, and an actual I/O collision must not mask SVD failure.
+    #[test]
+    fn resume_captures_first_svd_matrix_without_masking_source_error() {
+        for collision in [false, true] {
+            let temp = tempfile::tempdir().unwrap();
+            let parent = temp.path().join("parent");
+            let child = temp.path().join("child");
+            let s = resume_fixture(&parent);
+            let path = temp.path().join("svd-failure.h5");
+            let mut engine = FailingSvdFixture {
+                collision: collision.then(|| path.clone()),
+            };
+            let error = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                publish_with_engine(&s, &child, &mut engine, &mut || 0.)
+            }))
+            .unwrap_err();
+            let message = error
+                .downcast_ref::<String>()
+                .map(String::as_str)
+                .or_else(|| error.downcast_ref::<&str>().copied())
+                .unwrap();
+            assert!(
+                message.contains("ComputationError"),
+                "original SVD error was replaced: {message}"
+            );
+            assert!(path.is_file(), "first failed matrix was not captured");
+            if collision {
+                assert_eq!(fs::read(path).unwrap(), b"concurrent file");
+                continue;
+            }
+            let f = hdf5_metno::File::open(&path).unwrap();
+            assert_eq!(
+                f.dataset("step").unwrap().read_scalar::<u64>().unwrap(),
+                155
+            );
+            assert_eq!(
+                f.dataset("svd_call").unwrap().read_scalar::<u64>().unwrap(),
+                1
+            );
+            assert_eq!(
+                f.dataset("shape").unwrap().read_raw::<u64>().unwrap(),
+                vec![4, 3]
+            );
+            let values = f
+                .dataset("matrix_col_major")
+                .unwrap()
+                .read_raw::<f64>()
+                .unwrap();
+            assert_eq!(values[0].to_bits(), 0x7ff8_0000_0000_1234);
+            assert_eq!(
+                &values[1..],
+                &[6., 1., 7., 2., 8., 3., 9., 4., 10., 5., 11.]
+            );
+            let verified = super::super::v4::verify_failure_file(&path).unwrap();
+            assert_eq!(verified["step"], 155);
+            assert_eq!(verified["nonfinite_count"], 1);
+            assert_eq!(verified["payload_verified"], true);
+            let partial = finalize_interrupted_directory(&child, "SVD fixture failure").unwrap();
+            assert_eq!(partial["completed_steps"], 154);
+            assert_eq!(partial["snapshot_count"], 0);
+            assert_eq!(partial["sample_count"], 6);
+            assert_eq!(partial["completed_steps_kind"], "retained_lower_bound");
+            drop(f);
+            let f = hdf5_metno::File::open_rw(&path).unwrap();
+            let mut corrupt = values;
+            corrupt[1] += 1.;
+            f.dataset("matrix_col_major")
+                .unwrap()
+                .write_raw(&corrupt)
+                .unwrap();
+            drop(f);
+            assert!(
+                super::super::v4::verify_failure_file(&path).is_err(),
+                "corrupt matrix payload was accepted"
+            );
+        }
+    }
     fn first_progress(s: &AkltReferenceSettingsV3) -> ItebdCheckpointProgress {
         ItebdCheckpointProgress {
             beta: s.targets()[0].beta,
@@ -1207,6 +1511,44 @@ mod tests {
             &serde_json::to_vec_pretty(&summary).unwrap(),
         )
         .unwrap();
+    }
+    #[test]
+    fn resumed_partial_cannot_reset_saved_norm_or_cap_after_rehash() {
+        let temp = tempfile::tempdir().unwrap();
+        let settings = resume_fixture(&temp.path().join("parent"));
+        for mutation in ["norm", "cap"] {
+            let child = temp.path().join(mutation);
+            drop(Publisher::create(&settings, &child).unwrap());
+            finalize_interrupted_directory(&child, "before first new target").unwrap();
+            let mut rows = read_rows(&child).unwrap();
+            let mut summary = read_json(&child.join("summary.json")).unwrap();
+            if mutation == "norm" {
+                for row in &mut rows {
+                    row["accumulated_log_norm"] = 0.0.into();
+                }
+                summary["accumulated_log_norm"] = 0.0.into();
+            } else {
+                for row in &mut rows {
+                    row["maximum_dimension_seen"] = Value::Null;
+                    row["cap_ever_reached"] = Value::Null;
+                    row["cap_observed_strang_steps"] = 0.into();
+                    row["cap_coverage"] = "unobserved_tail".into();
+                }
+                summary["cap"] = json!({"maximum_dimension_seen":null,"ever_reached":null,"observed_strang_steps":0,"coverage":"unobserved_tail"});
+            }
+            write_rows(&child, &rows).unwrap();
+            summary["files"] = files(&child).unwrap();
+            atomic_write(
+                &child.join("summary.json"),
+                &serde_json::to_vec(&summary).unwrap(),
+            )
+            .unwrap();
+            let error = verify_directory(&child).expect_err("reset restart evidence accepted");
+            assert!(
+                format!("{error:#}").contains("restart boundary"),
+                "{error:#}"
+            );
+        }
     }
     #[test]
     fn summary_lower_bound_cannot_exceed_retained_progress() {
