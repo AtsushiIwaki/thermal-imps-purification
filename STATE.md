@@ -60,9 +60,10 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 - Cold cap256 completion and the first nonfinite operation require a separately
   approved diagnostic scope. No new trajectory is authorized. Bond/time-step
   convergence remains unestablished.
-- Retire integrated ordinary worktrees after output hash checks. Keep the earlier
-  diagnostic source branch at b751a9e. Task build `/private/tmp/imst-current-build`
-  awaits fresh normal-Trash review; its old manifest is superseded.
+- Both integrated ordinary worktrees/registrations and repair branches are retired
+  with unchanged retained hashes. The earlier diagnostic branch b751a9e remains.
+  Task build `/private/tmp/imst-current-build` awaits fresh normal-Trash review;
+  its old manifest is superseded.
 - Checkpoint publication is exclusive, not transactional across every format or
   arbitrary power loss. Use the documented completed-prefix recovery.
 - Native HDF5 in-process Git launcher support remains scoped to documented
