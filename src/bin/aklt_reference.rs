@@ -4,17 +4,21 @@ use std::path::Path;
 use thermal_imps_purification::aklt_reference::output::{
     finalize_interrupted_directory, run_to_directory, verify_directory,
 };
-use thermal_imps_purification::aklt_reference::{preflight, AkltReferenceRequest};
-fn request(path: &str) -> Result<AkltReferenceRequest> {
-    serde_json::from_slice(&std::fs::read(path).with_context(|| format!("read request {path}"))?)
+use thermal_imps_purification::aklt_reference::{parse_worker_request,preflight_worker,AkltWorkerRequest,v3,v3_output};
+fn request(path: &str) -> Result<AkltWorkerRequest> {
+    parse_worker_request(&std::fs::read(path).with_context(|| format!("read request {path}"))?)
         .with_context(|| format!("parse strict request {path}"))
 }
 fn execute(args: &[String]) -> Result<serde_json::Value> {
     match args {
-        [flag,path] if flag=="--preflight"=>preflight(&request(path)?),
+        [flag] if flag=="--runtime-info"=>Ok(serde_json::to_value(v3::capture_runtime()?)?),
+        [flag,path] if flag=="--preflight"=>preflight_worker(&request(path)?),
         [flag,path] if flag=="--verify"=>verify_directory(Path::new(path)),
         [flag,path,reason] if flag=="--finalize-interrupted"=>finalize_interrupted_directory(Path::new(path),reason),
-        [input,output] if !input.starts_with('-')=>run_to_directory(&request(input)?,Path::new(output)),
+        [input,output] if !input.starts_with('-')=>match request(input)? {
+            AkltWorkerRequest::Legacy(r)=>run_to_directory(&r,Path::new(output)),
+            AkltWorkerRequest::V3(r)=>v3_output::run_to_directory(&r,Path::new(output)),
+        },
         _=>bail!("usage: aklt_reference --preflight REQUEST_JSON | REQUEST_JSON OUTPUT_DIRECTORY | --verify OUTPUT_DIRECTORY | --finalize-interrupted OUTPUT_DIRECTORY REASON"),
     }
 }

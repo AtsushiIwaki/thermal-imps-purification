@@ -28,27 +28,53 @@ pub struct AkltReferenceSettingsV3 {
     base: AkltReferenceSettings,
 }
 impl AkltReferenceSettingsV3 {
-    pub fn request(&self) -> &AkltReferenceRequestV3 { &self.request }
-    pub fn hamiltonian(&self) -> &ItebdHamiltonian { self.base.hamiltonian() }
-    pub fn truncation(&self) -> &Truncation { self.base.truncation() }
-    pub fn segments(&self) -> &[ItebdStepSegment] { self.base.segments() }
-    pub fn targets(&self) -> &[ReferenceTarget] { self.base.targets() }
+    pub fn request(&self) -> &AkltReferenceRequestV3 {
+        &self.request
+    }
+    pub fn hamiltonian(&self) -> &ItebdHamiltonian {
+        self.base.hamiltonian()
+    }
+    pub fn truncation(&self) -> &Truncation {
+        self.base.truncation()
+    }
+    pub fn segments(&self) -> &[ItebdStepSegment] {
+        self.base.segments()
+    }
+    pub fn targets(&self) -> &[ReferenceTarget] {
+        self.base.targets()
+    }
 }
 
 pub fn resolve_v3_request(request: &AkltReferenceRequestV3) -> Result<AkltReferenceSettingsV3> {
-    ensure!(request.schema_version == 3 && request.contract == CONTRACT_V3
-        && request.max_seconds.is_none(), "v3 requires schema3 and explicit max_seconds:null");
-    ensure!(request.max_bond == 256 && request.variant == AkltVariant::Fine,
-        "v3 requires fine variant and max_bond256");
-    ensure!(request.recording_policy == RECORDING_POLICY && request.heat_capacity_policy == HEAT_POLICY,
-        "unsupported v3 recording/heat policy");
+    let valid_contract = request.schema_version == 3
+        && request.contract == CONTRACT_V3
+        && request.max_seconds.is_none();
+    ensure!(
+        valid_contract,
+        "v3 requires schema3 and explicit max_seconds:null"
+    );
+    ensure!(
+        request.max_bond == 256 && request.variant == AkltVariant::Fine,
+        "v3 requires fine variant and max_bond256"
+    );
+    ensure!(
+        request.recording_policy == RECORDING_POLICY && request.heat_capacity_policy == HEAT_POLICY,
+        "unsupported v3 recording/heat policy"
+    );
     let mut base = resolve_request(&AkltReferenceRequest {
-        schema_version:2, contract:CONTRACT_V2.into(), model:request.model.clone(),
-        variant:AkltVariant::Fine, max_seconds:None,
-        source_revision:request.source_revision.clone(), worker_sha256:request.worker_sha256.clone(),
+        schema_version: 2,
+        contract: CONTRACT_V2.into(),
+        model: request.model.clone(),
+        variant: AkltVariant::Fine,
+        max_seconds: None,
+        source_revision: request.source_revision.clone(),
+        worker_sha256: request.worker_sha256.clone(),
     })?;
     base.truncation.max_bond = Some(256);
-    Ok(AkltReferenceSettingsV3 { request:request.clone(), base })
+    Ok(AkltReferenceSettingsV3 {
+        request: request.clone(),
+        base,
+    })
 }
 
 pub fn preflight_v3(request: &AkltReferenceRequestV3) -> Result<serde_json::Value> {
@@ -58,9 +84,13 @@ pub fn preflight_v3(request: &AkltReferenceRequestV3) -> Result<serde_json::Valu
     value["contract"] = CONTRACT_V3.into();
     value["request"] = serde_json::to_value(request)?;
     value["max_bond"] = 256.into();
-    value.as_object_mut().unwrap().remove("optional_terminal_checkpoint");
+    value
+        .as_object_mut()
+        .unwrap()
+        .remove("optional_terminal_checkpoint");
     value["optional_snapshot_checkpoint"] = "states.h5".into();
-    value["snapshot_policy"] = serde_json::json!({"kind":"target_snapshots","file":"states.h5","maximum_count":20});
+    value["snapshot_policy"] =
+        serde_json::json!({"kind":"target_snapshots","file":"states.h5","maximum_count":20});
     let options = SpecificHeatOptions::default();
     value["heat_capacity"] = serde_json::json!({"kind":"energy_variance",
         "max_distance":options.max_distance,"relative_tolerance":options.relative_tolerance,
@@ -80,18 +110,28 @@ pub struct RuntimeEvidence {
 
 pub fn capture_runtime() -> Result<RuntimeEvidence> {
     let mut environment = BTreeMap::new();
-    for name in ["RAYON_NUM_THREADS","OMP_NUM_THREADS","OPENBLAS_NUM_THREADS","MKL_NUM_THREADS","VECLIB_MAXIMUM_THREADS"] {
+    for name in [
+        "RAYON_NUM_THREADS",
+        "OMP_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "VECLIB_MAXIMUM_THREADS",
+    ] {
         let value = match std::env::var(name) {
             Ok(v) => Some(v),
             Err(std::env::VarError::NotPresent) => None,
-            Err(error) => return Err(error).with_context(|| format!("read runtime environment {name}")),
+            Err(error) => {
+                return Err(error).with_context(|| format!("read runtime environment {name}"))
+            }
         };
         environment.insert(name.into(), value);
     }
     let backend = tenferro_cpu::CpuBackend::new();
-    Ok(RuntimeEvidence { environment,
-        visible_cpu_count:tenferro_cpu::available_parallelism(),
-        thread_hint:backend.num_threads(), provider:format!("{:?}",backend.kind()),
+    Ok(RuntimeEvidence {
+        environment,
+        visible_cpu_count: tenferro_cpu::available_parallelism(),
+        thread_hint: backend.num_threads(),
+        provider: format!("{:?}", backend.kind()),
     })
 }
 
@@ -101,11 +141,11 @@ pub struct VarianceHeatRecord {
     pub raw_energy_variance_per_site: f64,
     pub energy_variance_per_site: f64,
     pub specific_heat_per_site: f64,
-    pub onsite_contribution: [f64;2],
-    pub positive_direction_contribution: [f64;2],
-    pub negative_direction_contribution: [f64;2],
-    pub parity_a_contribution: [f64;2],
-    pub parity_b_contribution: [f64;2],
+    pub onsite_contribution: [f64; 2],
+    pub positive_direction_contribution: [f64; 2],
+    pub negative_direction_contribution: [f64; 2],
+    pub parity_a_contribution: [f64; 2],
+    pub parity_b_contribution: [f64; 2],
     pub max_distance: usize,
     pub stop_reason: String,
     pub last_positive_shell_magnitude: f64,
@@ -114,20 +154,23 @@ pub struct VarianceHeatRecord {
 }
 impl From<SpecificHeatReport> for VarianceHeatRecord {
     fn from(r: SpecificHeatReport) -> Self {
-        let pair = |z: Complex64| [z.re,z.im];
+        let pair = |z: Complex64| [z.re, z.im];
         Self {
-            raw_energy_variance_per_site:r.raw_energy_variance_per_site,
-            energy_variance_per_site:r.energy_variance_per_site,
-            specific_heat_per_site:r.specific_heat_per_site,
-            onsite_contribution:pair(r.onsite_contribution),
-            positive_direction_contribution:pair(r.positive_direction_contribution),
-            negative_direction_contribution:pair(r.negative_direction_contribution),
-            parity_a_contribution:pair(r.parity_a_contribution),
-            parity_b_contribution:pair(r.parity_b_contribution), max_distance:r.max_distance,
-            stop_reason:match r.stop_reason { TailStopReason::ConsecutiveSmallShells => "consecutive_small_shells".into() },
-            last_positive_shell_magnitude:r.last_positive_shell_magnitude,
-            last_negative_shell_magnitude:r.last_negative_shell_magnitude,
-            max_imaginary_residual:r.max_imaginary_residual,
+            raw_energy_variance_per_site: r.raw_energy_variance_per_site,
+            energy_variance_per_site: r.energy_variance_per_site,
+            specific_heat_per_site: r.specific_heat_per_site,
+            onsite_contribution: pair(r.onsite_contribution),
+            positive_direction_contribution: pair(r.positive_direction_contribution),
+            negative_direction_contribution: pair(r.negative_direction_contribution),
+            parity_a_contribution: pair(r.parity_a_contribution),
+            parity_b_contribution: pair(r.parity_b_contribution),
+            max_distance: r.max_distance,
+            stop_reason: match r.stop_reason {
+                TailStopReason::ConsecutiveSmallShells => "consecutive_small_shells".into(),
+            },
+            last_positive_shell_magnitude: r.last_positive_shell_magnitude,
+            last_negative_shell_magnitude: r.last_negative_shell_magnitude,
+            max_imaginary_residual: r.max_imaginary_residual,
         }
     }
 }
@@ -145,13 +188,49 @@ pub struct AkltValuesV3 {
     pub physical: AkltSampleValues,
     pub heat: VarianceHeatEvidence,
 }
+impl Measurement for AkltValuesV3 {
+    fn validate(&self) -> Result<()> {
+        self.physical.validate()?;
+        ensure!(
+            self.heat.available == self.heat.report.is_some(),
+            "variance availability/report mismatch"
+        );
+        ensure!(
+            self.heat.available == self.heat.reason.is_none(),
+            "variance availability/reason mismatch"
+        );
+        if let Some(reason) = &self.heat.reason {
+            ensure!(!reason.trim().is_empty(), "empty variance failure");
+        }
+        Ok(())
+    }
+    fn stop_reason(&self) -> Option<&str> {
+        self.heat.reason.as_deref()
+    }
+}
 pub fn measure_v3_reference(
-    state:&ItebdState, ham:&ItebdHamiltonian, beta:f64, norm:f64,
+    state: &ItebdState,
+    ham: &ItebdHamiltonian,
+    beta: f64,
+    norm: f64,
 ) -> Result<AkltValuesV3> {
-    let physical = measure_reference_with_cap(state,ham,beta,norm,256)?;
-    let heat = match crate::itebd_auto::specific_heat_with_options_auto(state,ham,beta,&SpecificHeatOptions::default()) {
-        Ok(report) => VarianceHeatEvidence { available:true, reason:None, report:Some(report.into()) },
-        Err(error) => VarianceHeatEvidence { available:false, reason:Some(format!("variance heat failed: {error:#}")), report:None },
+    let physical = measure_reference_with_cap(state, ham, beta, norm, 256)?;
+    let heat = match crate::itebd_auto::specific_heat_with_options_auto(
+        state,
+        ham,
+        beta,
+        &SpecificHeatOptions::default(),
+    ) {
+        Ok(report) => VarianceHeatEvidence {
+            available: true,
+            reason: None,
+            report: Some(report.into()),
+        },
+        Err(error) => VarianceHeatEvidence {
+            available: false,
+            reason: Some(format!("variance heat failed: {error:#}")),
+            report: None,
+        },
     };
     Ok(AkltValuesV3 { physical, heat })
 }

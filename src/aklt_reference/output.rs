@@ -73,7 +73,7 @@ use anyhow::bail;
 use serde_json::{json, Value};
 use std::{fs, path::Path};
 
-const COLUMNS: &str = "temperature_tick,temperature,beta_target,beta_actual,completed_steps,available,reason,energy,mx,mz,free_energy,entropy,accumulated_log_norm,parity_delta_energy,parity_delta_mx,parity_delta_mz,direct_energy_difference,maximum_rdm_fixed_point_residual,maximum_rdm_trace_residual,maximum_rdm_hermiticity_residual,maximum_rdm_iterations,minimum_rdm_eigenvalue,bond_dimension_ab,bond_dimension_ba,cap_reached_now,maximum_dimension_seen,cap_ever_reached,cap_observed_strang_steps,cap_coverage";
+pub(super) const COLUMNS: &str = "temperature_tick,temperature,beta_target,beta_actual,completed_steps,available,reason,energy,mx,mz,free_energy,entropy,accumulated_log_norm,parity_delta_energy,parity_delta_mx,parity_delta_mz,direct_energy_difference,maximum_rdm_fixed_point_residual,maximum_rdm_trace_residual,maximum_rdm_hermiticity_residual,maximum_rdm_iterations,minimum_rdm_eigenvalue,bond_dimension_ab,bond_dimension_ba,cap_reached_now,maximum_dimension_seen,cap_ever_reached,cap_observed_strang_steps,cap_coverage";
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Summary {
@@ -705,8 +705,18 @@ fn inspect(
         json!({"schema_version":summary.schema_version,"contract":contract_name,"status":summary.status,"sample_count":rows.len(),"available_samples":available,"checkpoint_available":checkpoint,"checkpoint_verified":checkpoint,"terminal_consistency_passed":terminal,"completed_steps":summary.completed_steps,"completed_steps_kind":summary.completed_steps_kind,"request":summary.request,"beta_actual":summary.beta_actual,"accumulated_log_norm":summary.accumulated_log_norm,"cap":summary.cap,"elapsed_seconds":summary.elapsed_seconds,"budget_overrun_seconds":summary.budget_overrun_seconds}),
     )
 }
+fn is_v3_directory(directory: &Path) -> Result<bool> {
+    ensure!(fs::symlink_metadata(directory)?.file_type().is_dir(), "reference directory must be regular");
+    let path=directory.join("conditions.json");
+    ensure!(fs::symlink_metadata(&path)?.file_type().is_file(),"conditions.json must be regular");
+    let value:Value=serde_json::from_slice(&fs::read(&path)?)?;
+    Ok(value["contract"].as_str()==Some(super::v3::CONTRACT_V3))
+}
 /// Read-only integrity check; does not certify convergence at earlier target betas.
 pub fn verify_directory(directory: &Path) -> Result<Value> {
+    if is_v3_directory(directory)? {
+        return super::v3_output::verify_directory(directory);
+    }
     membership(directory, true)
         .with_context(|| format!("verify bundle {}", directory.display()))?;
     let settings = read_settings(directory)?;
@@ -717,6 +727,9 @@ pub fn verify_directory(directory: &Path) -> Result<Value> {
 }
 /// Recover only after the supervisor has observed termination. Never evolves or replaces state.
 pub fn finalize_interrupted_directory(directory: &Path, reason: &str) -> Result<Value> {
+    if is_v3_directory(directory)? {
+        return super::v3_output::finalize_interrupted_directory(directory, reason);
+    }
     let started = std::time::Instant::now();
     ensure!(
         !reason.trim().is_empty(),

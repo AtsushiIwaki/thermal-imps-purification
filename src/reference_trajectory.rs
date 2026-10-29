@@ -103,6 +103,15 @@ pub(crate) struct TrajectorySettings<'a> {
 }
 pub(crate) trait Measurement: Clone {
     fn validate(&self) -> Result<()>;
+    fn stop_reason(&self) -> Option<&str> { None }
+}
+pub(crate) trait TargetObserver<V> {
+    fn before_measurement(&mut self, _target: &ReferenceTarget, _state: &ItebdState, _progress: &ItebdCheckpointProgress) -> Result<()> { Ok(()) }
+    fn sample(&mut self, sample: &ScheduledSample<V>) -> Result<()>;
+}
+struct ScalarObserver<'a,V>(&'a mut dyn FnMut(&ScheduledSample<V>) -> Result<()>);
+impl<V> TargetObserver<V> for ScalarObserver<'_,V> {
+    fn sample(&mut self, sample: &ScheduledSample<V>) -> Result<()> { self.0(sample) }
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledSample<V> {
@@ -169,6 +178,14 @@ fn stop(reason: String, stopped: &mut Option<String>, reasons: &mut Vec<String>)
 pub(crate) fn run_scheduled<V: Measurement>(
     settings: TrajectorySettings<'_>,
     callback: &mut dyn FnMut(&ScheduledSample<V>) -> Result<()>,
+    engine: &mut dyn Engine<V>,
+    elapsed: &mut dyn FnMut() -> f64,
+) -> Result<ScheduledOutcome<V>> {
+    run_scheduled_observed(settings, &mut ScalarObserver(callback), engine, elapsed)
+}
+pub(crate) fn run_scheduled_observed<V: Measurement>(
+    settings: TrajectorySettings<'_>,
+    observer: &mut dyn TargetObserver<V>,
     engine: &mut dyn Engine<V>,
     elapsed: &mut dyn FnMut() -> f64,
 ) -> Result<ScheduledOutcome<V>> {
@@ -313,6 +330,11 @@ pub(crate) fn run_scheduled<V: Measurement>(
                 &mut reasons,
             );
         }
+        if stopped.is_none() && progress.completed_steps == target.completed_steps
+            && (progress.beta - target.beta).abs() <= 1e-12 * target.beta.max(1.) {
+            observer.before_measurement(target, state.as_ref().context("missing target state")?, &progress)
+                .with_context(|| format!("reference snapshot at target {}",target.temperature_tick))?;
+        }
         let measured = if let Some(reason) = &stopped {
             Err(anyhow::anyhow!(reason.clone()))
         } else {
@@ -358,12 +380,15 @@ pub(crate) fn run_scheduled<V: Measurement>(
             values,
             cap: cap.clone(),
         };
-        callback(&sample).with_context(|| {
+        observer.sample(&sample).with_context(|| {
             format!(
                 "reference output callback at target {}",
                 target.temperature_tick
             )
         })?;
+        if let Some(reason) = sample.values.as_ref().and_then(Measurement::stop_reason) {
+            stop(reason.to_owned(), &mut stopped, &mut reasons);
+        }
         samples.push(sample);
         // A completed measurement and publication are retained even if they cross the deadline.
         if stopped.is_none() && expired(elapsed) {
@@ -436,13 +461,16 @@ mod tests {
         tensor::Truncation,
     };
     use anyhow::{bail, ensure, Result};
-    use std::{cell::Cell, rc::Rc};
+    use std::{cell::{Cell, RefCell}, rc::Rc};
     #[derive(Clone, Debug)]
     struct Value(f64);
     impl Measurement for Value {
         fn validate(&self) -> Result<()> {
             ensure!(self.0.is_finite(), "nonfinite measurement");
             Ok(())
+        }
+        fn stop_reason(&self) -> Option<&str> {
+            (self.0 == -1.).then_some("variance tail failure")
         }
     }
     struct Fixture {
@@ -503,6 +531,7 @@ mod tests {
         Validation,
         Measurement,
         NonfiniteMeasurement,
+        HeatFailure,
         Callback,
     }
     struct Seam {
@@ -513,6 +542,7 @@ mod tests {
         deadline: Option<(Phase, usize)>,
         failure: Option<(Phase, usize)>,
         hit: bool,
+        events: Option<Rc<RefCell<Vec<&'static str>>>>,
     }
     impl Seam {
         fn new() -> Self {
@@ -524,6 +554,7 @@ mod tests {
                 deadline: None,
                 failure: None,
                 hit: false,
+                events: None,
             }
         }
         fn visit(&self, p: Phase, n: usize) {
@@ -580,12 +611,17 @@ mod tests {
             norm: f64,
         ) -> Result<Value> {
             self.measures += 1;
+            if let Some(events) = &self.events {
+                events.borrow_mut().extend(["physical", "variance"]);
+            }
             self.visit(Phase::Measurement, self.measures);
             if self.failure == Some((Phase::Measurement, self.measures)) {
                 bail!("originating measurement failure");
             }
             Ok(Value(
-                if self.failure == Some((Phase::NonfiniteMeasurement, self.measures)) {
+                if self.failure == Some((Phase::HeatFailure, self.measures)) {
+                    -1.
+                } else if self.failure == Some((Phase::NonfiniteMeasurement, self.measures)) {
                     f64::NAN
                 } else {
                     norm
@@ -610,6 +646,42 @@ mod tests {
             engine,
             &mut || clock.get(),
         )
+    }
+    struct EventObserver(Rc<RefCell<Vec<&'static str>>>);
+    impl TargetObserver<Value> for EventObserver {
+        fn before_measurement(&mut self, _: &ReferenceTarget, _: &ItebdState, _: &ItebdCheckpointProgress) -> Result<()> {
+            self.0.borrow_mut().extend(["append", "read_back"]);
+            Ok(())
+        }
+        fn sample(&mut self, _: &ScheduledSample<Value>) -> Result<()> {
+            self.0.borrow_mut().push("publish");
+            Ok(())
+        }
+    }
+    #[test]
+    fn target_snapshot_precedes_measurement() {
+        let f = Fixture::new();
+        let events = Rc::new(RefCell::new(Vec::new()));
+        let mut engine = Seam::new();
+        engine.events = Some(events.clone());
+        let out = run_scheduled_observed(f.settings(), &mut EventObserver(events.clone()), &mut engine, &mut || 0.).unwrap();
+        assert_eq!(out.status, "complete");
+        assert_eq!(*events.borrow(), ["append","read_back","physical","variance","publish",
+            "append","read_back","physical","variance","publish"]);
+    }
+    #[test]
+    fn measurement_stop_keeps_values_and_stops_before_next_target() {
+        let f = Fixture::new();
+        let mut engine = Seam::new();
+        engine.failure = Some((Phase::HeatFailure, 1));
+        let out = run(&f, &mut engine).unwrap();
+        assert_eq!(engine.steps, 2);
+        assert_eq!(engine.measures, 1);
+        assert_eq!(out.status, "partial");
+        assert!(out.samples[0].available);
+        assert!(!out.samples[1].available);
+        assert!(out.terminal_state.is_some());
+        assert!(out.reason.contains("variance tail failure"));
     }
     #[test]
     fn aklt_unlimited_clock_keeps_cap_evidence() {
