@@ -1,5 +1,6 @@
 //! Fixed coefficient-one AKLT projector reference, with ordinary spin-one thermodynamics.
 pub mod output;
+pub mod v3;
 use crate::itebd_auto::{ItebdHamiltonian, ItebdState};
 use crate::itebd_checkpoint::ItebdStepSegment;
 use crate::reference_trajectory::{
@@ -177,6 +178,15 @@ pub fn measure_reference(
     beta: f64,
     accumulated_log_norm: f64,
 ) -> Result<AkltSampleValues> {
+    measure_reference_with_cap(state, ham, beta, accumulated_log_norm, 128)
+}
+pub(crate) fn measure_reference_with_cap(
+    state: &ItebdState,
+    ham: &ItebdHamiltonian,
+    beta: f64,
+    accumulated_log_norm: f64,
+    cap: usize,
+) -> Result<AkltSampleValues> {
     use crate::itebd_rdm::{reduced_density_matrix_auto, AutoRdmResult, RdmOptions, RdmParity};
     ensure!(
         beta.is_finite() && beta > 0.,
@@ -201,7 +211,7 @@ pub fn measure_reference(
     let z = crate::model::sz1().map(Complex64::from);
     let mut values = AkltSampleValues {
         minimum_rdm_eigenvalue: f64::INFINITY,
-        cap_reached_now: summary.bond_dimensions.iter().any(|d| *d >= 128),
+        cap_reached_now: summary.bond_dimensions.iter().any(|d| *d >= cap),
         bond_dimension_ab: summary.bond_dimensions[0],
         bond_dimension_ba: summary.bond_dimensions[1],
         ..Default::default()

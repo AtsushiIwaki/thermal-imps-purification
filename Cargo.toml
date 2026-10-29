@@ -7,6 +7,8 @@ publish = false
 
 [dependencies]
 anyhow = "1"
+sha2 = "=0.10.9"
+tenferro-cpu = { git = "https://github.com/tensor4all/tenferro-rs.git", rev = "f68b33d9e06cc0af8d2b9c40f7c52d8972cd1266" }
 tensor4all-core = { git = "https://github.com/tensor4all/tensor4all-rs.git", rev = "880032daea2a84d7ddfe84a2594a6d160631afc2" }
 tensor4all-hdf5 = { git = "https://github.com/tensor4all/tensor4all-rs.git", rev = "880032daea2a84d7ddfe84a2594a6d160631afc2" }
 hdf5-metno = { version = "0.12", default-features = false, features = ["static"] }
