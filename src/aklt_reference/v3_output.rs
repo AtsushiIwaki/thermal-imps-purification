@@ -1102,6 +1102,20 @@ pub fn finalize_interrupted_directory(directory: &Path, why: &str) -> Result<Val
     );
     let (settings, runtime) = read_settings(directory)?;
     let mut rows = read_rows(directory)?;
+    // A panic leaves later rows at their exact launch template. Recognize only
+    // untouched placeholders; do not sanitize arbitrary changed beta/norm/cap.
+    let templates = empty_rows(&settings);
+    let pending: Vec<bool> = rows
+        .iter()
+        .zip(&templates)
+        .map(|(row, seed)| {
+            columns()
+                .iter()
+                .filter(|key| !["reason", "snapshot_reason", "heat_reason"].contains(key))
+                .all(|key| row[*key] == seed[*key])
+        })
+        .collect();
+    let mut recovered_dimensions = vec![None; rows.len()];
     let uncertain = uncertain_index(&rows)?;
     if directory.join("states.h5").exists() {
         let names = {
@@ -1135,6 +1149,11 @@ pub fn finalize_interrupted_directory(directory: &Path, why: &str) -> Result<Val
                 &Default::default(),
             )
             .context("recover completed native snapshot")?;
+            if pending[index] && settings.resume.is_some() {
+                let state = crate::itebd_state_view::ItebdStateRef::from(&loaded.state);
+                recovered_dimensions[index] =
+                    Some([state.lambda_ab().len(), state.lambda_ba().len()]);
+            }
             let row = &mut rows[index];
             ensure!(
                 loaded.progress.completed_steps == settings.targets()[index].completed_steps,
@@ -1148,14 +1167,47 @@ pub fn finalize_interrupted_directory(directory: &Path, why: &str) -> Result<Val
             row["accumulated_log_norm"] = loaded.progress.accumulated_log_norm.into();
         }
     }
+    if let Some(resume) = &settings.resume {
+        let mut cap = resume.restart.cap.clone();
+        let mut steps = resume.restart.progress.completed_steps;
+        let mut beta = resume.restart.progress.beta;
+        let mut norm = resume.restart.progress.accumulated_log_norm;
+        for (index, row) in rows.iter_mut().enumerate() {
+            if pending[index] {
+                // A recovered HDF5 state certifies its dimensions, not the
+                // missing inter-target cap history or unrecorded measurements.
+                if let Some(dimensions) = recovered_dimensions[index] {
+                    for dimension in dimensions {
+                        cap.maximum_dimension_seen =
+                            cap.maximum_dimension_seen.max(Some(dimension));
+                        if dimension >= 256 {
+                            cap.ever_reached = Some(true);
+                        }
+                    }
+                } else {
+                    row["completed_steps"] = steps.into();
+                    row["beta_actual"] = beta.into();
+                    row["accumulated_log_norm"] = norm.into();
+                }
+                cap.mark_unobserved();
+                put_cap(row, &cap)?;
+            }
+            if integer(row, "completed_steps")? >= steps {
+                steps = integer(row, "completed_steps")?;
+                beta = number(row, "beta_actual")?;
+                norm = number(row, "accumulated_log_norm")?;
+            }
+            cap = cap_from(row)?;
+        }
+    }
     for row in &mut rows {
         if row["available"] != true {
             row["reason"] = why.into();
             row["heat_reason"] = why.into();
         }
     }
-    write_rows(directory, &rows)?;
     validate_rows(&settings, &rows)?;
+    write_rows(directory, &rows)?;
     let last = rows
         .iter()
         .max_by_key(|r| r["completed_steps"].as_u64().unwrap_or(0))
@@ -1261,6 +1313,7 @@ mod tests {
         setups: usize,
         measures: usize,
         stop_after: Option<usize>,
+        panic_after: Option<usize>,
     }
     impl Engine<AkltValuesV3> for ContinuationFixture {
         fn setup(&mut self, h: &ItebdHamiltonian) -> Result<ItebdState> {
@@ -1274,6 +1327,11 @@ mod tests {
             _: f64,
             _: &crate::tensor::Truncation,
         ) -> Result<StepInfo> {
+            assert_ne!(
+                self.panic_after,
+                Some(self.steps),
+                "fixture panic between target snapshots"
+            );
             if self.stop_after == Some(self.steps) {
                 bail!("fixture stop before next step");
             }
@@ -1304,6 +1362,7 @@ mod tests {
             setups: 0,
             measures: 0,
             stop_after: Some(154),
+            panic_after: None,
         };
         let outcome = publish_with_engine(&settings(), &parent, &mut old, &mut || 0.).unwrap();
         assert_eq!(outcome["snapshot_count"], 14);
@@ -1332,6 +1391,7 @@ mod tests {
             setups: 0,
             measures: 0,
             stop_after: None,
+            panic_after: None,
         };
         let result = publish_with_engine(&resumed, &child, &mut engine, &mut || 0.);
         assert!(result.is_ok(), "continuation failed: {:?}", result.err());
@@ -1372,11 +1432,86 @@ mod tests {
             setups: 0,
             measures: 0,
             stop_after: None,
+            panic_after: None,
         };
         assert!(publish_with_engine(&resumed, &unstarted, &mut engine, &mut || 0.).is_err());
         assert!(!unstarted.exists());
         assert_eq!(engine.steps, 0);
         assert_eq!(engine.setups, 0);
+    }
+    #[test]
+    fn interrupted_resume_promotes_only_untouched_pending_tail_from_retained_prefix() {
+        let temp = tempfile::tempdir().unwrap();
+        let settings = resume_fixture(&temp.path().join("parent"));
+        for mode in ["tamper", "csv_lag", "clean"] {
+            let child = temp.path().join(mode);
+            let mut engine = ContinuationFixture {
+                steps: 0,
+                setups: 0,
+                measures: 0,
+                stop_after: None,
+                panic_after: Some(192),
+            };
+            let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                publish_with_engine(&settings, &child, &mut engine, &mut || 0.)
+            }));
+            assert!(panic.is_err());
+            let before = read_rows(&child).unwrap();
+            assert_eq!(before[3]["completed_steps"], 346);
+            assert_eq!(before[4]["completed_steps"], 154);
+            let state_pin = fingerprint(&child.join("states.h5")).unwrap();
+            if mode == "tamper" {
+                let mut rows = before.clone();
+                rows[4]["accumulated_log_norm"] = 123.0.into();
+                write_rows(&child, &rows).unwrap();
+                assert!(finalize_interrupted_directory(&child, "SVD failure").is_err());
+                assert!(!child.join("summary.json").exists());
+                continue;
+            }
+            if mode == "csv_lag" {
+                let mut rows = before.clone();
+                rows[3] = empty_rows(&settings)[3].clone();
+                write_rows(&child, &rows).unwrap();
+            }
+            let done = finalize_interrupted_directory(&child, "SVD failure");
+            assert!(
+                done.is_ok(),
+                "recover interrupted target prefix: {:?}",
+                done.err()
+            );
+            let done = done.unwrap();
+            assert_eq!(done["snapshot_count"], 4);
+            assert_eq!(
+                done["available_samples"],
+                if mode == "csv_lag" { 3 } else { 4 }
+            );
+            assert_eq!(
+                done["available_heat_samples"],
+                if mode == "csv_lag" { 3 } else { 4 }
+            );
+            assert_eq!(done["completed_steps"], 346);
+            assert_eq!(done["completed_steps_kind"], "retained_lower_bound");
+            let after = read_rows(&child).unwrap();
+            let preserved = if mode == "csv_lag" { 3 } else { 4 };
+            assert_eq!(&before[..preserved], &after[..preserved]);
+            if mode == "csv_lag" {
+                assert_eq!(after[3]["snapshot_available"], true);
+                assert_eq!(after[3]["available"], false);
+                assert_eq!(after[3]["cap_observed_strang_steps"], 262);
+            }
+            assert_eq!(after[4]["completed_steps"], 346);
+            assert_eq!(
+                after[4]["accumulated_log_norm"],
+                before[3]["accumulated_log_norm"]
+            );
+            assert_eq!(after[4]["cap_coverage"], "unobserved_tail");
+            assert!(after[4]["cap_ever_reached"].is_null());
+            assert_eq!(fingerprint(&child.join("states.h5")).unwrap(), state_pin);
+            assert_eq!(
+                verify_directory(&child).unwrap()["verified_snapshot_count"],
+                4
+            );
+        }
     }
     struct FailingSvdFixture {
         collision: Option<PathBuf>,
