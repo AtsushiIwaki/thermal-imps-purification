@@ -2,99 +2,71 @@
 
 ## Current position
 
-This repository is a standalone two-site thermal purification/iTEBD crate with real and complex
-backends, a solve CLI, checkpoint/restart and reduced-density-matrix APIs, examples, verification
-tools, and a macOS/Linux CI configuration. It is published at
+This is the standalone two-site thermal purification/iTEBD crate, with real and
+complex backends, solve CLI, checkpoint/restart, reduced-density-matrix APIs and
+verification tools. It is published at
 [AtsushiIwaki/thermal-imps-purification](https://github.com/AtsushiIwaki/thermal-imps-purification).
-Its development guidance and selected
-knowledge pages are self-contained within this checkout. The authoritative numerical contracts,
-measured evidence, and qualified limits remain in the linked public documents.
-MIT is applied to project-authored material; copied upstream material retains its own terms.
-The README is a short finite-temperature quickstart; advanced CLI and library details live in
-the linked usage and API guides.
+Project-authored material uses MIT; retained upstream sources keep their notices.
+The [usage guide](docs/usage.md) owns current CLI/library contracts.
 
-The cap256 extension is integrated into local main. The single authorized run
-retained14 verified snapshots/physical/variance measurements (T=2.0,...,0.7),
-then exited101 in `src/tensor.rs:143` with an SVD decomposition failure.
-T=0.6,...,0.1 remains unavailable; no retry or fallback ran. The native retained
-progress154steps/beta1.4285714285714268 is a lower bound, with unobserved cap
-tail and unknown trajectory-only time. Retained maximum dimension68 is not a
-certificate for the failed interval. The exact failing step/matrix is unavailable;
-a common root cause with prior SVD failures is unproved.
+The Faer terminal2x2 SVD repair and v4 saved-MPS continuation are integrated into
+local main. The single continuation from parent snapshot13/T0.7/step154 retained
+four new HDF5/physical/variance targets T=0.6,0.5,0.4,0.3, then failed at fullstep402,
+third SVD (beta_before_step3.878968253968235, temperature context~0.2578).
+The captured2304x2304 matrix has5,308,416 nonfinite entries. The first corrupting
+operation within that full step is unobserved. This is not proof of another
+finite-input Faer defect or the uncaptured original failure's root cause.
 
-The four-file bundle is retained at
-`results/aklt-projector-dmax256-reference/fine/`; states.h5 holds14 snapshots.
-Interrupted finalization verified all14 associations and physical values without
-repeating variance sums. The controlling Infinite_MST report is published with
-reference_status=partial. This is not a full-temperature cap256 reference.
-Faer/native defaults were preserved (visibleCPU24/thread_hint24; five thread
-overrides absent). The controlling chat remains Dropbox Local Infinite_MST.
-See the [v3 contract](docs/usage.md#aklt-cap256-target-snapshots-and-variance-heat).
-Post-integration verification passed488 native tests across40 binaries,
-16 optional ignored,0 failures/warnings, wall251.8s including compile/setup.
-The controlling314 Python and14 main native HDF5 tests passed. The single fresh
-review's two Important integrity findings were fixed by RED→GREEN tests.
+Original14 plus new4 gives18/20 available temperatures; T0.2/T0.1 remains missing.
+Production preserved Native defaults (visibleCPU24/thread_hint24; five overrides
+absent), original fine grid, Dmax256/cutoff1e-13 and no elapsed cap. No retry or
+extra variance evaluation ran. Original producer f43b496/workerf877e84 is retained
+in conditions/HDF5; source d6dbce7 fixes only interrupted finalization.
 
-V1/schema1 retains its3600-second contract; v2/schema2 retains explicit null.
-The old cap128 fine run completed20 targets/1014 steps in1096.053s, reached
-cap128 at T=0.1/0.2 and retained a verified endpoint. Its time-step variant
-retained18 targets through T=0.3, then failed in SVD without a certified endpoint.
-That partial outcome and all old bytes remain unchanged; no retry or old endpoint
-variance evaluation is part of the new task.
+Native output is `results/aklt-projector-dmax256-resume-svd-repair/fine/`, with
+four new snapshots and a partial summary at retained_lower_bound346; its sibling
+`svd-failure.h5` is diagnostic only. Retained cap maximum102/observed346 has an
+unobserved tail and does not certify the failed interval. Original parent bundle
+`results/aklt-projector-dmax256-reference/fine/` and its14 states are unchanged.
+A compatible reader recovered the new four completed rows and states unchanged,
+without variance remeasurement. Exact untouched pending placeholders inherit
+retained progress/cap bounds; changed seeds are rejected and CSV-lag recovery
+cannot invent physical/heat measurements or cap coverage.
 
-The published canonical repair and mixed-field Ising worker remain the baseline.
-The [successful hosted follow-up](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38651815754)
-verified the prior code at `e063778`, not this AKLT change. The completed mixed-field
-study retains three cold reference bundles under results/mixed-field-ising-g105-h05-reference/.
-Its fine values were adopted by explicit user choice despite time-step differences and
-slightly negative low-temperature entropy; that is not refinement qualification.
-The controlling study retains its detailed numerical and cleanup evidence.
+The controlling Infinite_MST report is published with18 available points and two
+gaps; all six one-axes pages were inspected and frozen-only regeneration matches
+page content streams. Its original launch marker stays consumed/unknown after
+failed original finalization; separate rescue records describe partial publication.
+Do not reset the guard or rerun production for report recovery. The controlling
+note is `notes/2026-10-29-aklt-purification-svd-resume.md`, with ignored records
+in `codes/imst_rs/results/records/aklt-purification-dmax256-resume-svd-repair/`.
 
-## Unresolved constraints
+Software gates passed495 Native tests/42 binaries (16 optional ignored),320
+controlling Python tests,14 main HDF5 tests (4 optional exporters ignored),54
+tooling tests and selected vendor SVD5+3. One exact known upstream ARM64 warning
+remains; no unknown Native warnings. Doctests discovered0. Final rescue Native
+wall250.194s includes compilation/setup; compatible release rebuild25.518s.
+Fresh review found no Critical/Important issue. An extra malformed CSV row can
+panic before typed row-count validation but before publication (deferred minor).
 
-- Release tags and registry publication remain undecided.
-- AKLT validation covers a measured finite temperature window with active bond caps; it does not
-  establish low-temperature or bond-dimension convergence. The validation and limitations pages
-  retain the other model-specific numerical bounds.
-- JSON and HDF5 outputs use exclusive creation. Checkpoint publication is independent rather than
-  transactional across formats and does not guarantee recovery after an arbitrary process or
-  power loss. Use fresh output destinations.
-- HDF5 launch coordination on macOS and GNU/Linux is scoped to the documented in-process Git
-  launcher and the pinned shared mutex. GNU/Linux requires glibc >=2.34. Windows has local
-  build/smoke evidence; this does not establish full-suite coverage on every platform or behavior
-  for independent launchers.
-- Documentation-only verification does not establish new physics, fresh full-suite success, or
-  hosted CI coverage.
-- Selected source notices do not establish complete legal clearance for a built binary artifact.
+V1/schema1 keeps3600 seconds; v2/schema2 keeps explicit null. The old cap128 fine
+reference completed20 points/1014 steps and reached cap128 at T0.1/0.2; its
+step-size variant retained18 through T0.3 and failed SVD. Both are unchanged.
+The earlier mixed-field Ising study and canonical repair remain as documented
+in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 
-## Next action
+## Next actions and limits
 
-The approved bounded repair/continuation is implemented on the ordinary branch
-`codex/aklt-purification-resume-svd-repair`, based on local main3c49bf5. Integration
-and the single production launch remain pending user selection. It vendors only
-the reviewed Faer terminal2x2 SVD repair, preserving the tensor4all/tenferro pins.
-The v4 contract loads parent snapshot13 at absolute step154/T0.7 and carries its
-raw state, accumulated log normalization and saved-row cap evidence into860 new
-steps. It records six new snapshots and optional first returned SVD failure
-matrix; no beta0 setup, old variance evaluation or automatic retry is selected.
-See [continuation contract](docs/usage.md#aklt-cap256-continuation-after-the-svd-repair).
-Fresh repair gates passed494 native tests/42 binaries (16 optional ignored),
-54 tooling tests and selected vendor SVD5+3 checks; doctests discovered0. Native
-routine wall262.643s includes compilation/setup; one exact upstream ARM64 warning
-is recorded, with no unknown warning. Independent review findings on boundary
-anchoring and old-report protection are resolved. This is software evidence only.
-The controlling Infinite_MST note is
-`notes/2026-10-29-aklt-purification-svd-resume.md`; ignored development evidence
-belongs to its `results/records/aklt-purification-dmax256-resume-svd-repair/`.
-The earlier bounded investigation did not reproduce the thermal failure. The
-old finite3x3 SVD control fails before this repair and passes afterward, but the
-original uncaptured thermal failure's cause remains unproved.
-
-Cold cap256 values and low-temperature cap/time-step convergence remain unresolved.
-The previous integrated worktree/branch were retired after verified preservation.
-The throwaway diagnostic worktree `/private/tmp/thermal-purification-svd-worktree`
-and reactivated `/private/tmp/imst-current-build` remain pending disposition;
-the previous build Trash manifest was superseded before reuse. Required source,
-locks and original production results are preserved; executables are disposable
-and historical inspection uses a compatible reader. No production continuation
-or registry publication has run in this task.
+- Cold cap256 completion and the first nonfinite operation require a separately
+  approved diagnostic scope. No new trajectory is authorized. Bond/time-step
+  convergence remains unestablished.
+- Retire integrated ordinary worktrees after output hash checks. Keep the earlier
+  diagnostic source branch at b751a9e. Task build `/private/tmp/imst-current-build`
+  awaits fresh normal-Trash review; its old manifest is superseded.
+- Checkpoint publication is exclusive, not transactional across every format or
+  arbitrary power loss. Use the documented completed-prefix recovery.
+- Native HDF5 in-process Git launcher support remains scoped to documented
+  macOS/GNU Linux (glibc>=2.34). Local Windows smoke evidence is not a full-suite
+  platform guarantee. Hosted CI does not attest these new local numerical data.
+- Release tags/registry publication remain undecided. Retained third-party notices
+  do not independently establish complete binary redistribution clearance.
