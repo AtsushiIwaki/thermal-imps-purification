@@ -14,8 +14,20 @@ local main. The single continuation from parent snapshot13/T0.7/step154 retained
 four new HDF5/physical/variance targets T=0.6,0.5,0.4,0.3, then failed at fullstep402,
 third SVD (beta_before_step3.878968253968235, temperature context~0.2578).
 The captured2304x2304 matrix has5,308,416 nonfinite entries. The first corrupting
-operation within that full step is unobserved. This is not proof of another
-finite-input Faer defect or the uncaptured original failure's root cause.
+operation within that production full step remains unobserved.
+
+One new bounded diagnostic loaded saved T0.3/step346 and trapped step371/call1:
+a finite963x963 input produced successful SVD with entirely NaN retainedU/V.
+Direct patched/pristine Faer reproduce this symptom; NumPy/Accelerate returns
+finite factors with reconstruction6.68e-15. Fixed-matrix tracing shows a secular
+root below its supplied lower bracket: out-of-range secant candidates reverse
+the fallback bracket, bisection is skipped, and an invalid midpoint gives a
+negative reconstruction product and sqrt NaN in perturb_col0. Identity with
+production402 is unproved. Exactly one thermal diagnostic (max56steps, stopped
+after24 completed) and six fixed-matrix factorizations ran; no measurements,
+production repair or reference publication. Source `42797c5`/`cd9a468` stays only on branch
+codex/aklt-nonfinite-diagnostic in the ordinary external diagnostic worktree.
+The controlling note is Infinite_MST notes/2026-10-29-aklt-purification-nonfinite-svd.md.
 
 Original14 plus new4 gives18/20 available temperatures; T0.2/T0.1 remains missing.
 Production preserved Native defaults (visibleCPU24/thread_hint24; five overrides
@@ -57,13 +69,16 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 
 ## Next actions and limits
 
-- Cold cap256 completion and the first nonfinite operation require a separately
-  approved diagnostic scope. No new trajectory is authorized. Bond/time-step
+- Cold cap256 completion and a reviewed root-bracket repair remain open. The
+  finite-input mechanism is localized but original402
+  attribution is unproved. No further trajectory is selected; bond/time-step
   convergence remains unestablished.
 - Both integrated ordinary worktrees/registrations and repair branches are retired
   with unchanged retained hashes. The earlier diagnostic branch b751a9e remains.
-  Task build `/private/tmp/imst-current-build` awaits fresh normal-Trash review;
-  its old manifest is superseded.
+  New ordinary `/private/tmp/thermal-purification-nonfinite-worktree`/branch `cd9a468`
+  await disposition, with no production merge. Task build `/private/tmp/imst-current-build`
+  was reactivated for diagnosis; its pending Trash manifest is superseded with no
+  actionable rows. Fresh review is needed before Trash.
 - Checkpoint publication is exclusive, not transactional across every format or
   arbitrary power loss. Use the documented completed-prefix recovery.
 - Native HDF5 in-process Git launcher support remains scoped to documented
