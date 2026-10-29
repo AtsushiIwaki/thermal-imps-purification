@@ -962,7 +962,26 @@ fn inspect(directory: &Path, summary: Value) -> Result<Value> {
             .all(|r| r["completed_steps"].as_u64().is_some_and(|n| n <= steps)),
         "summary progress mismatch"
     );
-    number(&summary, "accumulated_log_norm")?;
+    let retained_steps = rows
+        .iter()
+        .map(|r| integer(r, "completed_steps"))
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .max()
+        .context("missing retained progress")?;
+    let norm = number(&summary, "accumulated_log_norm")?;
+    ensure!(steps == retained_steps, "summary exceeds retained progress");
+    ensure!(
+        rows.iter()
+            .filter(|r| r["completed_steps"].as_u64() == Some(steps))
+            .all(|r| {
+                close(
+                    number(r, "beta_actual").unwrap_or(f64::NAN),
+                    number(&summary, "beta_actual").unwrap_or(f64::NAN),
+                ) && close(number(r, "accumulated_log_norm").unwrap_or(f64::NAN), norm)
+            }),
+        "summary beta/norm disagrees with retained progress"
+    );
     let cap: CapEvidence = serde_json::from_value(summary["cap"].clone())?;
     validate_cap(&cap, steps)?;
     let observed = observed_cap(&rows)?;
@@ -1188,6 +1207,87 @@ mod tests {
             &serde_json::to_vec_pretty(&summary).unwrap(),
         )
         .unwrap();
+    }
+    #[test]
+    fn summary_lower_bound_cannot_exceed_retained_progress() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("empty");
+        drop(Publisher::create(&settings(), &path).unwrap());
+        let mut summary =
+            finalize_interrupted_directory(&path, "worker died before evolution").unwrap();
+        assert_eq!(summary["completed_steps"], 0);
+        summary.as_object_mut().unwrap().retain(|key, _| {
+            ![
+                "sample_count",
+                "verified_snapshot_count",
+                "checkpoint_verified",
+                "scalar_state_consistency_passed",
+                "variance_remeasured",
+            ]
+            .contains(&key.as_str())
+        });
+        summary["completed_steps"] = 1014.into();
+        summary["beta_actual"] = 10.0.into();
+        summary["accumulated_log_norm"] = 123.0.into();
+        atomic_write(
+            &path.join("summary.json"),
+            &serde_json::to_vec(&summary).unwrap(),
+        )
+        .unwrap();
+        let error = verify_directory(&path).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("retained progress"),
+            "{error:#}"
+        );
+    }
+    #[test]
+    fn summary_norm_must_match_latest_rows() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("complete");
+        fixture(&path, None);
+        let mut summary = read_json(&path.join("summary.json")).unwrap();
+        summary["accumulated_log_norm"] = 123.0.into();
+        atomic_write(
+            &path.join("summary.json"),
+            &serde_json::to_vec(&summary).unwrap(),
+        )
+        .unwrap();
+        let error = verify_directory(&path).unwrap_err();
+        assert!(
+            format!("{error:#}").contains("retained progress"),
+            "{error:#}"
+        );
+    }
+    #[test]
+    fn summary_may_record_progress_after_last_saved_target() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("partial");
+        fixture(&path, Some(1));
+        let mut rows = read_rows(&path).unwrap();
+        let steps = settings().targets()[0].completed_steps + 1;
+        let beta = prefix_beta(&settings(), steps).unwrap();
+        for row in &mut rows[1..] {
+            row["completed_steps"] = steps.into();
+            row["beta_actual"] = beta.into();
+            row["accumulated_log_norm"] = (-0.01).into();
+            row["cap_observed_strang_steps"] = steps.into();
+        }
+        write_rows(&path, &rows).unwrap();
+        repin(&path, "samples.csv");
+        let mut summary = read_json(&path.join("summary.json")).unwrap();
+        summary["reason"] = "interrupted after one additional complete step".into();
+        summary["completed_steps"] = steps.into();
+        summary["beta_actual"] = beta.into();
+        summary["accumulated_log_norm"] = (-0.01).into();
+        summary["cap"]["observed_strang_steps"] = steps.into();
+        atomic_write(
+            &path.join("summary.json"),
+            &serde_json::to_vec(&summary).unwrap(),
+        )
+        .unwrap();
+        let verified = verify_directory(&path).unwrap();
+        assert_eq!(verified["snapshot_count"], 1);
+        assert_eq!(verified["completed_steps"], steps);
     }
     #[test]
     fn variance_failure_preserves_state_and_physical_values() {

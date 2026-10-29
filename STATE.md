@@ -21,9 +21,12 @@ heat with the existing defaults and preserves physical values on heat failure.
 It reuses the old fine1014-step grid without a deadline, and records native
 thread defaults independently from single-thread software checks.
 See the [v3 usage contract](docs/usage.md#aklt-cap256-target-snapshots-and-variance-heat).
-The routine gate passed485 tests across40 binaries,16 optional ignored,
-0 failures and0 warnings, wall231.7s including incremental compilation.
-Final release/controlling Python gates and fresh review are still in progress.
+The final routine gate passed488 tests across40 binaries,16 optional ignored,
+0 failures and0 warnings, wall247.9s including incremental compilation/setup.
+Release CLI8 tests and the controlling Python314 tests passed. A single fresh
+whole-branch review found two Important progress/frozen-evidence integrity gaps;
+both were fixed by RED→GREEN tests and affected full gates. A controlling-report
+minor remains: max-difference metadata omits temperatures (full table retains them).
 No new thermal trajectory has started; integration remains a separate choice.
 
 V1/schema1 retains its3600-second contract; v2/schema2 retains explicit null.
@@ -60,8 +63,8 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-Complete software verification and one fresh review, select integration for both
-repositories, then bind stable sources and the exact release worker for the single
+Select integration for both repositories after the completed software gates and
+review fix pass, then bind stable sources and the exact release worker for the single
 cap256 operation. The task-owned build root is `/private/tmp/imst-current-build`.
 Preserve workflow records and results before ordinary worktree retirement; build
 Trash review and cleanup remain. No build/worktree has been retired in this task.
