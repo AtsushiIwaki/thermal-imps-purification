@@ -117,6 +117,10 @@ real/complex evolution, specific heat, checkpoint I/O, and interval reduced dens
 ## Development, provenance, and license
 
 [CONTRIBUTING.md](CONTRIBUTING.md) describes development and verification. The
+[secular-root repair record](docs/investigations/2026-10-29-faer-secular-bracket.md)
+documents the retained Faer bracket fix, independent regression, selected native
+verification and before/after fixed-matrix timing. These controls do not establish
+thermal convergence or authorize another reference trajectory. The
 [provenance](docs/provenance.md), [references](docs/references.md), and
 [third-party notices](THIRD_PARTY_NOTICES.md) record extraction history, upstream software,
 methods, licenses, and redistribution obligations.

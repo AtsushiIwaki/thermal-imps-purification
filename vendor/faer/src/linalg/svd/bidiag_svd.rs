@@ -49,6 +49,13 @@ pub(crate) fn secular_eq_root_finder<T: RealField>(
 			f_mid = f_mid_left_shift;
 		}
 	}
+	let (mu_lower, mu_upper) = if shift == *left {
+		(zero::<T>(), right - left)
+	} else {
+		(left - right, zero::<T>())
+	};
+	let in_domain =
+		|mu: &T| mu.is_finite() && *mu >= mu_lower && *mu <= mu_upper;
 	enum SecantError {
 		OutOfBounds,
 		PrecisionLimitReached,
@@ -61,7 +68,9 @@ pub(crate) fn secular_eq_root_finder<T: RealField>(
 			}
 			let mut left_candidate = None;
 			let mut right_candidate = None;
-			let mut use_bisection = false;
+			let mut use_bisection = !in_domain(&mu_cur)
+				|| !f_cur.is_finite()
+				|| !f_prev.is_finite();
 			let sme_sign = (f_prev > zero()) == (f_cur > zero());
 			if !sme_sign {
 				let (min, max) = if mu_cur < mu_prev {
@@ -83,7 +92,18 @@ pub(crate) fn secular_eq_root_finder<T: RealField>(
 					/ (&mu_prev - &mu_cur);
 				let ref b = &f_cur - a / &mu_cur;
 				let mu_zero = -a / b;
+				// An extrapolation outside this pole interval cannot bracket its root.
+				// Reject it before caching bounds or evaluating across another pole.
+				if !in_domain(&mu_zero) {
+					err = SecantError::OutOfBounds;
+					use_bisection = true;
+					break;
+				}
 				let ref f_zero = secular_eq(shift.copy(), mu_zero.copy());
+				if !f_zero.is_finite() {
+					use_bisection = true;
+					break;
+				}
 				if *f_zero < zero() {
 					left_candidate = Some(mu_zero.copy());
 				} else {
@@ -93,22 +113,20 @@ pub(crate) fn secular_eq_root_finder<T: RealField>(
 				f_prev = f_cur.copy();
 				mu_cur = mu_zero.copy();
 				f_cur = f_zero.copy();
-				if shift == *left && (mu_cur < zero() || mu_cur > right - left)
-				{
-					err = SecantError::OutOfBounds;
-					use_bisection = true;
-				}
-				if shift == *right && (mu_cur > zero() || mu_cur < left - right)
-				{
-					err = SecantError::OutOfBounds;
-					use_bisection = true;
-				}
 				if f_cur.abs() > f_prev.abs() {
 					let mut k = one::<T>();
 					for _ in 0..4 {
 						let mu_opposite = -a / (&k * f_zero + b);
+						if !in_domain(&mu_opposite) {
+							k = k.mul_pow2(two);
+							continue;
+						}
 						let f_opposite =
 							secular_eq(shift.copy(), mu_opposite.copy());
+						if !f_opposite.is_finite() {
+							k = k.mul_pow2(two);
+							continue;
+						}
 						if *f_zero < zero() && f_opposite >= zero() {
 							right_candidate = Some(mu_opposite);
 							break;
@@ -240,19 +258,33 @@ pub(crate) fn secular_eq_root_finder<T: RealField>(
 	} else {
 		(left_shifted.copy(), right_shifted.copy(), f_left, f_right)
 	};
-	let (use_bisection, mut mu_cur, left_candidate, right_candidate, _err) =
+	let (mut use_bisection, mut mu_cur, left_candidate, right_candidate, _err) =
 		secant(args.0, args.1, args.2, args.3);
 	match (left_candidate, right_candidate) {
-		(Some(left), Some(right)) if left < right => {
-			if left > left_shifted {
-				left_shifted = left;
+		(Some(left), Some(right))
+			if in_domain(&left) && in_domain(&right) && left < right =>
+		{
+			// Intersect atomically: independently accepting bounds can reverse
+			// a valid fallback bracket when a candidate pair lies outside it.
+			let new_left = if left > left_shifted {
+				left
+			} else {
+				left_shifted.copy()
+			};
+			let new_right = if right < right_shifted {
+				right
+			} else {
+				right_shifted.copy()
+			};
+			if new_left < new_right {
+				left_shifted = new_left;
+				right_shifted = new_right;
 			}
-			if right < right_shifted {
-				right_shifted = right;
-			}
-		},
-		_ => {},
+		}
+		_ => {}
 	}
+	use_bisection |=
+		!mu_cur.is_finite() || mu_cur < left_shifted || mu_cur > right_shifted;
 	if use_bisection {
 		while &right_shifted - &left_shifted
 			> two * epsilon * left_shifted.abs().fmax(right_shifted.abs())
@@ -271,6 +303,7 @@ pub(crate) fn secular_eq_root_finder<T: RealField>(
 	}
 	(shift, mu_cur)
 }
+
 // Adapted from LAPACK DLASV2; see COPYING.LAPACK.BSD and VENDORING.md.
 // https://www.netlib.org/lapack/explore-html/d3/dad/dlasv2_8f_source.html
 // For B = [[f,g],[0,h]], return signed values and rotations L,R with L^T B R = D.
@@ -2056,6 +2089,38 @@ mod tests {
 mod imst_svd_regressions {
 	use super::*;
 	use crate::{Col, Mat};
+	#[test]
+	fn secular_root_keeps_the_lower_pole_bracket() {
+		// 1 - 2/sigma^2 - 0.01/(sigma^2-1) is increasing between its poles.
+		// Clearing denominators gives z^2 - 3.01 z + 2 = 0, z=sigma^2.
+		// The literals below are independently derived positive roots. The wide
+		// outer bracket previously accepted negative secant candidates and inverted.
+		let f = |shift: f64, mu: f64| {
+			let sigma = shift + mu;
+			1.0 - 2.0 / (sigma * sigma) - 0.01 / ((sigma - 1.0) * (sigma + 1.0))
+		};
+		let batch = |shifts: &[f64; 4], mus: &[f64; 4]| {
+			std::array::from_fn(|i| f(shifts[i], mus[i]))
+		};
+		for (lower, upper, expected, last) in [
+			(1.0, 1e6, 1.4211987153889648, false),
+			(0.0, 1.0, 0.995085027209613, false),
+			(1.0, 1e6, 1.4211987153889648, true),
+		] {
+			let (shift, mu) =
+				secular_eq_root_finder(&f, &batch, lower, upper, last);
+			let root = shift + mu;
+			std::assert!(
+				root.is_finite() && root >= lower && root <= upper,
+				"root={root} outside [{lower}, {upper}]"
+			);
+			std::assert!(
+				(root - expected).abs() < 2e-14,
+				"root={root} expected={expected}"
+			);
+		}
+	}
+
 	#[test]
 	fn public_clustered_three_by_three() {
 		let a = f64::from_bits(0x3fed_b6e9_5cf8_3a86);

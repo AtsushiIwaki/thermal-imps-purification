@@ -16,18 +16,23 @@ third SVD (beta_before_step3.878968253968235, temperature context~0.2578).
 The captured2304x2304 matrix has5,308,416 nonfinite entries. The first corrupting
 operation within that production full step remains unobserved.
 
-One new bounded diagnostic loaded saved T0.3/step346 and trapped step371/call1:
-a finite963x963 input produced successful SVD with entirely NaN retainedU/V.
-Direct patched/pristine Faer reproduce this symptom; NumPy/Accelerate returns
-finite factors with reconstruction6.68e-15. Fixed-matrix tracing shows a secular
-root below its supplied lower bracket: out-of-range secant candidates reverse
-the fallback bracket, bisection is skipped, and an invalid midpoint gives a
-negative reconstruction product and sqrt NaN in perturb_col0. Identity with
-production402 is unproved. Exactly one thermal diagnostic (max56steps, stopped
-after24 completed) and six fixed-matrix factorizations ran; no measurements,
-production repair or reference publication. Source `42797c5`/`cd9a468` stays only on branch
-codex/aklt-nonfinite-diagnostic in the ordinary external diagnostic worktree.
-The controlling note is Infinite_MST notes/2026-10-29-aklt-purification-nonfinite-svd.md.
+The approved secular-root bracket repair is implemented on branch
+codex/faer-secular-bracket-fix, pending integration. It rejects invalid secant
+candidates before use and preserves the fallback bracket. An independent small
+polynomial-root regression failed before the change and passes after it; prior
+terminal2x2 regressions also pass. The captured963x963 matrix is now finite and
+accurate at controlled24-way Faer parallelism (relative reconstruction3.93e-15).
+ABBA before/after timing found healthy-input median changes−0.23% at1 and−1.11%
+at24, with overlapping IQRs; no significant speedup or thermal-time claim follows.
+The old captured24 result is invalid; its timing cannot certify a speed ratio.
+See the [repair record](docs/investigations/2026-10-29-faer-secular-bracket.md).
+
+The diagnostic root trace identified out-of-range candidates reversing the
+fallback bracket, skipped bisection, a below-pole root and negative sqrt. It
+first trapped diagnostic371/call1, distinct from the unobserved corrupting
+operation in production402. Diagnostic branches b751a9e/cd9a468 remain retained;
+no diagnostic instrumentation is merged into the repair. No new thermal
+trajectory, variance measurement or reference publication ran in the repair.
 
 Original14 plus new4 gives18/20 available temperatures; T0.2/T0.1 remains missing.
 Production preserved Native defaults (visibleCPU24/thread_hint24; five overrides
@@ -69,14 +74,15 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 
 ## Next actions and limits
 
-- Cold cap256 completion and a reviewed root-bracket repair remain open. The
-  finite-input mechanism is localized but original402
-  attribution is unproved. No further trajectory is selected; bond/time-step
-  convergence remains unestablished.
+- Integrate the reviewed root-bracket repair after final gates and the user
+  selects integration. Final gates passed495 Native/42 binaries (16 optional
+  ignored), six vendor plus three selected SVD checks and14 main native HDF5
+  checks (4 optional exporters ignored); doctests discovered0. Original402 attribution and cold cap256 completion remain
+  open; no further trajectory is selected. Bond/time-step convergence is unproved.
 - Both integrated ordinary worktrees/registrations and repair branches are retired
   with unchanged retained hashes. The earlier diagnostic branch b751a9e remains.
-  New ordinary `/private/tmp/thermal-purification-nonfinite-worktree`/branch `cd9a468`
-  await disposition, with no production merge. Task build `/private/tmp/imst-current-build`
+  Ordinary `/private/tmp/thermal-purification-nonfinite-worktree` now hosts the
+  repair branch and awaits integration/disposition, with no production merge. Task build `/private/tmp/imst-current-build`
   was reactivated for diagnosis; its pending Trash manifest is superseded with no
   actionable rows. Fresh review is needed before Trash.
 - Checkpoint publication is exclusive, not transactional across every format or
