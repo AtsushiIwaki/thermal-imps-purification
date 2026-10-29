@@ -13,21 +13,27 @@ MIT is applied to project-authored material; copied upstream material retains it
 The README is a short finite-temperature quickstart; advanced CLI and library details live in
 the linked usage and API guides.
 
-The approved cap256 extension is implemented on the ordinary external worktree
-`/private/tmp/thermal-purification-worktree`, branch
-`codex/aklt-purification-dmax256`; the controlling chat remains in Infinite_MST
-Dropbox Local. V3 retains20 target states in one native HDF5, evaluates variance
-heat with the existing defaults and preserves physical values on heat failure.
-It reuses the old fine1014-step grid without a deadline, and records native
-thread defaults independently from single-thread software checks.
-See the [v3 usage contract](docs/usage.md#aklt-cap256-target-snapshots-and-variance-heat).
-The final routine gate passed488 tests across40 binaries,16 optional ignored,
-0 failures and0 warnings, wall247.9s including incremental compilation/setup.
-Release CLI8 tests and the controlling Python314 tests passed. A single fresh
-whole-branch review found two Important progress/frozen-evidence integrity gaps;
-both were fixed by RED→GREEN tests and affected full gates. A controlling-report
-minor remains: max-difference metadata omits temperatures (full table retains them).
-No new thermal trajectory has started; integration remains a separate choice.
+The cap256 extension is integrated into local main. The single authorized run
+retained14 verified snapshots/physical/variance measurements (T=2.0,...,0.7),
+then exited101 in `src/tensor.rs:143` with an SVD decomposition failure.
+T=0.6,...,0.1 remains unavailable; no retry or fallback ran. The native retained
+progress154steps/beta1.4285714285714268 is a lower bound, with unobserved cap
+tail and unknown trajectory-only time. Retained maximum dimension68 is not a
+certificate for the failed interval. The exact failing step/matrix is unavailable;
+a common root cause with prior SVD failures is unproved.
+
+The four-file bundle is retained at
+`results/aklt-projector-dmax256-reference/fine/`; states.h5 holds14 snapshots.
+Interrupted finalization verified all14 associations and physical values without
+repeating variance sums. The controlling Infinite_MST report is published with
+reference_status=partial. This is not a full-temperature cap256 reference.
+Faer/native defaults were preserved (visibleCPU24/thread_hint24; five thread
+overrides absent). The controlling chat remains Dropbox Local Infinite_MST.
+See the [v3 contract](docs/usage.md#aklt-cap256-target-snapshots-and-variance-heat).
+Post-integration verification passed488 native tests across40 binaries,
+16 optional ignored,0 failures/warnings, wall251.8s including compile/setup.
+The controlling314 Python and14 main native HDF5 tests passed. The single fresh
+review's two Important integrity findings were fixed by RED→GREEN tests.
 
 V1/schema1 retains its3600-second contract; v2/schema2 retains explicit null.
 The old cap128 fine run completed20 targets/1014 steps in1096.053s, reached
@@ -63,10 +69,9 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-Select integration for both repositories after the completed software gates and
-review fix pass, then bind stable sources and the exact release worker for the single
-cap256 operation. The task-owned build root is `/private/tmp/imst-current-build`.
-Preserve workflow records and results before ordinary worktree retirement; build
-Trash review and cleanup remain. No build/worktree has been retired in this task.
-The time-step SVD root cause and low-temperature time-step/cap convergence remain
-unresolved. Registry publication and additional numerical studies remain unselected.
+A separately scoped investigation is needed for the cap256 SVD failure before
+any new attempt. Cold cap256 values and low-temperature cap/time-step convergence
+remain unresolved. The ordinary task worktree is being retired after verified
+integration/preservation. `/private/tmp/imst-current-build` awaits explicit
+normal-Trash review; required source, vendor patches, locks and terminal results
+remain. No extra calculation, retry or registry publication is selected.

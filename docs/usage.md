@@ -362,3 +362,9 @@ extra indices, swapped targets and existing inconsistent summaries are rejected.
 Finalization cannot resume evolution and refuses to overwrite an existing summary.
 The controlling Infinite_MST process consumes one launch and handles report-only
 recovery; it must not delete guards or issue an automatic second trajectory.
+
+The selected 2026-10-29 operation is partial:14 target snapshots and physical/
+variance rows through T=0.7 were verified, then SVD failed before the next target.
+The retained154 steps are a lower bound, not the exact failure step; missing
+T=0.6,...,0.1 values remain unavailable. No retry was performed. The controlling
+Infinite_MST record owns the comparison, runtime and cleanup evidence.
