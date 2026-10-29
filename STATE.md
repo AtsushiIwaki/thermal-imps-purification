@@ -13,34 +13,25 @@ MIT is applied to project-authored material; copied upstream material retains it
 The README is a short finite-temperature quickstart; advanced CLI and library details live in
 the linked usage and API guides.
 
-The approved Dense AKLT continuation adds `aklt-projector-reference-v2`/schema2
-with required `max_seconds:null`; v1/schema1 retains its exact3600-second contract.
-The cap128 fine/time-step variants keep cutoff1e-13, max_dtau0.005/0.01 and
-1014/507 complete Strang steps. Both share the existing trajectory engine; Ising
-behavior is unchanged. Native retention and verification preserve contract version,
-cap history, actual stop reasons and uncertainty after mutating failure/interruption.
-See the [worker contract](docs/usage.md#aklt-reference-without-a-deadline).
+The approved cap256 extension is implemented on the ordinary external worktree
+`/private/tmp/thermal-purification-worktree`, branch
+`codex/aklt-purification-dmax256`; the controlling chat remains in Infinite_MST
+Dropbox Local. V3 retains20 target states in one native HDF5, evaluates variance
+heat with the existing defaults and preserves physical values on heat failure.
+It reuses the old fine1014-step grid without a deadline, and records native
+thread defaults independently from single-thread software checks.
+See the [v3 usage contract](docs/usage.md#aklt-cap256-target-snapshots-and-variance-heat).
+The routine gate passed485 tests across40 binaries,16 optional ignored,
+0 failures and0 warnings, wall231.7s including incremental compilation.
+Final release/controlling Python gates and fresh review are still in progress.
+No new thermal trajectory has started; integration remains a separate choice.
 
-Final qualification passed466 routine tests across38 binaries (16 optional tests
-unselected,0 failures,0 warnings),0 selected doc tests and6 release native CLI
-tests, with0 required skips. Routine wall224.5s includes debug compilation and
-execution; doc0.496s, release build22.067s and release CLI26.203s (0.74s execution)
-were recorded separately. The existing contraction AST audit required lifting
-three JSON `.contract` field reads outside macros; the audit itself is unchanged.
-One fresh whole-branch review found two Important frozen-report consistency gaps
-in the controlling Infinite_MST Python code; both were fixed by RED-GREEN tests
-and its full affected Python gate.
-No deferred minor finding remains. The single controlling operation ended on
-2026-10-27 JST. Fine purification completed all20 targets/1014 steps in1096.053s;
-its checkpoint and terminal consistency were natively verified. Cap128 was reached
-at T=0.1/0.2. The time-step variant retained18 targets through T=0.3, then exited101
-on an SVD decomposition error at src/tensor.rs:143. Native finalization retained
-its actual reason, T=0.1/0.2 gaps and no certified endpoint. Its173 retained steps
-are a lower bound; maximum observed dimension120 does not establish that the cap
-was never reached in the unobserved tail. No retry occurred. The controlling
-study remains completed=false despite all60 thermal endpoints being verified.
-See [the observed limits](docs/limitations.md#new-aklt-reference-adapter-2026-10-24-implementation).
-The original bounded studies and their unattempted references are unchanged.
+V1/schema1 retains its3600-second contract; v2/schema2 retains explicit null.
+The old cap128 fine run completed20 targets/1014 steps in1096.053s, reached
+cap128 at T=0.1/0.2 and retained a verified endpoint. Its time-step variant
+retained18 targets through T=0.3, then failed in SVD without a certified endpoint.
+That partial outcome and all old bytes remain unchanged; no retry or old endpoint
+variance evaluation is part of the new task.
 
 The published canonical repair and mixed-field Ising worker remain the baseline.
 The [successful hosted follow-up](https://github.com/AtsushiIwaki/thermal-imps-purification/actions/runs/38651815754)
@@ -69,19 +60,10 @@ The controlling study retains its detailed numerical and cleanup evidence.
 
 ## Next action
 
-The approved single continuation attempt and its report are finished. A separate
-scoped investigation is needed for the time-step SVD failure; the exact failing
-matrix/backtrace was not retained, so no common root cause with earlier Faer
-failures is established. Low-temperature time-step and cap convergence remain
-unresolved. Launch bindings retain revision b61ae0f and the exact tested worker;
-closing documentation does not change the numerical source or rebuild it.
-After explicit review on 2026-10-27, the shared /private/tmp/imst-current-build
-parent (including purification targets) was moved to normal recoverable Trash.
-The original path is absent, the Trash inventory and tested worker hash match,
-and the Trash was not emptied. Infinite_MST retains the cleanup receipt, path
-mapping, rebuild record and successful strict inventory; retained reference
-results and source remain here. After a Local handoff on 2026-10-28, Codex
-archived the controlling Infinite_MST worktree with recovery available; its
-directory and Git registration are absent. Git branches remain retained.
-Future native execution requires rebuilding. Registry publication, extra cap,
-retry or numerical refinement remains unselected.
+Complete software verification and one fresh review, select integration for both
+repositories, then bind stable sources and the exact release worker for the single
+cap256 operation. The task-owned build root is `/private/tmp/imst-current-build`.
+Preserve workflow records and results before ordinary worktree retirement; build
+Trash review and cleanup remain. No build/worktree has been retired in this task.
+The time-step SVD root cause and low-temperature time-step/cap convergence remain
+unresolved. Registry publication and additional numerical studies remain unselected.

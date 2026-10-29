@@ -221,3 +221,23 @@ The shared scheduled runner is private; existing Ising public types remain suppo
 returning `anyhow::Result<serde_json::Value>`. The finalizer never evolves and requires
 an externally observed dead process. See the [AKLT worker contract](usage.md#fixed-aklt-projector-reference-worker)
 for exact fields, deadlines, normalization and the limits of cap evidence.
+
+## AKLT reference v3 publication
+
+`aklt_reference::v3::{AkltReferenceRequestV3, resolve_v3_request, preflight_v3,
+measure_v3_reference, capture_runtime}` defines fixed cap256 controls, variance
+measurement evidence and native launch metadata. `AkltValuesV3` retains physical
+values when variance measurement fails, with typed scalar diagnostics or the
+actual failure reason. Existing `measure_reference` remains cap128.
+
+`aklt_reference::v3_output::{run_to_directory, verify_directory,
+finalize_interrupted_directory}` owns the20-target native HDF5 bundle.
+The existing parent `output::{verify_directory, finalize_interrupted_directory}`
+dispatches by explicit contract. `parse_worker_request` returns the explicit
+`AkltWorkerRequest::{Legacy,V3}` union, and `preflight_worker` resolves it.
+The shared scheduled trajectory loop uses an internal target observer before
+measurement; legacy scalar callbacks remain adapters to the same evolution.
+V3 verification returns the summary plus sample/snapshot counts,
+`checkpoint_verified`, `scalar_state_consistency_passed`, and
+`variance_remeasured:false`. A later verifier's environment never replaces
+`runtime_at_launch`. See [usage](usage.md#aklt-cap256-target-snapshots-and-variance-heat).

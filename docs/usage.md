@@ -313,3 +313,52 @@ and its endpoint verification; time-step retained18 targets and was finalized as
 partial after an SVD backend failure, without a checkpoint or retry. Partial native
 verification validates retained evidence, not an unavailable physical endpoint.
 See [the measured outcome and limits](limitations.md#new-aklt-reference-adapter-2026-10-24-implementation).
+
+### AKLT cap256 target snapshots and variance heat
+
+The explicit `aklt-projector-reference-v3` contract (schema3) adds one `fine`
+trajectory with `max_bond:256`, required `max_seconds:null`,
+`recording_policy:"target-snapshots-v1"` and
+`heat_capacity_policy:"variance-default-v1"`. Model/source/worker fields retain
+v2 meanings. Other caps, variants, missing deadlines, policies and unknown
+request fields are rejected. V1/v2 interfaces and retained output meanings remain.
+
+```json
+{"schema_version":3,"contract":"aklt-projector-reference-v3","model":{"name":"aklt_projector"},"variant":"fine","max_bond":256,"max_seconds":null,"recording_policy":"target-snapshots-v1","heat_capacity_policy":"variance-default-v1","source_revision":"<40 lowercase hex digits>","worker_sha256":"<64 lowercase hex digits>"}
+```
+
+Use the same `aklt_reference --preflight request.json`,
+`aklt_reference request.json fresh-directory`, `--verify directory` and
+`--finalize-interrupted directory reason` forms. `--runtime-info` is read-only
+and reports provider, visible CPUs, actual native thread hint and five thread
+environment variables. It neither evolves a state nor changes a default.
+The cap256 controller must preserve the independent purification environment;
+MST's four-thread baseline does not apply. Verification may use thread1 without
+rewriting the recorded launch settings.
+
+The existing 1014-step fine grid and all cutoff/canonicalizer/RDM settings are
+reused. One `states.h5` contains up to20 scheduled snapshots at T=2.0,...,0.1.
+No beta0/per-step/off-target/duplicate terminal state is retained. Each target is
+appended, flushed and read back before physical and variance measurements.
+Variance uses `SpecificHeatOptions::default()` (distance200, rtol1e-6,
+atol1e-12,3 small shells, reality1e-10). Failure preserves the saved state and
+completed physical values, records its cause, stops evolution and leaves later
+points unavailable.
+
+CSV adds snapshot availability/index/reason, heat availability/reason,
+`heat_capacity_variance`, and compact scalar `heat_diagnostics` to the v2 fields.
+Conditions and summary retain actual `runtime_at_launch`. Summary binds file
+hashes, snapshot mapping/count and separate physical/heat counts. Native
+verification loads all usable snapshots and checks grid, progress, source,
+model, cap256, physical scalars and beta²-variance normalization. It does not
+repeat variance sums. Returned read-back evidence is verification of retained
+states, not a bond/time-step convergence certificate.
+
+After a reaped worker's interruption, finalization recovers completed snapshots
+even if scalar CSV publication lagged, marking absent measurements unavailable.
+A mutation-failed or flush-uncertain snapshot remains uncertified diagnostic
+content; usable snapshots must be an ordered prefix. Corrupt complete states,
+extra indices, swapped targets and existing inconsistent summaries are rejected.
+Finalization cannot resume evolution and refuses to overwrite an existing summary.
+The controlling Infinite_MST process consumes one launch and handles report-only
+recovery; it must not delete guards or issue an automatic second trajectory.

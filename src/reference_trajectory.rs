@@ -103,15 +103,26 @@ pub(crate) struct TrajectorySettings<'a> {
 }
 pub(crate) trait Measurement: Clone {
     fn validate(&self) -> Result<()>;
-    fn stop_reason(&self) -> Option<&str> { None }
+    fn stop_reason(&self) -> Option<&str> {
+        None
+    }
 }
 pub(crate) trait TargetObserver<V> {
-    fn before_measurement(&mut self, _target: &ReferenceTarget, _state: &ItebdState, _progress: &ItebdCheckpointProgress) -> Result<()> { Ok(()) }
+    fn before_measurement(
+        &mut self,
+        _target: &ReferenceTarget,
+        _state: &ItebdState,
+        _progress: &ItebdCheckpointProgress,
+    ) -> Result<()> {
+        Ok(())
+    }
     fn sample(&mut self, sample: &ScheduledSample<V>) -> Result<()>;
 }
-struct ScalarObserver<'a,V>(&'a mut dyn FnMut(&ScheduledSample<V>) -> Result<()>);
-impl<V> TargetObserver<V> for ScalarObserver<'_,V> {
-    fn sample(&mut self, sample: &ScheduledSample<V>) -> Result<()> { self.0(sample) }
+struct ScalarObserver<'a, V>(&'a mut dyn FnMut(&ScheduledSample<V>) -> Result<()>);
+impl<V> TargetObserver<V> for ScalarObserver<'_, V> {
+    fn sample(&mut self, sample: &ScheduledSample<V>) -> Result<()> {
+        self.0(sample)
+    }
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScheduledSample<V> {
@@ -330,10 +341,19 @@ pub(crate) fn run_scheduled_observed<V: Measurement>(
                 &mut reasons,
             );
         }
-        if stopped.is_none() && progress.completed_steps == target.completed_steps
-            && (progress.beta - target.beta).abs() <= 1e-12 * target.beta.max(1.) {
-            observer.before_measurement(target, state.as_ref().context("missing target state")?, &progress)
-                .with_context(|| format!("reference snapshot at target {}",target.temperature_tick))?;
+        if stopped.is_none()
+            && progress.completed_steps == target.completed_steps
+            && (progress.beta - target.beta).abs() <= 1e-12 * target.beta.max(1.)
+        {
+            observer
+                .before_measurement(
+                    target,
+                    state.as_ref().context("missing target state")?,
+                    &progress,
+                )
+                .with_context(|| {
+                    format!("reference snapshot at target {}", target.temperature_tick)
+                })?;
         }
         let measured = if let Some(reason) = &stopped {
             Err(anyhow::anyhow!(reason.clone()))
@@ -461,7 +481,10 @@ mod tests {
         tensor::Truncation,
     };
     use anyhow::{bail, ensure, Result};
-    use std::{cell::{Cell, RefCell}, rc::Rc};
+    use std::{
+        cell::{Cell, RefCell},
+        rc::Rc,
+    };
     #[derive(Clone, Debug)]
     struct Value(f64);
     impl Measurement for Value {
@@ -649,7 +672,12 @@ mod tests {
     }
     struct EventObserver(Rc<RefCell<Vec<&'static str>>>);
     impl TargetObserver<Value> for EventObserver {
-        fn before_measurement(&mut self, _: &ReferenceTarget, _: &ItebdState, _: &ItebdCheckpointProgress) -> Result<()> {
+        fn before_measurement(
+            &mut self,
+            _: &ReferenceTarget,
+            _: &ItebdState,
+            _: &ItebdCheckpointProgress,
+        ) -> Result<()> {
             self.0.borrow_mut().extend(["append", "read_back"]);
             Ok(())
         }
@@ -664,10 +692,29 @@ mod tests {
         let events = Rc::new(RefCell::new(Vec::new()));
         let mut engine = Seam::new();
         engine.events = Some(events.clone());
-        let out = run_scheduled_observed(f.settings(), &mut EventObserver(events.clone()), &mut engine, &mut || 0.).unwrap();
+        let out = run_scheduled_observed(
+            f.settings(),
+            &mut EventObserver(events.clone()),
+            &mut engine,
+            &mut || 0.,
+        )
+        .unwrap();
         assert_eq!(out.status, "complete");
-        assert_eq!(*events.borrow(), ["append","read_back","physical","variance","publish",
-            "append","read_back","physical","variance","publish"]);
+        assert_eq!(
+            *events.borrow(),
+            [
+                "append",
+                "read_back",
+                "physical",
+                "variance",
+                "publish",
+                "append",
+                "read_back",
+                "physical",
+                "variance",
+                "publish"
+            ]
+        );
     }
     #[test]
     fn measurement_stop_keeps_values_and_stops_before_next_target() {

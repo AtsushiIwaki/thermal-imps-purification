@@ -706,11 +706,17 @@ fn inspect(
     )
 }
 fn is_v3_directory(directory: &Path) -> Result<bool> {
-    ensure!(fs::symlink_metadata(directory)?.file_type().is_dir(), "reference directory must be regular");
-    let path=directory.join("conditions.json");
-    ensure!(fs::symlink_metadata(&path)?.file_type().is_file(),"conditions.json must be regular");
-    let value:Value=serde_json::from_slice(&fs::read(&path)?)?;
-    Ok(value["contract"].as_str()==Some(super::v3::CONTRACT_V3))
+    ensure!(
+        fs::symlink_metadata(directory)?.file_type().is_dir(),
+        "reference directory must be regular"
+    );
+    let path = directory.join("conditions.json");
+    ensure!(
+        fs::symlink_metadata(&path)?.file_type().is_file(),
+        "conditions.json must be regular"
+    );
+    let value: Value = serde_json::from_slice(&fs::read(&path)?)?;
+    Ok(value["contract"].as_str() == Some(super::v3::CONTRACT_V3))
 }
 /// Read-only integrity check; does not certify convergence at earlier target betas.
 pub fn verify_directory(directory: &Path) -> Result<Value> {

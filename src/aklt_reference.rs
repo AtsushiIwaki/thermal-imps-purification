@@ -15,7 +15,10 @@ pub fn parse_worker_request(bytes: &[u8]) -> Result<AkltWorkerRequest> {
     }
 }
 pub fn preflight_worker(request: &AkltWorkerRequest) -> Result<serde_json::Value> {
-    match request { AkltWorkerRequest::Legacy(r) => preflight(r), AkltWorkerRequest::V3(r) => v3::preflight_v3(r) }
+    match request {
+        AkltWorkerRequest::Legacy(r) => preflight(r),
+        AkltWorkerRequest::V3(r) => v3::preflight_v3(r),
+    }
 }
 use crate::itebd_auto::{ItebdHamiltonian, ItebdState};
 use crate::itebd_checkpoint::ItebdStepSegment;

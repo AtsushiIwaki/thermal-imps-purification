@@ -4,7 +4,9 @@ use std::path::Path;
 use thermal_imps_purification::aklt_reference::output::{
     finalize_interrupted_directory, run_to_directory, verify_directory,
 };
-use thermal_imps_purification::aklt_reference::{parse_worker_request,preflight_worker,AkltWorkerRequest,v3,v3_output};
+use thermal_imps_purification::aklt_reference::{
+    parse_worker_request, preflight_worker, v3, v3_output, AkltWorkerRequest,
+};
 fn request(path: &str) -> Result<AkltWorkerRequest> {
     parse_worker_request(&std::fs::read(path).with_context(|| format!("read request {path}"))?)
         .with_context(|| format!("parse strict request {path}"))
