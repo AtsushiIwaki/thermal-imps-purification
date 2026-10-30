@@ -79,15 +79,19 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
   and0 discovered doctests. Release aklt_reference was rebuilt/relinked from
   stable main and read-only runtime smoke passed; no thermal calculation ran.
   The prior three selected SVD and14 main native HDF5 checks remain valid with
-  unchanged numerical source. Original402 attribution, cold cap256 completion
-  and bond/time-step convergence remain open; no further trajectory is selected.
+  unchanged numerical source. The user now requests continuation from saved
+  T0.3/step346 to the two cold targets. Native verification of the four parent
+  snapshots passed without variance remeasurement. The existing resume contract
+  is T0.7-only; its bounded T0.3 extension awaits short design approval before
+  implementation. No new evolution ran; original402 attribution and thermal
+  convergence remain open.
 - The completed repair worktree/registration and repair branch are retired
   after clean/integrated checks; protected27 output hashes are unchanged.
   Diagnostic branches b751a9e/cd9a468 remain. Task build
-  `/private/tmp/imst-current-build` is retained pending fresh explicit normal-Trash
-  review; no build removal or physical-space reclamation is claimed. The prior
-  cleanup manifest is superseded. Integration/retirement evidence is in the
-  controlling bracket-repair records.
+  `/private/tmp/imst-current-build` is retained for the newly requested
+  continuation. The cleanup candidate is superseded with zero actionable rows;
+  no build removal or physical-space reclamation is claimed. Integration and
+  retirement evidence remains in the controlling bracket-repair records.
 - Checkpoint publication is exclusive, not transactional across every format or
   arbitrary power loss. Use the documented completed-prefix recovery.
 - Native HDF5 in-process Git launcher support remains scoped to documented
