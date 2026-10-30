@@ -141,5 +141,8 @@ Infinite_MST `notes/2026-10-30-aklt-purification-step-sampled.md`; it retains
 production source/worker pins, timing and the unisolated small new/old scalar
 differences. Both local main branches are integrated and ordinary worktrees/branches retired
 with workflow/hash preservation. Fresh primary Native514, Python341 and main
-HDF514 checks passed. External-build Trash review is pending. This completion
-does not authorize another trajectory.
+HDF514 checks passed. After explicit approval, the8278-file external build
+(8.164GiB logical) was moved to normal recoverable Trash with all hashes
+preserved and its source path absent. Trash was not emptied; no reclaimed
+physical space is inferred. Strict closure inventory has zero issues. Future
+Native use requires rebuilding. This completion does not authorize another trajectory.
