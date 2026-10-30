@@ -61,8 +61,9 @@ impl AkltStepSampledSettings {
 }
 
 pub(crate) fn resolve_request(r: &AkltStepSampledRequest) -> Result<AkltStepSampledSettings> {
+    let contract_name = r.contract.as_str();
     ensure!(
-        r.schema_version == 5 && r.contract == CONTRACT_V5 && r.max_seconds.is_none(),
+        r.schema_version == 5 && contract_name == CONTRACT_V5 && r.max_seconds.is_none(),
         "step-sampled v5 requires schema5 and explicit max_seconds:null"
     );
     ensure!(

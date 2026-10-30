@@ -9,13 +9,13 @@ verification tools. It is published at
 Project-authored material uses MIT; retained upstream sources keep their notices.
 The [usage guide](docs/usage.md) owns current CLI/library contracts.
 
-The controlling chat approved the two-step sampling specification
-`Infinite_MST/docs/superpowers/specs/2026-10-30-aklt-purification-step-sampled-design.md`
-and requested its implementation plan
-`Infinite_MST/docs/superpowers/plans/2026-10-30-aklt-purification-step-sampled.md`.
-It selects the retained T2.0/step50 state,964 further steps, one cached plus482
-new scalar observations and no new HDF5. The plan awaits review, preserving
-Native execution; no implementation, build or new launch has started.
+The controlling chat approved the two-step sampling specification and plan
+in Infinite_MST/docs/superpowers/ and selected Native implementation. The v5
+scalar-only worker is implemented in an ordinary external worktree. It resumes
+T2.0/step50, keeps964 further steps and publishes one cached plus482 new
+observations. No new HDF5 is written. Final verification/review and a read-only
+run packet precede separate numerical approval; no new trajectory has launched.
+Source integration and task build/worktree retirement remain pending.
 
 The approved T0.3 continuation completed668 new fine-grid steps to absolute1014,
 acquiring verified states/physical/variance rows atT0.2 andT0.1. Original14 plus

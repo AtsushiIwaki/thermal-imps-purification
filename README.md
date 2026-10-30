@@ -122,6 +122,8 @@ documents the retained Faer bracket fix, independent regression, selected native
 verification and before/after fixed-matrix timing. The [AKLT continuation interface](docs/usage.md#aklt-cap256-continuation-after-the-svd-repair)
 accepts the explicitly verified T=0.7 or T=0.3 saved boundary. These controls do not establish
 thermal convergence or authorize another reference trajectory. The
+[scalar-only two-step AKLT interface](docs/usage.md#aklt-two-step-scalar-observations)
+retains the same fine evolution sequence and admits the original T2 starting snapshot. The
 [provenance](docs/provenance.md), [references](docs/references.md), and
 [third-party notices](THIRD_PARTY_NOTICES.md) record extraction history, upstream software,
 methods, licenses, and redistribution obligations.

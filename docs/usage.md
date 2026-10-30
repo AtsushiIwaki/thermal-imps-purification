@@ -435,3 +435,39 @@ layout, hash and producer fields and returns small diagnostic metadata, includin
 nonfinite count. It does not replay SVD or emit matrix JSON. Existing files are
 never overwritten. A passing finite control does not identify the original
 uncaptured thermal failure's cause.
+
+
+### AKLT two-step scalar observations
+
+The strict schema5 contract is `aklt-projector-reference-step-sampled-v5`.
+It selects fine/Dmax256, max_seconds:null, every-two-complete-steps-v1,
+observables-only-v1 and variance-default-v1. Restart must pin the original v3
+four files, snapshot0, absolute step50, actual beta/norm and complete boundary-row
+cap evidence. Its parent may be partial after a later failure. The selected
+input snapshot and physical scalars are checked without another variance pass.
+
+Use `aklt_reference --preflight request.json fresh-directory` for read-only
+admission, `aklt_reference request.json fresh-directory` for the single
+trajectory, and `--verify directory` for scalar-contract checks. The v5
+preflight requires the output location to resolve the relative parent. Existing
+v1–v4 forms retain their semantics. Production refuses any of RAYON_NUM_THREADS,
+OMP_NUM_THREADS, OPENBLAS_NUM_THREADS, MKL_NUM_THREADS or
+VECLIB_MAXIMUM_THREADS; the independent backend uses its Native defaults.
+
+The unchanged fine segments1..19 contain964 full Strang/canonicalization steps.
+Observations are at52,54,...,1014, plus the cached step50 row:483 positions.
+Temperatures derive from actual accumulated beta, including roundoff. Direct
+energy-variance heat uses the existing tolerances and stops acquisition on
+unavailability while preserving completed physical values.
+
+Only conditions.json, samples.csv and summary.json are published. There is no
+new output state, HDF5/matrix failure recorder or restartable endpoint.
+`--finalize-interrupted directory REASON` validates a retained scalar prefix
+only after child exit is known. Unknown odd-step progress remains a lower bound;
+it is never inferred from the last observed row. Verification distinguishes
+selected input-state admission from scalar-only output verification and always
+reports checkpoint_verified=false and
+posthoc_state_scalar_consistency_verified=false. No old variance is remeasured.
+The controlling Infinite_MST supervisor owns source/worker/report pins, the
+single launch guard and report-only recovery. A separate concrete numerical
+approval is required before this newly implemented mode runs on retained data.
