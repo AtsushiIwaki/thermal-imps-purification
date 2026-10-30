@@ -19,8 +19,9 @@ are intact. Native elapsed1942.863s; supervised wall1949.635s, nonadditive.
 The controlling record is Infinite_MST
 `notes/2026-10-30-aklt-purification-step-sampled.md`. Small shared-step new/old
 differences (E1.11e-7, C_var3.58e-7 maximum) have no isolated cause yet.
-Source integration and task build/worktree retirement remain pending. The new
-launch guard is consumed/complete; no retry or further trajectory is approved.
+Both local main branches are integrated and ordinary worktrees/feature branches
+retired with84 workflow files preserved. External-build recoverable Trash review
+remains pending. The new guard is consumed/complete; no retry is approved.
 
 The approved T0.3 continuation completed668 new fine-grid steps to absolute1014,
 acquiring verified states/physical/variance rows atT0.2 andT0.1. Original14 plus
@@ -72,16 +73,18 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 
 ## Next actions and limits
 
-- Select integration of the reviewed/qualified scalar-sampling branches in both
-  repositories; current ordinary worktrees remain active. Before the acquisition,
-  Native514/43 binaries passed (16 optional ignored, one known warning),
-  Python341 passed/zero skips, required main HDF514 passed/4 optional ignored;
-  doctests discovered0. No software changed during production.
+- Local integration is complete (P1957a9f/M7806c3f). Fresh primary-path
+  qualification passed Native514/43 binaries (16 optional ignored, one known
+  warning), Python341/zero skips and required main HDF514/4 optional ignored;
+  doctests0. Initial omitted-reader setup was corrected, not skipped.
+- Both ordinary sampling worktrees/branches are retired,84 workflow files are
+  retained in primary .superpowers locations, and48 result/guard pins unchanged.
 - The prior T0.3 integration/retirement remains complete. Its records and all
   earlier diagnostic branches/failure publications are preserved.
 - `/private/tmp/imst-current-build` now holds fresh task-owned workers/readers and
-  PDF QA (about8GiB). Fresh-manifest review and recoverable Trash approval remain
-  required before retirement; shared caches are excluded. No reclamation claimed.
+  PDF QA (8.164GiB logical). The fresh exact-manifest/normal Trash preflight is
+  ready and user approval is pending. Shared caches are excluded; no build
+  retirement or reclamation claimed.
 - The new/old shared-step reproduction differences remain unexplained. Thermal
   time-step/cutoff convergence and original402 attribution remain unproved.
 - The extra malformed-CSV-row finalizer panic remains a deferred fail-closed

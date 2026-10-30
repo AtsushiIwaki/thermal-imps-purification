@@ -139,5 +139,7 @@ and no new HDF5. Observed maximum bond146 did not hit cap256. Its six-page repor
 passed frozen-only regeneration and visual QA. The controlling record is
 Infinite_MST `notes/2026-10-30-aklt-purification-step-sampled.md`; it retains
 production source/worker pins, timing and the unisolated small new/old scalar
-differences. Source integration and recoverable build/worktree retirement are
-still pending. This completion does not authorize another trajectory.
+differences. Both local main branches are integrated and ordinary worktrees/branches retired
+with workflow/hash preservation. Fresh primary Native514, Python341 and main
+HDF514 checks passed. External-build Trash review is pending. This completion
+does not authorize another trajectory.
