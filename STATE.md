@@ -31,8 +31,9 @@ atT0.8; matched C_FD difference is4.67674e-8 atT0.7. These do not certify absolu
 thermal accuracy. The controlling note is Infinite_MST
 `notes/2026-10-30-aklt-purification-t03-continuation.md`.
 
-The bounded T0.3 extension is reviewed and verified on `codex/aklt-t03-resume`,
-awaiting integration. Production source2c7a6c0/worker
+The reviewed T0.3 extension is locally integrated into main at f1e109b
+(controlling Infinite_MST main d3660ee), with merged trees identical to their
+verified feature branches. Production source2c7a6c0/worker
 `d7d4909b9492105b9df786d49d0188e2220fc485070239532bbedf199ec87b6c`
 remain recorded in conditions/HDF5. Native routine passed497 tests/42 binaries
 (16 optional ignored, one known ARM64 warning); Python324 passed with zero
@@ -58,13 +59,15 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 
 ## Next actions and limits
 
-- Select integration for the reviewed T0.3 extension; its calculation/report is
-  complete. Thermal time-step/cutoff convergence and original402 attribution
-  remain unproved. No further trajectory is selected.
-- Both ordinary source worktrees and `/private/tmp/imst-current-build` remain
-  for the integration choice. Prior cleanup candidates are superseded with no
-  actionable rows. No build removal, Trash approval or physical-space
-  reclamation is inferred. Earlier completed worktrees are already retired.
+- Local integration and merged-primary verification are complete: Native497
+  passed/16 optional ignored, Python324 passed/zero skips, main native HDF514
+  passed/4 optional exporters ignored; doctests discovered0. Both ordinary
+  worktrees and merged feature branches are retired after SHA256 source/workflow
+  preservation and unchanged36-output-hash checks. Diagnostic branches remain.
+- `/private/tmp/imst-current-build` remains pending a fresh explicit normal-Trash
+  review. No build removal, Trash approval or physical-space reclamation is
+  inferred. Thermal time-step/cutoff convergence and original402 attribution
+  remain unproved; no further trajectory is selected.
 - The extra malformed-CSV-row finalizer panic remains a deferred fail-closed
   minor; it did not affect this completed run.
 - Checkpoint publication is exclusive, not transactional across every format or
