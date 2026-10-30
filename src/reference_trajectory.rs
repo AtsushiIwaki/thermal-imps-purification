@@ -1,4 +1,5 @@
 //! Shared fixed-target reference evolution and cooperative stop evidence.
+pub(crate) mod step_sampled;
 use crate::{
     itebd::StepInfo,
     itebd_auto::{ItebdHamiltonian, ItebdState},

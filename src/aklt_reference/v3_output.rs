@@ -565,7 +565,7 @@ fn validate_cap(cap: &CapEvidence, steps: u64) -> Result<()> {
     };
     Ok(())
 }
-fn validate_heat(row: &Value) -> Result<()> {
+pub(super) fn validate_heat(row: &Value) -> Result<()> {
     if !boolean(row, "heat_available")? {
         ensure!(
             reason(row, "heat_reason")
