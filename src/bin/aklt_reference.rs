@@ -26,7 +26,7 @@ fn execute(args: &[String]) -> Result<serde_json::Value> {
             AkltWorkerRequest::Legacy(r)=>run_to_directory(&r,Path::new(output)),
             AkltWorkerRequest::V3(r)=>v3_output::run_to_directory(&r,Path::new(output)),
             AkltWorkerRequest::Resume(r)=>thermal_imps_purification::aklt_reference::v4::run_to_directory(&r,Path::new(output)),
-            AkltWorkerRequest::StepSampled(_)=>bail!("step-sampled scalar publisher is not yet available"),
+            AkltWorkerRequest::StepSampled(r)=>thermal_imps_purification::aklt_reference::v5_output::run_to_directory(&r,Path::new(output)),
         },
         _=>bail!("usage: aklt_reference --preflight REQUEST_JSON | REQUEST_JSON OUTPUT_DIRECTORY | --verify OUTPUT_DIRECTORY | --verify-svd-failure FILE | --finalize-interrupted OUTPUT_DIRECTORY REASON"),
     }

@@ -5,6 +5,7 @@ pub mod v3_output;
 pub mod v4;
 pub mod v5;
 pub mod v5_input;
+pub mod v5_output;
 pub enum AkltWorkerRequest {
     Legacy(AkltReferenceRequest),
     V3(v3::AkltReferenceRequestV3),

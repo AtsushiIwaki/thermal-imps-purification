@@ -82,3 +82,71 @@ fn selected_preflight_reports_missing_parent_without_creating_output() {
     assert!(error.contains("parent"), "wrong admission error: {error}");
     assert!(!output.exists());
 }
+
+#[test]
+fn scalar_verifier_dispatch_keeps_v5_error_context() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(
+        root.path().join("conditions.json"),
+        serde_json::to_vec(&json!({"contract":"aklt-projector-reference-step-sampled-v5"}))
+            .unwrap(),
+    )
+    .unwrap();
+    std::fs::write(root.path().join("samples.csv"), b"broken\n").unwrap();
+    std::fs::write(root.path().join("summary.json"), b"{}").unwrap();
+    let reply = Command::new(env!("CARGO_BIN_EXE_aklt_reference"))
+        .arg("--verify")
+        .arg(root.path())
+        .output()
+        .unwrap();
+    assert!(!reply.status.success());
+    let error = String::from_utf8_lossy(&reply.stderr);
+    assert!(
+        error.contains("verify step-sampled scalars"),
+        "wrong verifier dispatch: {error}"
+    );
+    assert!(!root.path().join("states.h5").exists());
+}
+
+#[test]
+fn scalar_production_refuses_thread_override_before_output_creation() {
+    let root = tempfile::tempdir().unwrap();
+    let request = root.path().join("request.json");
+    let output = root.path().join("out");
+    std::fs::write(&request, serde_json::to_vec(&request_json()).unwrap()).unwrap();
+    let reply = Command::new(env!("CARGO_BIN_EXE_aklt_reference"))
+        .env("RAYON_NUM_THREADS", "1")
+        .arg(&request)
+        .arg(&output)
+        .output()
+        .unwrap();
+    assert!(!reply.status.success());
+    let error = String::from_utf8_lossy(&reply.stderr);
+    assert!(
+        error.contains("requires native defaults"),
+        "wrong production refusal: {error}"
+    );
+    assert!(!output.exists());
+}
+
+#[test]
+fn scalar_missing_summary_reports_the_actual_metadata_path() {
+    let root = tempfile::tempdir().unwrap();
+    std::fs::write(
+        root.path().join("conditions.json"),
+        serde_json::to_vec(&json!({"contract":"aklt-projector-reference-step-sampled-v5"}))
+            .unwrap(),
+    )
+    .unwrap();
+    let reply = Command::new(env!("CARGO_BIN_EXE_aklt_reference"))
+        .arg("--verify")
+        .arg(root.path())
+        .output()
+        .unwrap();
+    assert!(!reply.status.success());
+    let error = String::from_utf8_lossy(&reply.stderr);
+    assert!(
+        error.contains("summary.json"),
+        "missing I/O path context: {error}"
+    );
+}

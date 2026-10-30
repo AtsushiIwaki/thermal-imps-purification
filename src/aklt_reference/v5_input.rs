@@ -22,12 +22,8 @@ pub(crate) struct AdmittedStepStart {
     pub verification: Value,
 }
 
-fn parent_directory(destination: &Path, relative: &str) -> Result<PathBuf> {
+pub(super) fn parent_directory(destination: &Path, relative: &str) -> Result<PathBuf> {
     let destination = std::path::absolute(destination)?;
-    ensure!(
-        !destination.exists() && !destination.is_symlink(),
-        "step-sampled destination exists"
-    );
     let mut base = destination
         .parent()
         .context("missing destination parent")?
@@ -81,6 +77,10 @@ pub(crate) fn load_start(
     s: &AkltStepSampledSettings,
     destination: &Path,
 ) -> Result<AdmittedStepStart> {
+    ensure!(
+        !destination.exists() && !destination.is_symlink(),
+        "step-sampled destination exists"
+    );
     let r = &s.request().restart;
     let parent = parent_directory(destination, &r.directory)?;
     check_pins(s, &parent)?;
@@ -230,6 +230,32 @@ pub fn preflight_start(r: &AkltStepSampledRequest, destination: &Path) -> Result
     p["input_verification"] = admitted.verification;
     p["cached_start"] = admitted.cached_row;
     Ok(p)
+}
+
+// Metadata/pin verification after publication does not load or remeasure a state.
+pub(super) fn check_cached_parent(
+    s: &AkltStepSampledSettings,
+    destination: &Path,
+    cached: &Value,
+    proof: &Value,
+) -> Result<()> {
+    let parent = parent_directory(destination, &s.request().restart.directory)?;
+    check_pins(s, &parent)?;
+    let rows = v3_output::read_rows(&parent)?;
+    ensure!(
+        rows.len() == 20 && rows.first() == Some(cached),
+        "selected parent cached row changed"
+    );
+    let conditions: Value = serde_json::from_slice(&fs::read(parent.join("conditions.json"))?)?;
+    let summary: Value = serde_json::from_slice(&fs::read(parent.join("summary.json"))?)?;
+    ensure!(
+        proof
+            == &json!({"kind":"selected-parent-admission-v1","selected_snapshot_verified":true,
+        "physical_scalar_consistency_passed":true,"variance_remeasured":false,
+        "source_revision":conditions["request"]["source_revision"],"snapshot_index":0,"parent_status":summary["status"]}),
+        "selected parent admission evidence mismatch"
+    );
+    Ok(())
 }
 
 #[cfg(test)]

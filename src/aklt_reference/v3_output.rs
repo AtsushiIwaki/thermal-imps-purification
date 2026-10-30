@@ -29,7 +29,7 @@ const EXTRA: &[&str] = &[
     "heat_diagnostics",
 ];
 const TEXT: &[&str] = &["reason", "cap_coverage", "snapshot_reason", "heat_reason"];
-const PHYSICAL: &[&str] = &[
+pub(super) const PHYSICAL: &[&str] = &[
     "energy",
     "mx",
     "mz",
@@ -534,7 +534,7 @@ fn prefix_beta(settings: &AkltReferenceSettingsV3, steps: u64) -> Result<f64> {
     ensure!(remaining == 0, "progress exceeds reference schedule");
     Ok(beta)
 }
-fn validate_cap(cap: &CapEvidence, steps: u64) -> Result<()> {
+pub(super) fn validate_cap(cap: &CapEvidence, steps: u64) -> Result<()> {
     ensure!(
         cap.maximum_dimension_seen
             .is_none_or(|d| (1..=256).contains(&d))
