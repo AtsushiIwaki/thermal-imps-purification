@@ -9,11 +9,13 @@ verification tools. It is published at
 Project-authored material uses MIT; retained upstream sources keep their notices.
 The [usage guide](docs/usage.md) owns current CLI/library contracts.
 
-The controlling chat requested the written two-step sampling specification
-`Infinite_MST/docs/superpowers/specs/2026-10-30-aklt-purification-step-sampled-design.md`.
+The controlling chat approved the two-step sampling specification
+`Infinite_MST/docs/superpowers/specs/2026-10-30-aklt-purification-step-sampled-design.md`
+and requested its implementation plan
+`Infinite_MST/docs/superpowers/plans/2026-10-30-aklt-purification-step-sampled.md`.
 It selects the retained T2.0/step50 state,964 further steps, one cached plus482
-new scalar observations and no new HDF5. Written-specification review and the
-implementation plan precede implementation; no new launch has started.
+new scalar observations and no new HDF5. The plan awaits review, preserving
+Native execution; no implementation, build or new launch has started.
 
 The approved T0.3 continuation completed668 new fine-grid steps to absolute1014,
 acquiring verified states/physical/variance rows atT0.2 andT0.1. Original14 plus
@@ -70,9 +72,9 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
   passed/4 optional exporters ignored; doctests discovered0. Both ordinary
   worktrees and merged feature branches are retired after SHA256 source/workflow
   preservation and unchanged36-output-hash checks. Diagnostic branches remain.
-- Review the controlling written step-sampling specification, then prepare its
-  implementation plan after approval. Production stays on the original fine
-  dtau sequence and native thread defaults; no new launch is approved.
+- Review the controlling written step-sampling implementation plan, then execute
+  through Native after review. Production stays on the original fine dtau
+  sequence and native thread defaults; no new launch is approved.
 - `/private/tmp/imst-current-build` is absent at the current design inspection;
   future execution needs fresh builds. No current Trash receipt establishes its
   disposal method or physical reclamation. Thermal time-step/cutoff convergence
