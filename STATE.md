@@ -13,8 +13,11 @@ The controlling chat approved the two-step sampling specification and plan
 in Infinite_MST/docs/superpowers/ and selected Native implementation. The v5
 scalar-only worker is implemented in an ordinary external worktree. It resumes
 T2.0/step50, keeps964 further steps and publishes one cached plus482 new
-observations. No new HDF5 is written. Final verification/review and a read-only
-run packet precede separate numerical approval; no new trajectory has launched.
+observations. No new HDF5 is written. The controlling bridge/report/supervisor are implemented and the whole-branch
+review has regression fixes for its two substantive findings. Coordinator-owned
+qualification and the read-only packet are recorded under Infinite_MST
+`codes/imst_rs/results/records/aklt-purification-dmax256-step-sampled/`. A separate
+concrete numerical approval is required; no new trajectory has launched.
 Source integration and task build/worktree retirement remain pending.
 
 The approved T0.3 continuation completed668 new fine-grid steps to absolute1014,
