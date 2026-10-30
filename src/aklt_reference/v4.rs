@@ -1,4 +1,4 @@
-//! Explicit continuation from the retained cap256 T=0.7 snapshot.
+//! Explicit continuation from supported retained cap256 target snapshots.
 use super::v3::{
     preflight_v3, resolve_v3_request, AkltReferenceRequestV3, AkltReferenceSettingsV3,
 };
@@ -60,13 +60,16 @@ pub(super) fn resolve_resume_request(
         !s.directory.is_empty() && !Path::new(&s.directory).is_absolute(),
         "restart directory must be relative to child"
     );
+    let beta_target = match (s.progress.completed_steps, s.snapshot_index) {
+        (154, 13) => 10. / 7.,
+        (346, 3) => 10. / 3.,
+        _ => anyhow::bail!("restart must identify the retained T0.7 or T0.3 boundary"),
+    };
     ensure!(
-        s.snapshot_index == 13
-            && s.progress.completed_steps == 154
-            && s.progress.beta.is_finite()
-            && (s.progress.beta - 10. / 7.).abs() < 1e-12
+        s.progress.beta.is_finite()
+            && (s.progress.beta - beta_target).abs() < 1e-12
             && s.progress.accumulated_log_norm.is_finite(),
-        "restart must identify the retained T0.7 boundary"
+        "restart progress differs from supported boundary"
     );
     ensure!(
         s.files.len() == 4
@@ -93,7 +96,7 @@ pub(super) fn resolve_resume_request(
     }
     ensure!(
         s.cap.coverage == CapCoverage::CompleteThroughStop
-            && s.cap.observed_strang_steps == 154
+            && s.cap.observed_strang_steps == s.progress.completed_steps
             && s.cap
                 .maximum_dimension_seen
                 .is_some_and(|v| (1..=256).contains(&v))
@@ -114,6 +117,13 @@ pub(super) fn resolve_resume_request(
     };
     Ok(resolve_v3_request(&base)?.with_resume(r.clone()))
 }
+pub(super) fn target_offset(r: &AkltReferenceResumeRequest) -> usize {
+    match (r.restart.progress.completed_steps, r.restart.snapshot_index) {
+        (154, 13) => 14,
+        (346, 3) => 18,
+        _ => unreachable!("settings require a validated restart boundary"),
+    }
+}
 pub fn preflight_resume(r: &AkltReferenceResumeRequest) -> Result<Value> {
     let settings = resolve_resume_request(r)?;
     let mut p = preflight_v3(settings.request())?;
@@ -123,8 +133,8 @@ pub fn preflight_resume(r: &AkltReferenceResumeRequest) -> Result<Value> {
     p["initial_beta"] = r.restart.progress.beta.into();
     p["initial_progress"] = serde_json::to_value(&r.restart.progress)?;
     p["targets"] = serde_json::to_value(settings.targets())?;
-    p["remaining_steps"] = 860.into();
-    p["snapshot_policy"]["maximum_count"] = 6.into();
+    p["remaining_steps"] = (1014 - r.restart.progress.completed_steps).into();
+    p["snapshot_policy"]["maximum_count"] = settings.targets().len().into();
     p["failure_recording"] =
         json!({"kind":"first-svd-matrix-v1","file":"../svd-failure.h5","maximum_count":1});
     Ok(p)
@@ -171,22 +181,39 @@ pub(super) fn load_restart(
     }
     let parent_conditions: Value =
         serde_json::from_slice(&std::fs::read(parent.join("conditions.json"))?)?;
+    let cold = r.progress.completed_steps == 346;
+    let (parent_schema, parent_contract, count, boundary_index) = if cold {
+        (4, CONTRACT_V4, 4, 3)
+    } else {
+        (3, v3::CONTRACT_V3, 14, 13)
+    };
     ensure!(
-        parent_conditions["contract"] == v3::CONTRACT_V3
-            && parent_conditions["schema_version"] == 3,
-        "restart parent must be an original v3 bundle"
+        parent_conditions["contract"] == parent_contract
+            && parent_conditions["schema_version"] == parent_schema,
+        "restart parent contract differs from supported boundary"
     );
+    if cold {
+        // Bound the lineage before recursive verification: T0.3 -> T0.7 -> original v3.
+        // Arbitrary/self-referencing resume chains are not supported.
+        let parent_request: AkltReferenceResumeRequest =
+            serde_json::from_value(parent_conditions["request"].clone())?;
+        resolve_resume_request(&parent_request)?;
+        ensure!(
+            parent_request.restart.progress.completed_steps == 154,
+            "T0.3 parent must be the T0.7 continuation"
+        );
+    }
     let verified =
         super::v3_output::verify_directory(&parent).context("verify pinned parent reference")?;
     ensure!(
-        verified["contract"] == v3::CONTRACT_V3
-            && verified["snapshot_count"] == 14
-            && verified["available_samples"] == 14
-            && verified["available_heat_samples"] == 14,
-        "restart requires the complete retained fourteen-target prefix"
+        verified["contract"] == parent_contract
+            && verified["snapshot_count"] == count
+            && verified["available_samples"] == count
+            && verified["available_heat_samples"] == count,
+        "restart requires the complete retained parent prefix"
     );
     let rows = super::v3_output::read_rows(&parent)?;
-    let boundary = &rows[13];
+    let boundary = &rows[boundary_index];
     ensure!(
         super::v3_output::cap_from(boundary)? == r.cap,
         "restart cap differs from saved boundary"

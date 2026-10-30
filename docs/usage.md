@@ -402,6 +402,21 @@ Old variance sums are not evaluated again. That report uses the explicit
 `aklt-purification-bond-comparison-report-v2` frozen format; its original v1
 report remains readable. Continuation plots identify the T=0.7 boundary.
 
+The same schema4 contract also accepts the retained T=0.3 boundary of that
+T=0.7 continuation: snapshot3, absolute step346, exact saved beta/log norm and
+boundary-row cap observed through346. The parent must contain exactly four
+verified target snapshots/physical/variance rows through T=0.3. Its original
+v3 ancestor stays pinned and is verified before any new output is reserved;
+arbitrary resume chains and unsupported boundaries are rejected.
+
+This case runs only668 new steps (168 to T=0.2, then500 to T=0.1) and writes two
+new snapshots with local indices0/1. The complete1014-step grid, maximum bond256,
+cutoff1e-13, native runtime selection and unlimited elapsed policy are unchanged.
+It reuses the previous18 scalar/variance rows with their own producers and local
+snapshot indices. The new frozen comparison retains all three source bundles
+and identifies the T=0.3 boundary. Physical scalar/state verification remains
+read-only; it does not recompute old variance sums or replace retained rows.
+
 Faer0.24.4 is bound to the retained terminal2x2 SVD repair; see
 [vendoring provenance](../vendor/faer/VENDORING.md). The tensor4all/tenferro pins,
 cutoff, schedule, canonicalizer and variance defaults remain unchanged. Native

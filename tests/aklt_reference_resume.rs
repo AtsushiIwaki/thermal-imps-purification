@@ -50,3 +50,35 @@ fn resume_rejects_boundary_and_source_drift() {
         }
     }
 }
+
+// A T0.3 restart must not replay the four already retained continuation targets.
+#[test]
+fn t03_resume_preflight_has_only_two_cold_targets() {
+    let mut r = request();
+    r["restart"]["snapshot_index"] = 3.into();
+    r["restart"]["progress"] =
+        json!({"completed_steps":346,"beta":10./3.,"accumulated_log_norm":-3.46});
+    r["restart"]["cap"]["observed_strang_steps"] = 346.into();
+    let parsed = parse_worker_request(&serde_json::to_vec(&r).unwrap()).unwrap();
+    let result = preflight_worker(&parsed);
+    assert!(result.is_ok(), "T0.3 boundary rejected: {:?}", result.err());
+    let p = result.unwrap();
+    assert_eq!(p["remaining_steps"], 668);
+    assert_eq!(p["snapshot_policy"]["maximum_count"], 2);
+    assert_eq!(p["targets"].as_array().unwrap().len(), 2);
+    assert_eq!(p["targets"][0]["temperature_tick"], 2);
+    assert_eq!(p["targets"][0]["completed_steps"], 514);
+    assert_eq!(p["targets"][1]["completed_steps"], 1014);
+    for (key, value) in [
+        ("snapshot_index", json!(2)),
+        (
+            "progress",
+            json!({"completed_steps":345,"beta":10./3.,"accumulated_log_norm":-3.46}),
+        ),
+    ] {
+        let mut bad = r.clone();
+        bad["restart"][key] = value;
+        let parsed = parse_worker_request(&serde_json::to_vec(&bad).unwrap()).unwrap();
+        assert!(preflight_worker(&parsed).is_err());
+    }
+}
