@@ -131,3 +131,13 @@ methods, licenses, and redistribution obligations.
 Project-authored code and documentation are licensed under the [MIT License](LICENSE), copyright
 2026 Atsushi Iwaki. Copied upstream material remains under its upstream terms. No scholarly
 citation of this repository is requested; the MIT notice obligations still apply.
+
+
+The controlling explicitly approved v5 scalar acquisition completed on2026-10-30:
+483/483 physical/direct-variance rows including one cached start,964 new steps
+and no new HDF5. Observed maximum bond146 did not hit cap256. Its six-page report
+passed frozen-only regeneration and visual QA. The controlling record is
+Infinite_MST `notes/2026-10-30-aklt-purification-step-sampled.md`; it retains
+production source/worker pins, timing and the unisolated small new/old scalar
+differences. Source integration and recoverable build/worktree retirement are
+still pending. This completion does not authorize another trajectory.

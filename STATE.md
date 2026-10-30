@@ -9,16 +9,18 @@ verification tools. It is published at
 Project-authored material uses MIT; retained upstream sources keep their notices.
 The [usage guide](docs/usage.md) owns current CLI/library contracts.
 
-The controlling chat approved the two-step sampling specification and plan
-in Infinite_MST/docs/superpowers/ and selected Native implementation. The v5
-scalar-only worker is implemented in an ordinary external worktree. It resumes
-T2.0/step50, keeps964 further steps and publishes one cached plus482 new
-observations. No new HDF5 is written. The controlling bridge/report/supervisor are implemented and the whole-branch
-review has regression fixes for its two substantive findings. Coordinator-owned
-qualification and the read-only packet are recorded under Infinite_MST
-`codes/imst_rs/results/records/aklt-purification-dmax256-step-sampled/`. A separate
-concrete numerical approval is required; no new trajectory has launched.
-Source integration and task build/worktree retirement remain pending.
+The explicitly approved v5 two-step acquisition completed one Native trajectory:
+964 unchanged fine-grid steps from original snapshot0/T2.0/step50 through1014,
+with483/483 physical and variance-heat rows (cached1+new482). No new HDF5 or
+failure matrix was written. Maximum observed bond146, cap256 unreached.
+The sampled C_var maximum is0.4980953893 atT0.216309. Scalar verification and
+six-page frozen-only regeneration/visual QA passed; all38 protected old hashes
+are intact. Native elapsed1942.863s; supervised wall1949.635s, nonadditive.
+The controlling record is Infinite_MST
+`notes/2026-10-30-aklt-purification-step-sampled.md`. Small shared-step new/old
+differences (E1.11e-7, C_var3.58e-7 maximum) have no isolated cause yet.
+Source integration and task build/worktree retirement remain pending. The new
+launch guard is consumed/complete; no retry or further trajectory is approved.
 
 The approved T0.3 continuation completed668 new fine-grid steps to absolute1014,
 acquiring verified states/physical/variance rows atT0.2 andT0.1. Original14 plus
@@ -70,18 +72,18 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
 
 ## Next actions and limits
 
-- Local integration and merged-primary verification are complete: Native497
-  passed/16 optional ignored, Python324 passed/zero skips, main native HDF514
-  passed/4 optional exporters ignored; doctests discovered0. Both ordinary
-  worktrees and merged feature branches are retired after SHA256 source/workflow
-  preservation and unchanged36-output-hash checks. Diagnostic branches remain.
-- Review the controlling written step-sampling implementation plan, then execute
-  through Native after review. Production stays on the original fine dtau
-  sequence and native thread defaults; no new launch is approved.
-- `/private/tmp/imst-current-build` is absent at the current design inspection;
-  future execution needs fresh builds. No current Trash receipt establishes its
-  disposal method or physical reclamation. Thermal time-step/cutoff convergence
-  and original402 attribution remain unproved.
+- Select integration of the reviewed/qualified scalar-sampling branches in both
+  repositories; current ordinary worktrees remain active. Before the acquisition,
+  Native514/43 binaries passed (16 optional ignored, one known warning),
+  Python341 passed/zero skips, required main HDF514 passed/4 optional ignored;
+  doctests discovered0. No software changed during production.
+- The prior T0.3 integration/retirement remains complete. Its records and all
+  earlier diagnostic branches/failure publications are preserved.
+- `/private/tmp/imst-current-build` now holds fresh task-owned workers/readers and
+  PDF QA (about8GiB). Fresh-manifest review and recoverable Trash approval remain
+  required before retirement; shared caches are excluded. No reclamation claimed.
+- The new/old shared-step reproduction differences remain unexplained. Thermal
+  time-step/cutoff convergence and original402 attribution remain unproved.
 - The extra malformed-CSV-row finalizer panic remains a deferred fail-closed
   minor; it did not affect this completed run.
 - Checkpoint publication is exclusive, not transactional across every format or
