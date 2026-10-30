@@ -716,10 +716,24 @@ fn is_v3_directory(directory: &Path) -> Result<bool> {
         "conditions.json must be regular"
     );
     let value: Value = serde_json::from_slice(&fs::read(&path)?)?;
-    Ok(matches!(value["contract"].as_str(),Some(super::v3::CONTRACT_V3|super::v4::CONTRACT_V4)))
+    Ok(matches!(
+        value["contract"].as_str(),
+        Some(super::v3::CONTRACT_V3 | super::v4::CONTRACT_V4)
+    ))
 }
 /// Read-only integrity check; does not certify convergence at earlier target betas.
+fn is_v5_directory(directory: &Path) -> Result<bool> {
+    let path = directory.join("conditions.json");
+    let value: Value = serde_json::from_slice(
+        &fs::read(&path).with_context(|| format!("read AKLT conditions {}", path.display()))?,
+    )?;
+    Ok(value["contract"] == super::v5::CONTRACT_V5)
+}
+
 pub fn verify_directory(directory: &Path) -> Result<Value> {
+    if is_v5_directory(directory)? {
+        return super::v5_output::verify_directory(directory);
+    }
     if is_v3_directory(directory)? {
         return super::v3_output::verify_directory(directory);
     }
@@ -733,6 +747,9 @@ pub fn verify_directory(directory: &Path) -> Result<Value> {
 }
 /// Recover only after the supervisor has observed termination. Never evolves or replaces state.
 pub fn finalize_interrupted_directory(directory: &Path, reason: &str) -> Result<Value> {
+    if is_v5_directory(directory)? {
+        return super::v5_output::finalize_interrupted_directory(directory, reason);
+    }
     if is_v3_directory(directory)? {
         return super::v3_output::finalize_interrupted_directory(directory, reason);
     }

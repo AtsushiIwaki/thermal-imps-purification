@@ -122,6 +122,8 @@ documents the retained Faer bracket fix, independent regression, selected native
 verification and before/after fixed-matrix timing. The [AKLT continuation interface](docs/usage.md#aklt-cap256-continuation-after-the-svd-repair)
 accepts the explicitly verified T=0.7 or T=0.3 saved boundary. These controls do not establish
 thermal convergence or authorize another reference trajectory. The
+[scalar-only two-step AKLT interface](docs/usage.md#aklt-two-step-scalar-observations)
+retains the same fine evolution sequence and admits the original T2 starting snapshot. The
 [provenance](docs/provenance.md), [references](docs/references.md), and
 [third-party notices](THIRD_PARTY_NOTICES.md) record extraction history, upstream software,
 methods, licenses, and redistribution obligations.
@@ -129,3 +131,13 @@ methods, licenses, and redistribution obligations.
 Project-authored code and documentation are licensed under the [MIT License](LICENSE), copyright
 2026 Atsushi Iwaki. Copied upstream material remains under its upstream terms. No scholarly
 citation of this repository is requested; the MIT notice obligations still apply.
+
+
+The controlling explicitly approved v5 scalar acquisition completed on2026-10-30:
+483/483 physical/direct-variance rows including one cached start,964 new steps
+and no new HDF5. Observed maximum bond146 did not hit cap256. Its six-page report
+passed frozen-only regeneration and visual QA. The controlling record is
+Infinite_MST `notes/2026-10-30-aklt-purification-step-sampled.md`; it retains
+production source/worker pins, timing and the unisolated small new/old scalar
+differences. Source integration and recoverable build/worktree retirement are
+still pending. This completion does not authorize another trajectory.
