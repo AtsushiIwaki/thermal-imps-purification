@@ -82,8 +82,10 @@ in [validation](docs/validation.md) and [limitations](docs/limitations.md).
   unchanged numerical source. The user now requests continuation from saved
   T0.3/step346 to the two cold targets. Native verification of the four parent
   snapshots passed without variance remeasurement. The existing resume contract
-  is T0.7-only; its bounded T0.3 extension awaits short design approval before
-  implementation. No new evolution ran; original402 attribution and thermal
+  now also accepts the approved T0.3 boundary. Native routine passed497 tests
+  (16 optional ignored), including a real two-level HDF5 restart; Python final
+  checks and review corrections are being completed. The one continuation is
+  authorized but has not launched. Original402 attribution and thermal
   convergence remain open.
 - The completed repair worktree/registration and repair branch are retired
   after clean/integrated checks; protected27 output hashes are unchanged.

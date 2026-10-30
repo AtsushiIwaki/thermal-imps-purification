@@ -1439,6 +1439,66 @@ mod tests {
         assert_eq!(engine.steps, 0);
         assert_eq!(engine.setups, 0);
     }
+    // Reinitializing beta0, losing norm, or accepting a changed ancestor breaks this real HDF5 chain.
+    #[test]
+    fn t03_publication_preserves_two_level_parent_and_saves_only_cold_states() {
+        let temp = tempfile::tempdir().unwrap();
+        let parent = temp.path().join("parent");
+        let warm = temp.path().join("warm");
+        let cold = temp.path().join("cold");
+        let resumed = resume_fixture(&parent);
+        let mut engine = ContinuationFixture {
+            steps: 0,
+            setups: 0,
+            measures: 0,
+            stop_after: Some(192),
+            panic_after: None,
+        };
+        let prefix = publish_with_engine(&resumed, &warm, &mut engine, &mut || 0.).unwrap();
+        assert_eq!(prefix["snapshot_count"], 4);
+        let rows = read_rows(&warm).unwrap();
+        let boundary = &rows[3];
+        let mut pins = files(&warm).unwrap();
+        pins["summary.json"] = fingerprint(&warm.join("summary.json")).unwrap();
+        let mut request = resumed.recorded_request().unwrap();
+        request["restart"] = json!({"directory":"../warm","snapshot_index":3,"files":pins,
+            "progress":{"completed_steps":346,"beta":boundary["beta_actual"],"accumulated_log_norm":boundary["accumulated_log_norm"]},
+            "cap":cap_from(boundary).unwrap()});
+        let settings =
+            super::super::v4::resolve_resume_request(&serde_json::from_value(request).unwrap());
+        assert!(
+            settings.is_ok(),
+            "T0.3 settings rejected: {:?}",
+            settings.err()
+        );
+        let settings = settings.unwrap();
+        let mut engine = ContinuationFixture {
+            steps: 0,
+            setups: 0,
+            measures: 0,
+            stop_after: None,
+            panic_after: None,
+        };
+        let result = publish_with_engine(&settings, &cold, &mut engine, &mut || 0.).unwrap();
+        assert_eq!((engine.setups, engine.steps, engine.measures), (0, 668, 2));
+        assert_eq!(result["snapshot_count"], 2);
+        let first = load_itebd_checkpoint(&cold.join("states.h5"), 0, &Default::default()).unwrap();
+        assert_eq!(first.progress.completed_steps, 514);
+        assert!((first.progress.accumulated_log_norm + 5.14).abs() < 1e-12);
+        assert_eq!(
+            first.time_grid,
+            ItebdTimeGrid::Segmented(settings.full_segments().to_vec())
+        );
+        assert!(verify_directory(&cold).is_ok());
+        let bytes = fs::read(parent.join("samples.csv")).unwrap();
+        fs::write(
+            parent.join("samples.csv"),
+            [bytes.as_slice(), b"\n"].concat(),
+        )
+        .unwrap();
+        let error = verify_directory(&cold).unwrap_err();
+        assert!(format!("{error:#}").contains("parent file pin changed"));
+    }
     #[test]
     fn interrupted_resume_promotes_only_untouched_pending_tail_from_retained_prefix() {
         let temp = tempfile::tempdir().unwrap();

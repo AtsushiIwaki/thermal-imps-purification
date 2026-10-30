@@ -39,10 +39,18 @@ impl AkltReferenceSettingsV3 {
         self.base.truncation()
     }
     pub fn segments(&self) -> &[ItebdStepSegment] {
-        &self.base.segments()[if self.resume.is_some() { 14 } else { 0 }..]
+        &self.base.segments()[self
+            .resume
+            .as_ref()
+            .map(super::v4::target_offset)
+            .unwrap_or(0)..]
     }
     pub fn targets(&self) -> &[ReferenceTarget] {
-        &self.base.targets()[if self.resume.is_some() { 14 } else { 0 }..]
+        &self.base.targets()[self
+            .resume
+            .as_ref()
+            .map(super::v4::target_offset)
+            .unwrap_or(0)..]
     }
     pub(super) fn full_segments(&self) -> &[ItebdStepSegment] {
         self.base.segments()
