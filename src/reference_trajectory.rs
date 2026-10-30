@@ -208,6 +208,48 @@ pub(crate) struct ScheduledStart {
     pub progress: ItebdCheckpointProgress,
     pub cap: CapEvidence,
 }
+pub(crate) fn advance_complete_step<V: Measurement>(
+    state: &mut ItebdState,
+    h: &ItebdHamiltonian,
+    truncation: &Truncation,
+    dtau: f64,
+    engine: &mut dyn Engine<V>,
+    progress: &mut ItebdCheckpointProgress,
+    cap: &mut Option<CapEvidence>,
+    bond_cap: Option<usize>,
+) -> Result<()> {
+    crate::svd_failure::begin_step(progress.completed_steps + 1, progress.beta);
+    let step = engine.step(state, h, dtau, truncation)?;
+    if let (Some(c), Some(b)) = (cap.as_mut(), bond_cap) {
+        c.observed_strang_steps += 1;
+        if step.max_bond > 0 {
+            c.observe(step.max_bond, b);
+        }
+    }
+    ensure!(
+        step.min_singular_value.is_finite() && step.max_bond > 0,
+        "invalid evolution step diagnostics"
+    );
+    let canonical = engine.canonicalize(state, h)?;
+    let norm = progress.accumulated_log_norm + step.log_norm + canonical;
+    ensure!(
+        step.log_norm.is_finite() && canonical.is_finite() && norm.is_finite(),
+        "nonfinite evolution normalization"
+    );
+    if let (Some(c), Some(b)) = (cap.as_mut(), bond_cap) {
+        let summary = crate::itebd_state_view::ItebdStateRef::from(&*state)
+            .validate()
+            .context("reference evolved state validation")?;
+        for d in summary.bond_dimensions {
+            c.observe(d, b);
+        }
+    }
+    progress.beta += 2. * dtau;
+    progress.completed_steps += 1;
+    progress.accumulated_log_norm = norm;
+    progress.last_step = Some(step);
+    Ok(())
+}
 pub(crate) fn run_scheduled_observed_from<V: Measurement>(
     settings: TrajectorySettings<'_>,
     observer: &mut dyn TargetObserver<V>,
@@ -304,42 +346,18 @@ pub(crate) fn run_scheduled_observed_from<V: Measurement>(
                 let s = state
                     .as_mut()
                     .context("missing initialized reference state")?;
-                let attempt = (|| -> Result<_> {
-                    crate::svd_failure::begin_step(progress.completed_steps + 1, progress.beta);
-                    let step =
-                        engine.step(s, settings.hamiltonian, segment.dtau, settings.truncation)?;
-                    if let (Some(c), Some(b)) = (&mut cap, bond_cap) {
-                        c.observed_strang_steps += 1;
-                        if step.max_bond > 0 {
-                            c.observe(step.max_bond, b);
-                        }
-                    }
-                    ensure!(
-                        step.min_singular_value.is_finite() && step.max_bond > 0,
-                        "invalid evolution step diagnostics"
-                    );
-                    let canonical = engine.canonicalize(s, settings.hamiltonian)?;
-                    let norm = progress.accumulated_log_norm + step.log_norm + canonical;
-                    ensure!(
-                        step.log_norm.is_finite() && canonical.is_finite() && norm.is_finite(),
-                        "nonfinite evolution normalization"
-                    );
-                    if let (Some(c), Some(b)) = (&mut cap, bond_cap) {
-                        let summary = crate::itebd_state_view::ItebdStateRef::from(&*s)
-                            .validate()
-                            .context("reference evolved state validation")?;
-                        for d in summary.bond_dimensions {
-                            c.observe(d, b);
-                        }
-                    }
-                    Ok((step, norm))
-                })();
+                let attempt = advance_complete_step(
+                    s,
+                    settings.hamiltonian,
+                    settings.truncation,
+                    segment.dtau,
+                    engine,
+                    &mut progress,
+                    &mut cap,
+                    bond_cap,
+                );
                 match attempt {
-                    Ok((step, norm)) => {
-                        progress.beta += 2. * segment.dtau;
-                        progress.completed_steps += 1;
-                        progress.accumulated_log_norm = norm;
-                        progress.last_step = Some(step);
+                    Ok(()) => {
                         if expired(elapsed) {
                             stop(
                                 "time limit after complete evolution step".into(),
